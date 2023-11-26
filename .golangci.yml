@@ -1,0 +1,45 @@
+---
+run:
+  timeout: 5m
+
+linters:
+  presets:
+    - bugs
+    - unused
+
+  enable:
+    - containedctx
+    - dogsled
+    - dupl
+    - dupword
+    - funlen
+    - gocognit
+    - godot
+    - gofmt
+    - goimports
+    - gosimple
+    - goprintffuncname
+    - grouper
+    - importas
+    - interfacebloat
+    - lll
+    - misspell
+    - nilnil
+    - nolintlint
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - tenv
+    - testpackage
+    - unconvert
+    - usestdlibvars
+    - wastedassign
+
+  disable:
+    - musttag
+
+linter-settigns:
+  staticcheck:
+    checks: ["all"]
