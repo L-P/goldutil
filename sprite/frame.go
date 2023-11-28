@@ -3,6 +3,7 @@ package sprite
 import (
 	"encoding/binary"
 	"fmt"
+	"image"
 	"io"
 	"strings"
 )
@@ -70,4 +71,8 @@ func (f Frame) String() string {
 	fmt.Fprintf(&w, "  Data: %d bytes\n", len(f.Data))
 
 	return w.String()
+}
+
+func (f Frame) Rect() image.Rectangle {
+	return image.Rect(0, 0, int(f.Width), int(f.Height))
 }

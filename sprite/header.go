@@ -77,6 +77,8 @@ func (st SyncType) String() string {
 	}
 }
 
+const expectedPaletteSize = 256
+
 // Binary-accurate.
 type Header struct {
 	MagicString    [4]byte // "IDSP"
@@ -95,7 +97,8 @@ type Header struct {
 	SyncType SyncType
 
 	// The palette is a Valve addition in sprite format version 2.
-	PaletteSize int16 // always 256
+	PaletteSize int16                         // always 256
+	Palette     [3 * expectedPaletteSize]byte // always 3 * PaletteSize, keep it fixed to simplify parsing
 }
 
 func (sh *Header) Read(r io.Reader) error {
@@ -110,6 +113,13 @@ func (sh *Header) Read(r io.Reader) error {
 
 	if sh.Version != 2 {
 		return fmt.Errorf("unhandled sprite version %d, expected version 2", sh.Version)
+	}
+
+	if sh.PaletteSize != expectedPaletteSize {
+		return fmt.Errorf(
+			"unhandled palette size: %d, expected %d",
+			sh.PaletteSize, expectedPaletteSize,
+		)
 	}
 
 	return nil
@@ -130,6 +140,7 @@ func (sh Header) String() string {
 	fmt.Fprintf(&w, "  BeamLength: %d\n", sh.BeamLength)
 	fmt.Fprintf(&w, "  SyncType: %s\n", sh.SyncType.String())
 	fmt.Fprintf(&w, "  PaletteSize: %d\n", sh.PaletteSize)
+	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette))
 
 	return w.String()
 }

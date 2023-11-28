@@ -78,11 +78,7 @@ func doSpriteExtract(args []string) error {
 		return fmt.Errorf("unable to open sprite: %w", err)
 	}
 
-	fmt.Printf("%s\n", spr.String())
-
-	_, _ = spr, dir
-
-	return nil
+	return extractSprite(spr, *dir)
 }
 
 func doSpriteInfo(args []string) error {

@@ -1,29 +1,23 @@
 package sprite
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 )
 
-const expectedPaletteSize = 256
-
 // .spr file, originally from Quake and modified by Valve.
 // See sprgen.c and the Quake engine.
 type Sprite struct {
 	Header
-
-	Palette [3 * expectedPaletteSize]byte // always 3 * PaletteSize
-	Frames  []Frame
+	Frames []Frame
 }
 
 func (spr Sprite) String() string {
 	var w strings.Builder
 
 	w.WriteString(spr.Header.String())
-	fmt.Fprintf(&w, "Palette: %d bytes\n", len(spr.Palette))
 
 	for i, v := range spr.Frames {
 		fmt.Fprintf(&w, "Frame %d:\n", i)
@@ -36,17 +30,6 @@ func (spr Sprite) String() string {
 func (spr *Sprite) Read(r io.Reader) error {
 	if err := spr.Header.Read(r); err != nil {
 		return fmt.Errorf("could not parse header: %w", err)
-	}
-
-	if spr.PaletteSize != expectedPaletteSize {
-		return fmt.Errorf(
-			"unhandled palette size: %d, expected %d",
-			spr.PaletteSize, expectedPaletteSize,
-		)
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &spr.Palette); err != nil {
-		return fmt.Errorf("could not parse palette: %w", err)
 	}
 
 	spr.Frames = make([]Frame, 0, spr.NumFrames)
