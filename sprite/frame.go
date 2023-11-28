@@ -39,6 +39,23 @@ type FrameMeta struct {
 	Width, Height    int32
 }
 
+func NewFrame(
+	width, height int32,
+	originX, originY int32,
+	data []byte,
+) Frame {
+	return Frame{
+		FrameMeta: FrameMeta{
+			Type:    Single,
+			Width:   width,
+			Height:  height,
+			OriginX: originX,
+			OriginY: originY,
+		},
+		Data: data,
+	}
+}
+
 func (fd *Frame) Read(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &fd.FrameMeta); err != nil {
 		return fmt.Errorf("unable to parse frame meta-data: %w", err)
@@ -75,4 +92,16 @@ func (f Frame) String() string {
 
 func (f Frame) Rect() image.Rectangle {
 	return image.Rect(0, 0, int(f.Width), int(f.Height))
+}
+
+func (f Frame) Write(w io.Writer) error {
+	if err := binary.Write(w, binary.LittleEndian, f.FrameMeta); err != nil {
+		return fmt.Errorf("unable to write frame header: %w", err)
+	}
+
+	if _, err := w.Write(f.Data); err != nil {
+		return fmt.Errorf("unable to write frame data: %w", err)
+	}
+
+	return nil
 }

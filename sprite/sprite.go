@@ -3,6 +3,7 @@ package sprite
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strings"
 )
@@ -12,6 +13,32 @@ import (
 type Sprite struct {
 	Header
 	Frames []Frame
+}
+
+func New(
+	width, height int, typ Type, format TextureFormat,
+	palette [3 * expectedPaletteSize]byte,
+) (Sprite, error) {
+	var spr Sprite
+	spr.Header = Header{
+		MagicString:    [4]byte{'I', 'D', 'S', 'P'},
+		Version:        2,
+		Type:           typ,
+		TextureFormat:  format,
+		BoundingRadius: boundingRadius(width, height),
+		Width:          int32(width),
+		Height:         int32(height),
+		PaletteSize:    expectedPaletteSize,
+		Palette:        palette,
+	}
+
+	return spr, nil
+}
+
+func boundingRadius(iWidth, iHeight int) float32 {
+	return float32(math.Sqrt(
+		math.Pow(float64(iWidth)/2, 2) + math.Pow(float64(iHeight)/2, 2),
+	))
 }
 
 func (spr Sprite) String() string {
@@ -58,4 +85,23 @@ func NewFromFile(path string) (Sprite, error) {
 	}
 
 	return sprite, nil
+}
+
+func (spr *Sprite) AddFrame(frame Frame) {
+	spr.Frames = append(spr.Frames, frame)
+	spr.NumFrames += 1
+}
+
+func (spr Sprite) Write(w io.Writer) error {
+	if err := spr.Header.Write(w); err != nil {
+		return err
+	}
+
+	for i, frame := range spr.Frames {
+		if err := frame.Write(w); err != nil {
+			return fmt.Errorf("could not write frame #%d: %w", i, err)
+		}
+	}
+
+	return nil
 }

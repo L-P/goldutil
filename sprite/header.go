@@ -93,7 +93,8 @@ type Header struct {
 	// Probably unused.
 	BeamLength int32
 
-	// Informs the quake engine to desync client-side animations.
+	// Informs the quake engine to desync client-side animations (makes them
+	// start with a random delay).
 	SyncType SyncType
 
 	// The palette is a Valve addition in sprite format version 2.
@@ -143,4 +144,8 @@ func (sh Header) String() string {
 	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette))
 
 	return w.String()
+}
+
+func (sh Header) Write(w io.Writer) error {
+	return binary.Write(w, binary.LittleEndian, sh)
 }
