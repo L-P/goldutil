@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"goldutil/sprite"
 	"image"
-	"image/color"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -115,8 +114,8 @@ func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldR
 
 // Returns the final palette, the last index in the input palette, and true if
 // this index must be remapped to 0xFF.
-func imagePalette(path string) ([256 * 3]byte, uint8, bool, error) {
-	var palette [256 * 3]byte
+func imagePalette(path string) (sprite.Palette, uint8, bool, error) {
+	var palette sprite.Palette
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -125,34 +124,31 @@ func imagePalette(path string) ([256 * 3]byte, uint8, bool, error) {
 	defer f.Close()
 
 	mysteryImg, _, err := image.Decode(f)
-	img, ok := mysteryImg.(image.PalettedImage)
+	if err != nil {
+		return palette, 0, false, fmt.Errorf("could not decode image: %w", err)
+	}
+
+	img, ok := mysteryImg.(*image.Paletted)
 	if !ok {
 		return palette, 0, false, errors.New("image is not paletted")
 	}
 
-	inputPalette, ok := img.ColorModel().(color.Palette)
-	if !ok {
-		return palette, 0, false, errors.New("image color model is not a palette")
-	}
-
-	if len(inputPalette) > 256 {
+	if len(img.Palette) > 256 {
 		return palette, 0, false, fmt.Errorf("expected at most 256 colors palette, got %d", len(palette))
 	}
 
-	for i, v := range inputPalette {
-		var j = i * 3
+	for i, v := range img.Palette {
 		r, g, b, _ := v.RGBA()
-		palette[j] = uint8(r)
-		palette[j+1] = uint8(g)
-		palette[j+2] = uint8(b)
+		palette[i] = sprite.RGB{
+			R: uint8(r),
+			G: uint8(g),
+			B: uint8(b),
+		}
 	}
 
-	lastIndex := len(inputPalette) - 1
+	lastIndex := len(img.Palette) - 1
 	if lastIndex != 255 {
-		var j = lastIndex * 3
-		palette[3*255] = palette[j]
-		palette[3*255+1] = palette[j+1]
-		palette[3*255+2] = palette[j+2]
+		palette[255] = palette[lastIndex]
 		return palette, uint8(lastIndex), true, nil
 	}
 

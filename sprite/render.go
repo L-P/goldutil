@@ -25,11 +25,10 @@ func (spr Sprite) PaletteNRGBA() color.Palette {
 
 	palette := make([]color.Color, spr.PaletteSize)
 	for i := int16(0); i < spr.PaletteSize; i++ {
-		j := i * 3
 		palette[i] = color.NRGBA{
-			spr.Palette[j],
-			spr.Palette[j+1],
-			spr.Palette[j+2],
+			spr.Palette[i].R,
+			spr.Palette[i].G,
+			spr.Palette[i].B,
 			0xFF,
 		}
 	}
@@ -45,11 +44,10 @@ func (spr Sprite) PaletteNRGBA() color.Palette {
 func (spr Sprite) indexAlphaPaletteNRGBA() color.Palette {
 	palette := make([]color.Color, spr.PaletteSize)
 	for i := int16(0); i < spr.PaletteSize; i++ {
-		j := i * 3
 		palette[i] = color.NRGBA{
-			spr.Palette[j],
-			spr.Palette[j+1],
-			spr.Palette[j+2],
+			spr.Palette[i].R,
+			spr.Palette[i].G,
+			spr.Palette[i].B,
 			uint8(i % 256),
 		}
 	}

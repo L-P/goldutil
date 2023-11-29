@@ -15,9 +15,15 @@ type Sprite struct {
 	Frames []Frame
 }
 
+type RGB struct {
+	R, G, B uint8
+}
+
+type Palette [256]RGB
+
 func New(
 	width, height int, typ Type, format TextureFormat,
-	palette [3 * expectedPaletteSize]byte,
+	palette Palette,
 ) (Sprite, error) {
 	var spr Sprite
 	spr.Header = Header{

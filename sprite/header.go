@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unsafe" // informational sizeof
 )
 
 type Type int32
@@ -98,8 +99,8 @@ type Header struct {
 	SyncType SyncType
 
 	// The palette is a Valve addition in sprite format version 2.
-	PaletteSize int16                         // always 256
-	Palette     [3 * expectedPaletteSize]byte // always 3 * PaletteSize, keep it fixed to simplify parsing
+	PaletteSize int16   // always 256
+	Palette     Palette // always 3 bytes * PaletteSize, keep it fixed to simplify parsing
 }
 
 func (sh *Header) Read(r io.Reader) error {
@@ -141,7 +142,7 @@ func (sh Header) String() string {
 	fmt.Fprintf(&w, "  BeamLength: %d\n", sh.BeamLength)
 	fmt.Fprintf(&w, "  SyncType: %s\n", sh.SyncType.String())
 	fmt.Fprintf(&w, "  PaletteSize: %d\n", sh.PaletteSize)
-	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette))
+	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette)*int(unsafe.Sizeof(RGB{})))
 
 	return w.String()
 }
