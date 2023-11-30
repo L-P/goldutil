@@ -11,8 +11,6 @@ import (
 )
 
 func extractSprite(spr sprite.Sprite, destDir string) error {
-	fmt.Println(spr.String())
-
 	for i := range spr.Frames {
 		var (
 			destPath  = filepath.Join(destDir, fmt.Sprintf("frame%03d.png", i))

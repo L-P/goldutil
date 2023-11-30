@@ -158,8 +158,6 @@ func doSpriteCreate(args []string) error {
 		return fmt.Errorf("unable to create sprite: %w", err)
 	}
 
-	fmt.Println(spr.String())
-
 	dest, err := os.OpenFile(*out, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("unable to open dest SPR for writing: %w", err)
