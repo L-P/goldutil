@@ -252,29 +252,3 @@ func doMapExport(args []string) error {
 
 	return nil
 }
-
-func exportQMap(qm qmap.QMap) (qmap.QMap, error) {
-	var skipIDs = make(map[string]struct{})
-	for _, layer := range qm.GetTBLayers() {
-		locked, ok := layer.GetProperty("_tb_layer_omit_from_export")
-		if ok && locked == "1" {
-			id, ok := layer.GetProperty("_tb_id")
-			if !ok {
-				return qmap.QMap{}, fmt.Errorf("found a layer with no _tb_id")
-			}
-			skipIDs[id] = struct{}{}
-		}
-	}
-
-	var clean qmap.QMap
-	for _, v := range qm.RawEntities() {
-		layerID, ok := v.GetProperty("_tb_layer")
-		if _, skip := skipIDs[layerID]; ok && skip {
-			continue
-		}
-
-		clean.AddEntity(v)
-	}
-
-	return clean, nil
-}
