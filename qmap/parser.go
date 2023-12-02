@@ -90,7 +90,7 @@ func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
 	switch {
 	case line == "}":
 		p.curEntity.endLine = lineNumber
-		p.qmap.addEntity(*p.curEntity)
+		p.qmap.AddEntity(*p.curEntity)
 		p.curEntity = nil
 
 		return psOutside, nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type QMap struct {
@@ -34,7 +35,7 @@ func LoadFromReader(r io.Reader) (QMap, error) {
 	return qmap, nil
 }
 
-func (qmap *QMap) addEntity(ent Entity) {
+func (qmap *QMap) AddEntity(ent Entity) {
 	qmap.entities = append(qmap.entities, ent)
 }
 
@@ -85,4 +86,18 @@ func (qmap *QMap) GetEntityByName(name string) (Entity, bool) {
 	}
 
 	return qmap.entities[i], true
+}
+
+func (qmap *QMap) String() string {
+	var b strings.Builder
+
+	b.WriteString("// Game: Half-Life\n")
+	b.WriteString("// Format: Valve\n")
+
+	for i, v := range qmap.entities {
+		fmt.Fprintf(&b, "// entity %d\n", i)
+		b.WriteString(v.String())
+	}
+
+	return b.String()
 }

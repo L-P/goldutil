@@ -12,9 +12,15 @@ import (
 var help = `Usage: %s COMMAND [ARGS…]
 
 Commands:
-    entity-graph MAP
-        Outputs a graphviz digraph of entity caller/callee relationships from a
+    map-export MAP
+        Exports a .map file the way TrenchBroom does, removing all layers
+        marked as not exported.
+        Output is written to stdout.
+
+    map-graph MAP
+        Creates a graphviz digraph of entity caller/callee relationships from a
         .map file. ripent exports use the same format and can be read too.
+        Output is written to stdout.
 
     sprite-info SPR
         Prints parsed frame data from a sprite.
@@ -87,8 +93,10 @@ func main() {
 
 func dispatch(command string, args []string) error {
 	switch command {
-	case "entity-graph":
+	case "map-graph":
 		return doEntGraph(args)
+	case "map-export":
+		return doMapExport(args)
 	case "sprite-info":
 		return doSpriteInfo(args)
 	case "sprite-extract":
@@ -197,7 +205,7 @@ func doSpriteInfo(args []string) error {
 }
 
 func doEntGraph(args []string) error {
-	fset := flag.NewFlagSet("entity-graph", flag.ExitOnError)
+	fset := flag.NewFlagSet("map-graph", flag.ExitOnError)
 	fset.Usage = usage
 	if err := fset.Parse(args); err != nil {
 		return err
@@ -216,4 +224,57 @@ func doEntGraph(args []string) error {
 	GraphQMap(qm, os.Stdout)
 
 	return nil
+}
+
+func doMapExport(args []string) error {
+	fset := flag.NewFlagSet("map-export", flag.ExitOnError)
+	fset.Usage = usage
+	if err := fset.Parse(args); err != nil {
+		return err
+	}
+
+	path := fset.Arg(0)
+	if path == "" {
+		return errors.New("expected one argument: the .map to export")
+	}
+
+	qm, err := qmap.LoadFromFile(path)
+	if err != nil {
+		return fmt.Errorf("unable to read from map: %w", err)
+	}
+
+	clean, err := exportQMap(qm)
+	if err != nil {
+		return fmt.Errorf("unable to export map: %w", err)
+	}
+
+	fmt.Print(clean.String())
+
+	return nil
+}
+
+func exportQMap(qm qmap.QMap) (qmap.QMap, error) {
+	var skipIDs = make(map[string]struct{})
+	for _, layer := range qm.GetTBLayers() {
+		locked, ok := layer.GetProperty("_tb_layer_omit_from_export")
+		if ok && locked == "1" {
+			id, ok := layer.GetProperty("_tb_id")
+			if !ok {
+				return qmap.QMap{}, fmt.Errorf("found a layer with no _tb_id")
+			}
+			skipIDs[id] = struct{}{}
+		}
+	}
+
+	var clean qmap.QMap
+	for _, v := range qm.RawEntities() {
+		layerID, ok := v.GetProperty("_tb_layer")
+		if _, skip := skipIDs[layerID]; ok && skip {
+			continue
+		}
+
+		clean.AddEntity(v)
+	}
+
+	return clean, nil
 }

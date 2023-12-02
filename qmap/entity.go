@@ -1,6 +1,9 @@
 package qmap
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Shared key names.
 const (
@@ -86,4 +89,28 @@ type Brush struct {
 
 func (b *Brush) addPlane(plane string) {
 	b.planes = append(b.planes, plane)
+}
+
+func (e Entity) String() string {
+	var b strings.Builder
+
+	b.WriteString("{\n")
+
+	for _, prop := range e.props {
+		fmt.Fprintf(&b, `"%s" "%s"`, prop.key, prop.value)
+		b.WriteRune('\n')
+	}
+
+	for i, brush := range e.brushes {
+		fmt.Fprintf(&b, "// brush %d\n", i)
+		b.WriteString(brush.String())
+	}
+
+	b.WriteString("}\n")
+
+	return b.String()
+}
+
+func (b Brush) String() string {
+	return "{\n" + strings.Join(b.planes, "\n") + "\n}\n"
 }
