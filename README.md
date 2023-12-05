@@ -5,9 +5,15 @@ GoldSrc utilities.
 Usage: goldutil COMMAND [ARGS…]
 
 Commands:
-    entity-graph MAP
-        Outputs a graphviz digraph of entity caller/callee relationships from a
+    map-export MAP
+        Exports a .map file the way TrenchBroom does, removing all layers
+        marked as not exported.
+        Output is written to stdout.
+
+    map-graph MAP
+        Creates a graphviz digraph of entity caller/callee relationships from a
         .map file. ripent exports use the same format and can be read too.
+        Output is written to stdout.
 
     sprite-info SPR
         Prints parsed frame data from a sprite.
