@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"goldutil/qmap"
+	"strings"
 )
 
 type set map[string]struct{}
@@ -40,7 +41,7 @@ func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set) (set, error) {
 	return skipIDs, nil
 }
 
-func exportQMap(qm qmap.QMap) (qmap.QMap, error) {
+func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
 	skipLayerIDs, err := getUnexportedLayerSet(qm)
 	if err != nil {
 		return qmap.QMap{}, err
@@ -78,8 +79,20 @@ func exportQMap(qm qmap.QMap) (qmap.QMap, error) {
 			}
 		}
 
+		if cleanupTB {
+			removeTBProps(&v) //nolint:gosec // We don't keep the pointer.
+		}
+
 		clean.AddEntity(v)
 	}
 
 	return clean, nil
+}
+
+func removeTBProps(ent *qmap.Entity) {
+	for k := range ent.PropertyMap() {
+		if strings.HasPrefix(k, "_tb_") {
+			ent.RemoveProperty(k)
+		}
+	}
 }

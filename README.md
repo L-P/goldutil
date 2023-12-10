@@ -5,10 +5,15 @@ GoldSrc utilities.
 Usage: goldutil COMMAND [ARGS…]
 
 Commands:
-    map-export MAP
+    map-export [-cleanup-tb] MAP
         Exports a .map file the way TrenchBroom does, removing all layers
         marked as not exported.
         Output is written to stdout.
+
+        Options:
+            -cleanup-tb Removes properties added by TrenchBroom that are not
+                        understood by the engine and spam the console with
+                        errors.
 
     map-graph MAP
         Creates a graphviz digraph of entity caller/callee relationships from a

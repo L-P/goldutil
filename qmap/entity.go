@@ -30,6 +30,16 @@ type Entity struct {
 	keyLookup          map[string]string
 }
 
+type Property struct {
+	line       int
+	key, value string
+}
+
+type Brush struct {
+	startLine, endLine int
+	planes             []string // raw planes, unparsed
+}
+
 func (e Entity) Name() string {
 	name, ok := e.GetProperty(KName)
 	if ok {
@@ -73,18 +83,19 @@ func (e *Entity) addProperty(p Property) {
 	e.props = append(e.props, p)
 }
 
+func (e *Entity) RemoveProperty(key string) {
+	var filtered = make([]Property, 0, len(e.props))
+	for _, v := range e.props {
+		if v.key != key {
+			filtered = append(filtered, v)
+		}
+	}
+
+	e.props = filtered
+}
+
 func (e *Entity) addBrush(b Brush) {
 	e.brushes = append(e.brushes, b)
-}
-
-type Property struct {
-	line       int
-	key, value string
-}
-
-type Brush struct {
-	startLine, endLine int
-	planes             []string // raw planes, unparsed
 }
 
 func (b *Brush) addPlane(plane string) {

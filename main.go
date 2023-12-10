@@ -12,10 +12,15 @@ import (
 var help = `Usage: %s COMMAND [ARGS…]
 
 Commands:
-    map-export MAP
+    map-export [-cleanup-tb] MAP
         Exports a .map file the way TrenchBroom does, removing all layers
         marked as not exported.
         Output is written to stdout.
+
+        Options:
+            -cleanup-tb Removes properties added by TrenchBroom that are not
+                        understood by the engine and spam the console with
+                        errors.
 
     map-graph MAP
         Creates a graphviz digraph of entity caller/callee relationships from a
@@ -228,6 +233,7 @@ func doEntGraph(args []string) error {
 
 func doMapExport(args []string) error {
 	fset := flag.NewFlagSet("map-export", flag.ExitOnError)
+	cleanupTB := fset.Bool("cleanup-tb", false, "remove TrenchBroom properties")
 	fset.Usage = usage
 	if err := fset.Parse(args); err != nil {
 		return err
@@ -243,7 +249,7 @@ func doMapExport(args []string) error {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	clean, err := exportQMap(qm)
+	clean, err := exportQMap(qm, *cleanupTB)
 	if err != nil {
 		return fmt.Errorf("unable to export map: %w", err)
 	}
