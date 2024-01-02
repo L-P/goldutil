@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 )
 
-func extractSprite(spr sprite.Sprite, destDir string) error {
+func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
 	for i := range spr.Frames {
 		var (
-			destPath  = filepath.Join(destDir, fmt.Sprintf("frame%03d.png", i))
+			destPath = filepath.Join(destDir, fmt.Sprintf(
+				"%s.frame%03d.png",
+				originalBaseName, i,
+			))
 			dest, err = os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		)
 		if err != nil {

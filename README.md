@@ -24,7 +24,9 @@ Commands:
         Prints parsed frame data from a sprite.
 
     sprite-extract [-dir DIR] SPR
-        Outputs all frames of a sprite to the current directory.
+        Outputs all frames of a sprite to the current directory. The output
+        files will be named after the original sprite file name plus a frame
+        number suffix and an extension.
 
         Options:
             -dir DIR    Outputs frames to the specified directory instead of
