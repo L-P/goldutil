@@ -1,0 +1,1 @@
+: *.go qmap/*.go sprite/*.go |> make |> goldutil
