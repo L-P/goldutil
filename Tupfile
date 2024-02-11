@@ -1,1 +1,1 @@
-: *.go qmap/*.go sprite/*.go |> make |> goldutil
+: *.go qmap/*.go sprite/*.go wad/*.go |> make |> goldutil
