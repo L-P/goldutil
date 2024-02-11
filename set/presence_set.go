@@ -2,8 +2,8 @@ package set
 
 type PresenceSet[T comparable] map[T]struct{}
 
-func NewPresenceSet[T comparable](cap int) PresenceSet[T] {
-	return make(map[T]struct{}, cap)
+func NewPresenceSet[T comparable](capacity int) PresenceSet[T] {
+	return make(map[T]struct{}, capacity)
 }
 
 func (ps PresenceSet[T]) Has(key T) bool {
