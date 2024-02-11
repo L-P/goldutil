@@ -64,7 +64,7 @@ func (mip *MIPTexture) Read(r io.ReadSeeker, offset, size int32) error {
 
 	for i := range mip.MIPData {
 		// Each MIPMap is half the size of the previous one.
-		size := (mip.Width * mip.Height) / ((2 << i) / 2)
+		size := (mip.Width * mip.Height) / int32(mipIndexToScale(i))
 		mip.MIPData[i] = make([]byte, size)
 
 		mipmapOffset := int64(offset + mip.MIPOffsets[i])
@@ -77,9 +77,13 @@ func (mip *MIPTexture) Read(r io.ReadSeeker, offset, size int32) error {
 		}
 	}
 
-	paletteOffset := int64(offset + size - (3 * 256) - 2)
+	paletteOffset := int64(offset + size - PaletteSize - 2)
 	if _, err := r.Seek(paletteOffset, io.SeekStart); err != nil {
 		return fmt.Errorf("unable to seek to palette data offset 0x%x: %w", paletteOffset, err)
+	}
+
+	if err := binary.Read(r, binary.LittleEndian, &mip.Palette); err != nil {
+		return fmt.Errorf("unable to read Palette: %w", err)
 	}
 
 	return nil

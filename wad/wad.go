@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"goldutil/set"
 	"io"
 	"os"
 	"strings"
@@ -28,12 +29,34 @@ func (n TextureName) String() string {
 type WAD struct {
 	Header
 
-	textures []texture
+	textures           []texture
+	nameToTextureIndex map[string]int
 }
 
 type texture struct {
 	entry Entry
 	mip   MIPTexture
+}
+
+// Returns available texture names.
+// The canonical name is the directory entry name (all uppercase in halflife.wad).
+// The texture lump name is unused.
+func (wad WAD) Names() []string {
+	names := make([]string, 0, len(wad.textures))
+	for i := range wad.textures {
+		names = append(names, wad.textures[i].entry.Name.String())
+	}
+
+	return names
+}
+
+func (wad WAD) GetTexture(name string) (MIPTexture, bool) {
+	index, ok := wad.nameToTextureIndex[name]
+	if !ok {
+		return MIPTexture{}, false
+	}
+
+	return wad.textures[index].mip, true
 }
 
 func (wad WAD) String() string {
@@ -85,7 +108,10 @@ func (t EntryType) String() string {
 	}
 }
 
-const EntrySize = int32(unsafe.Sizeof(Entry{}))
+const (
+	EntrySize   = int32(unsafe.Sizeof(Entry{}))
+	PaletteSize = int32(unsafe.Sizeof(Palette{}))
+)
 
 // Binary-accurate.
 type Entry struct {
@@ -125,12 +151,20 @@ func (wad *WAD) Read(r io.ReadSeeker) error {
 		return fmt.Errorf("unable to parse directory: %w", err)
 	}
 
+	wad.nameToTextureIndex = make(map[string]int, wad.EntriesCount)
+	for i := range wad.textures {
+		wad.nameToTextureIndex[wad.textures[i].entry.Name.String()] = i
+	}
+
 	return nil
 }
 
 // Combined directory / texture data reader.
 func readTextures(r io.ReadSeeker, header Header) ([]texture, error) {
-	var ret = make([]texture, 0, header.EntriesCount)
+	var (
+		ret   = make([]texture, 0, header.EntriesCount)
+		names = set.NewPresenceSet[string](int(header.EntriesCount))
+	)
 
 	for i := int32(0); i < header.EntriesCount; i++ {
 		offset := header.EntriesOffset + (EntrySize * i)
@@ -142,6 +176,12 @@ func readTextures(r io.ReadSeeker, header Header) ([]texture, error) {
 		if err := binary.Read(r, binary.LittleEndian, &entry); err != nil {
 			return nil, fmt.Errorf("unable to read entry #%d: %w", i, err)
 		}
+
+		entryName := entry.Name.String()
+		if names.Has(entryName) {
+			return nil, fmt.Errorf("entry #%d has a duplicated name: %s", i, entryName)
+		}
+		names.Set(entryName)
 
 		if entry.Type != EntryTypeMIPTex {
 			return nil, fmt.Errorf("unhandled entry #%d type: 0x%x", i, entry.Type)
