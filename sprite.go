@@ -105,8 +105,7 @@ func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldR
 
 	spr.AddFrame(sprite.NewFrame(
 		int32(rect.Dx()), int32(rect.Dy()),
-		// TODO understand why I'm seeing so much negative origins in valve sprites.
-		-int32(rect.Dx()/2), -int32(rect.Dy()/2),
+		int32(rect.Dx()/2), int32(rect.Dy()/2),
 		img.Pix,
 	))
 
