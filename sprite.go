@@ -74,20 +74,9 @@ func createSprite(typ sprite.Type, format sprite.TextureFormat, framePaths []str
 }
 
 func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldRemap bool) error {
-	f, err := os.Open(path)
+	img, err := openPalettedImage(path)
 	if err != nil {
-		return fmt.Errorf("unable to open file at '%s': %w", path, err)
-	}
-	defer f.Close()
-
-	mysteryImg, _, err := image.Decode(f)
-	if err != nil {
-		return fmt.Errorf("unable to decode image: %w", err)
-	}
-
-	img, ok := mysteryImg.(*image.Paletted)
-	if !ok {
-		return errors.New("image is not paletted")
+		return fmt.Errorf("unable to open image: %w", err)
 	}
 
 	rect := img.Bounds()
@@ -96,11 +85,7 @@ func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldR
 	}
 
 	if shouldRemap {
-		for i, v := range img.Pix {
-			if v == remapIndex {
-				img.Pix[i] = 0xFF
-			}
-		}
+		remapLastColor(img, remapIndex)
 	}
 
 	spr.AddFrame(sprite.NewFrame(
@@ -110,49 +95,6 @@ func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldR
 	))
 
 	return nil
-}
-
-// Returns the final palette, the last index in the input palette, and true if
-// this index must be remapped to 0xFF.
-func imagePalette(path string) (sprite.Palette, uint8, bool, error) {
-	var palette sprite.Palette
-
-	f, err := os.Open(path)
-	if err != nil {
-		return palette, 0, false, fmt.Errorf("unable to open file at '%s': %w", path, err)
-	}
-	defer f.Close()
-
-	mysteryImg, _, err := image.Decode(f)
-	if err != nil {
-		return palette, 0, false, fmt.Errorf("could not decode image: %w", err)
-	}
-
-	img, ok := mysteryImg.(*image.Paletted)
-	if !ok {
-		return palette, 0, false, errors.New("image is not paletted")
-	}
-
-	if len(img.Palette) > 256 {
-		return palette, 0, false, fmt.Errorf("expected at most 256 colors palette, got %d", len(palette))
-	}
-
-	for i, v := range img.Palette {
-		r, g, b, _ := v.RGBA()
-		palette[i] = sprite.RGB{
-			R: uint8(r),
-			G: uint8(g),
-			B: uint8(b),
-		}
-	}
-
-	lastIndex := len(img.Palette) - 1
-	if lastIndex != 255 {
-		palette[255] = palette[lastIndex]
-		return palette, uint8(lastIndex), true, nil
-	}
-
-	return palette, uint8(lastIndex), false, nil
 }
 
 func imageSize(path string) (int, int, error) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/set"
+	"goldutil/sprite"
 	"io"
 	"os"
 	"strings"
@@ -21,6 +22,16 @@ const (
 // Fixed-size and \0-terminated string.
 type TextureName [NameSize]byte
 
+func NewTextureName(str string) (TextureName, error) {
+	if len(str) > MaxNameLen {
+		return TextureName{}, fmt.Errorf("name is too long, %d>%d", len(str), MaxNameLen)
+	}
+
+	var ret TextureName
+	copy(ret[:], str)
+	return ret, nil
+}
+
 func (n TextureName) String() string {
 	nul := bytes.IndexByte(n[:], 0)
 	return string(n[:nul])
@@ -31,6 +42,15 @@ type WAD struct {
 
 	textures           []texture
 	nameToTextureIndex map[string]int
+}
+
+func New() WAD {
+	return WAD{
+		Header: Header{
+			MagicString: [4]byte{'W', 'A', 'D', '3'},
+		},
+		nameToTextureIndex: make(map[string]int),
+	}
 }
 
 type texture struct {
@@ -71,6 +91,11 @@ func (wad WAD) String() string {
 		w.WriteString(tex.entry.String())
 		fmt.Fprintf(&w, "\nEntry #%d data:\n", i)
 		w.WriteString(tex.mip.String())
+
+		// DEBUG
+		if tex.mip.Size() != tex.entry.UncompressedSize {
+			panic("computed size != defined size")
+		}
 	}
 
 	return w.String()
@@ -109,8 +134,10 @@ func (t EntryType) String() string {
 }
 
 const (
-	EntrySize   = int32(unsafe.Sizeof(Entry{}))
-	PaletteSize = int32(unsafe.Sizeof(Palette{}))
+	HeaderSize           = int32(unsafe.Sizeof(Header{}))
+	EntrySize            = int32(unsafe.Sizeof(Entry{}))
+	PaletteDataSize      = int32(unsafe.Sizeof(sprite.Palette{}))
+	MIPTextureHeaderSize = int32(unsafe.Sizeof(MIPTextureHeader{}))
 )
 
 // Binary-accurate.
@@ -214,4 +241,108 @@ func NewFromFile(path string) (WAD, error) {
 	}
 
 	return wad, nil
+}
+
+func (wad *WAD) AddTexture(mip MIPTexture) error {
+	if _, ok := wad.nameToTextureIndex[mip.Name.String()]; ok {
+		return fmt.Errorf("a texture with this name already exists in the wad: %s", mip.Name.String())
+	}
+
+	// Lump names are lowercase, uppercase in halflife.wad. Copy that behavior.
+	entryName, err := NewTextureName(strings.ToUpper(mip.Name.String()))
+	if err != nil {
+		return fmt.Errorf("invalid entry name '%s': %w", entryName.String(), err)
+	}
+
+	size := mip.Size()
+	var entry = Entry{
+		Size:             size,
+		UncompressedSize: size,
+		Type:             EntryTypeMIPTex,
+		Name:             entryName,
+	}
+
+	wad.textures = append(wad.textures, texture{entry: entry, mip: mip})
+	wad.nameToTextureIndex[mip.Name.String()] = len(wad.textures) - 1
+
+	return nil
+}
+
+func (wad *WAD) Write(w io.Writer) error {
+	totalMIPSize := wad.getTotalMIPSize()
+	wad.Header.EntriesCount = int32(len(wad.textures))
+	wad.Header.EntriesOffset = HeaderSize + totalMIPSize
+
+	if err := binary.Write(w, binary.LittleEndian, wad.Header); err != nil {
+		return fmt.Errorf("unable to write Header: %w", err)
+	}
+
+	offsetMap, err := wad.writeTextures(w)
+	if err != nil {
+		return fmt.Errorf("unable to write texture data: %w", err)
+	}
+
+	if err := wad.writeDirectory(offsetMap, w); err != nil {
+		return fmt.Errorf("unable to write directory: %w", err)
+	}
+
+	return nil
+}
+
+func (wad *WAD) writeDirectory(offsetMap map[int]int32, w io.Writer) error {
+	for i := range wad.textures {
+		wad.textures[i].entry.Offset = offsetMap[i]
+
+		if err := binary.Write(w, binary.LittleEndian, wad.textures[i].entry); err != nil {
+			return fmt.Errorf("unable to write Entry #%d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func (wad *WAD) writeTextures(w io.Writer) (map[int]int32, error) {
+	var (
+		offsetMap = make(map[int]int32, len(wad.textures))
+		offset    = HeaderSize
+	)
+
+	for i, tex := range wad.textures {
+		if err := binary.Write(w, binary.LittleEndian, tex.mip.MIPTextureHeader); err != nil {
+			return nil, fmt.Errorf("unable to write MIPTextureHeader #%d: %w", i, err)
+		}
+
+		for mipID := range tex.mip.MIPData {
+			if err := binary.Write(w, binary.LittleEndian, tex.mip.MIPData[mipID]); err != nil {
+				return nil, fmt.Errorf("unable to write mip data #%d (mipmap #%d): %w", i, mipID, err)
+			}
+		}
+
+		if err := binary.Write(w, binary.LittleEndian, tex.mip.PaletteSize); err != nil {
+			return nil, fmt.Errorf("unable to write PaletteSize in mip #%d: %w", i, err)
+		}
+
+		if err := binary.Write(w, binary.LittleEndian, tex.mip.Palette); err != nil {
+			return nil, fmt.Errorf("unable to write palette in mip #%d: %w", i, err)
+		}
+
+		if err := binary.Write(w, binary.LittleEndian, [2]byte{}); err != nil {
+			return nil, fmt.Errorf("unable to write padding#1 in mip #%d: %w", i, err)
+		}
+
+		offsetMap[i] = offset
+		offset += tex.mip.Size()
+	}
+
+	return offsetMap, nil
+}
+
+func (wad WAD) getTotalMIPSize() int32 {
+	var ret int32
+
+	for i := range wad.textures {
+		ret += wad.textures[i].mip.Size()
+	}
+
+	return ret
 }

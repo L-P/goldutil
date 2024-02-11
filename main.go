@@ -5,10 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"goldutil/qmap"
+	"goldutil/set"
 	"goldutil/sprite"
 	"goldutil/wad"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 var help = `Usage: %s COMMAND [ARGS…]
@@ -324,5 +326,65 @@ func doWADInfo(args []string) error {
 }
 
 func doWADCreate(args []string) error {
-	return errors.New("not implemented")
+	fset := flag.NewFlagSet("wad-create", flag.ExitOnError)
+	dest := fset.String("out", "", "destination file")
+	fset.Usage = usage
+	if err := fset.Parse(args); err != nil {
+		return err
+	}
+
+	input, err := collectPaths(fset.Args(), "*.png")
+	if err != nil {
+		return fmt.Errorf("unable to collect paths: %w", err)
+	}
+
+	return createWAD(*dest, input)
+}
+
+// Returns the paths when they're files, and the pattern-matching files inside
+// them if they're directories.
+func collectPaths(input []string, pattern string) ([]string, error) {
+	ret := make([]string, 0, len(input))
+
+	for _, path := range input {
+		stat, err := os.Stat(path)
+		if err != nil {
+			return nil, fmt.Errorf("could not stat '%s': %w", path, err)
+		}
+
+		if !stat.IsDir() {
+			ret = append(ret, path)
+			continue
+		}
+
+		matches, err := filepath.Glob(filepath.Join(path, pattern))
+		if err != nil {
+			return nil, fmt.Errorf("unable to glob dir '%s': %w", path, err)
+		}
+
+		ret = append(ret, matches...)
+	}
+
+	ret = dedupeStrs(ret)
+	sort.Strings(ret)
+
+	return ret, nil
+}
+
+func dedupeStrs(in []string) []string {
+	var (
+		ret  = make([]string, 0, len(in))
+		seen = set.NewPresenceSet[string](len(in))
+	)
+
+	for _, v := range in {
+		if seen.Has(v) {
+			continue
+		}
+
+		ret = append(ret, v)
+		seen.Set(v)
+	}
+
+	return ret
 }
