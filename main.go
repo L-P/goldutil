@@ -84,13 +84,13 @@ Commands:
                             palette will be rendered as fully transparent.
 
     wad-create -out WAD PATH [PATH…]
-        Create a WAD file from a list of PNG files and directories. Directories
+        Creates a WAD file from a list of PNG files and directories. Directories
         are not scanned recursively and only PNG files are used.
         File base names (without extensions) are uppercased and used as texture
         names. This means that names exceeding 15 chars will trigger an error.
 
     wad-extract -out DIR WAD
-        Extract a WAD file in the given directory as a bunch of PNG files.
+        Extracts a WAD file in the given directory as a bunch of PNG files.
 
     wad-info WAD
         Prints parsed data from a WAD file.
