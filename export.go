@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"goldutil/qmap"
+	"goldutil/set"
 	"strings"
 )
 
-type set map[string]struct{}
+func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
+	var skipIDs = set.NewPresenceSet[string](0)
 
-func getUnexportedLayerSet(qm qmap.QMap) (set, error) {
-	var skipIDs = make(set)
 	for _, layer := range qm.GetTBLayers() {
 		locked, ok := layer.GetProperty("_tb_layer_omit_from_export")
 		if ok && locked == "1" {
@@ -17,15 +17,15 @@ func getUnexportedLayerSet(qm qmap.QMap) (set, error) {
 			if !ok {
 				return nil, fmt.Errorf("found a layer with no _tb_id")
 			}
-			skipIDs[id] = struct{}{}
+			skipIDs.Set(id)
 		}
 	}
 
 	return skipIDs, nil
 }
 
-func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set) (set, error) {
-	var skipIDs = make(set)
+func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
+	var skipIDs = set.NewPresenceSet[string](0)
 	for _, group := range qm.GetTBGroups() {
 		groupID, ok := group.GetProperty("_tb_id")
 		if !ok {
@@ -33,8 +33,8 @@ func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set) (set, error) {
 		}
 
 		layerID, ok := group.GetProperty("_tb_layer")
-		if _, skip := unexportedLayerIDs[layerID]; ok && skip {
-			skipIDs[groupID] = struct{}{}
+		if ok && unexportedLayerIDs.Has(layerID) {
+			skipIDs.Set(groupID)
 		}
 	}
 
@@ -55,25 +55,25 @@ func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
 	var clean qmap.QMap
 	for _, v := range qm.RawEntities() {
 		layerID, ok := v.GetProperty("_tb_layer")
-		if _, skip := skipLayerIDs[layerID]; ok && skip {
+		if ok && skipLayerIDs.Has(layerID) {
 			continue
 		}
 
 		groupID, ok := v.GetProperty("_tb_group")
-		if _, skip := skipGroupIDs[groupID]; ok && skip {
+		if ok && skipGroupIDs.Has(groupID) {
 			continue
 		}
 
 		id, ok := v.GetProperty("_tb_id")
 		if ok && v.Class() == "func_group" {
 			if typ, ok := v.GetProperty("_tb_type"); ok {
-				if _, ok := skipGroupIDs[id]; ok && typ == "_tb_group" {
+				if typ == "_tb_group" && skipGroupIDs.Has(id) {
 					continue
 				}
 			}
 
 			if typ, ok := v.GetProperty("_tb_type"); ok {
-				if _, ok := skipLayerIDs[id]; ok && typ == "_tb_layer" {
+				if typ == "_tb_layer" && skipLayerIDs.Has(id) {
 					continue
 				}
 			}

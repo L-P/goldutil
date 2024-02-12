@@ -5,9 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"goldutil/qmap"
+	"goldutil/set"
 	"goldutil/sprite"
+	"goldutil/wad"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 var help = `Usage: %s COMMAND [ARGS…]
@@ -75,6 +78,19 @@ Commands:
                             color is determined by the last color on the palette.
                 alpha-test  Transparent 255 colors sprite. The 256th color on the
                             palette will be rendered as fully transparent.
+
+    wad-create -out WAD PATH [PATH…]
+        Create a WAD file from a list of PNG files and directories. Directories
+        are not scanned recursively and only PNG files are used.
+        File base names (without extensions) are names are uppercased and used
+        as texture names. This means that names exceeding 15 chars will trigger
+        an error.
+
+    wad-extract -out DIR WAD
+        Extract a WAD file in the given directory as a bunch of PNG files.
+
+    wad-info WAD
+        Prints parsed data from a WAD file.
 `
 
 func usage() {
@@ -111,6 +127,12 @@ func dispatch(command string, args []string) error {
 		return doSpriteExtract(args)
 	case "sprite-create":
 		return doSpriteCreate(args)
+	case "wad-extract":
+		return doWADExtract(args)
+	case "wad-create":
+		return doWADCreate(args)
+	case "wad-info":
+		return doWADInfo(args)
 	default:
 		return fmt.Errorf("unrecognized command: %s", command)
 	}
@@ -260,4 +282,109 @@ func doMapExport(args []string) error {
 	fmt.Print(clean.String())
 
 	return nil
+}
+
+func doWADExtract(args []string) error {
+	fset := flag.NewFlagSet("wad-extract", flag.ExitOnError)
+	fset.Usage = usage
+	dir := fset.String("out", "", "destination directory")
+	if err := fset.Parse(args); err != nil {
+		return err
+	}
+
+	stat, err := os.Stat(*dir)
+	if err != nil {
+		return fmt.Errorf("unable to use destination directory: %w", err)
+	}
+	if err == nil && !stat.IsDir() {
+		return errors.New("output directory paths exists but is not a directory")
+	}
+
+	wad3, err := wad.NewFromFile(fset.Arg(0))
+	if err != nil {
+		return fmt.Errorf("unable to open and parse WAD file: %w", err)
+	}
+
+	return extractWAD(wad3, *dir)
+}
+
+func doWADInfo(args []string) error {
+	fset := flag.NewFlagSet("wad-info", flag.ExitOnError)
+	fset.Usage = usage
+	if err := fset.Parse(args); err != nil {
+		return err
+	}
+
+	wad3, err := wad.NewFromFile(fset.Arg(0))
+	if err != nil {
+		return fmt.Errorf("unable to open and parse WAD file: %w", err)
+	}
+
+	fmt.Println(wad3.String())
+
+	return nil
+}
+
+func doWADCreate(args []string) error {
+	fset := flag.NewFlagSet("wad-create", flag.ExitOnError)
+	dest := fset.String("out", "", "destination file")
+	fset.Usage = usage
+	if err := fset.Parse(args); err != nil {
+		return err
+	}
+
+	input, err := collectPaths(fset.Args(), "*.png")
+	if err != nil {
+		return fmt.Errorf("unable to collect paths: %w", err)
+	}
+
+	return createWAD(*dest, input)
+}
+
+// Returns the paths when they're files, and the pattern-matching files inside
+// them if they're directories.
+func collectPaths(input []string, pattern string) ([]string, error) {
+	ret := make([]string, 0, len(input))
+
+	for _, path := range input {
+		stat, err := os.Stat(path)
+		if err != nil {
+			return nil, fmt.Errorf("could not stat '%s': %w", path, err)
+		}
+
+		if !stat.IsDir() {
+			ret = append(ret, path)
+			continue
+		}
+
+		matches, err := filepath.Glob(filepath.Join(path, pattern))
+		if err != nil {
+			return nil, fmt.Errorf("unable to glob dir '%s': %w", path, err)
+		}
+
+		ret = append(ret, matches...)
+	}
+
+	ret = dedupeStrs(ret)
+	sort.Strings(ret)
+
+	return ret, nil
+}
+
+func dedupeStrs(in []string) []string {
+	var (
+		ret  = make([]string, 0, len(in))
+		seen = set.NewPresenceSet[string](len(in))
+	)
+
+	for _, v := range in {
+		if seen.Has(v) {
+			continue
+		}
+
+		ret = append(ret, v)
+		seen.Set(v)
+	}
+
+	return ret
 }

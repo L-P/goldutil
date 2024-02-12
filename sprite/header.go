@@ -131,7 +131,7 @@ func (sh Header) String() string {
 	var w strings.Builder
 
 	w.WriteString("Header:\n")
-	fmt.Fprintf(&w, "  MagicString: %s\n", sh.MagicString[:])
+	fmt.Fprintf(&w, "  MagicString: %s\n", sh.MagicString)
 	fmt.Fprintf(&w, "  Version: %d\n", sh.Version)
 	fmt.Fprintf(&w, "  Type: %s\n", sh.Type.String())
 	fmt.Fprintf(&w, "  TextureFormat: %s\n", sh.TextureFormat.String())
