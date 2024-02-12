@@ -13,7 +13,11 @@ import (
 	"sort"
 )
 
-var help = `Usage: %s COMMAND [ARGS…]
+var Version = "unknown version"
+
+var help = `goldutil (%s)
+
+Usage: %s COMMAND [ARGS…]
 
 Commands:
     map-export [-cleanup-tb] MAP
@@ -94,14 +98,14 @@ Commands:
 `
 
 func usage() {
-	fmt.Fprintf(flag.CommandLine.Output(), help, os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), help, Version, os.Args[0])
 }
 
 func main() {
 	flag.Usage = usage
 
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, help, os.Args[0])
+		fmt.Fprintf(os.Stderr, help, Version, os.Args[0])
 		os.Exit(1)
 	}
 
