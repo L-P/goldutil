@@ -26,15 +26,36 @@ func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
 
 func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
-	for _, group := range qm.GetTBGroups() {
-		groupID, ok := group.GetProperty("_tb_id")
-		if !ok {
-			return nil, fmt.Errorf("found a group with no _tb_id")
+
+	for {
+		var foundMatches bool
+
+		for _, group := range qm.GetTBGroups() {
+			groupID, ok := group.GetProperty("_tb_id")
+			if !ok {
+				return nil, fmt.Errorf("found a group with no _tb_id")
+			}
+
+			parentGroupID, ok := group.GetProperty("_tb_group")
+			if ok && !skipIDs.Has(groupID) && skipIDs.Has(parentGroupID) {
+				skipIDs.Set(groupID)
+				foundMatches = true
+			}
+
+			layerID, ok := group.GetProperty("_tb_layer")
+			if ok && !skipIDs.Has(groupID) && unexportedLayerIDs.Has(layerID) {
+				skipIDs.Set(groupID)
+				foundMatches = true
+			}
 		}
 
-		layerID, ok := group.GetProperty("_tb_layer")
-		if ok && unexportedLayerIDs.Has(layerID) {
-			skipIDs.Set(groupID)
+		// Nested groups may not have their layer ID set, meaning we need to
+		// recurse from the topmost group into all subgroups to propagate their
+		// unexportedness. Do this by iterating until we find nothing new.
+		// Not optimal but you'll reach the limits of your target engine before
+		// this process ever gets long enough to be noticeable.
+		if !foundMatches {
+			break
 		}
 	}
 
