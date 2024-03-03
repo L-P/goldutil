@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: "ubuntu-22.04"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: "actions/setup-go@v4"
+        with:
+          go-version: '^1.19'
+
+      - name: test
+        run: make test
+
+      - name: build linux-amd64
+        run: make
+
+      - name: upload-artifact linux-amd64
+        uses: actions/upload-artifact@v4
+        with:
+          name: "goldutil-linux-amd64"
+          path: goldutil
+
+      - name: build windows-amd64
+        run: make windows
+
+      - name: upload-artifact windows-amd64
+        uses: actions/upload-artifact@v4
+        with:
+          name: "goldutil-windows-amd64"
+          path: goldutil.exe
