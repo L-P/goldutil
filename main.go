@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"goldutil/goldsrc"
 	"goldutil/qmap"
 	"goldutil/set"
 	"goldutil/sprite"
@@ -86,8 +87,9 @@ func newApp() *cli.App {
 						ArgsUsage: " FRAME0 [FRAMEX…]",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
-								Name:  "out",
-								Usage: "Path to the output .spr file.",
+								Name:     "out",
+								Usage:    "Path to the output .spr file.",
+								Required: true,
 							},
 							&cli.StringFlag{
 								Name:  "type",
@@ -124,8 +126,9 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 						ArgsUsage: " PATH [PATH…]",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
-								Name:  "out",
-								Usage: "Path to the output .wad file.",
+								Name:     "out",
+								Usage:    "Path to the output .wad file.",
+								Required: true,
 							},
 						},
 						Action: doWADCreate,
@@ -137,8 +140,9 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 						ArgsUsage: " WAD",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
-								Name:  "dir",
-								Usage: "Path to the output directory.",
+								Name:     "dir",
+								Usage:    "Path to the output directory.",
+								Required: true,
 							},
 						},
 						Action: doWADExtract,
@@ -149,6 +153,36 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 						Usage:     "Prints parsed data from a WAD file.",
 						ArgsUsage: " WAD",
 						Action:    doWADInfo,
+					},
+				},
+			},
+
+			{
+				Name:  "bsp",
+				Usage: "Read and write BSP files.",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "remap-materials",
+						Usage:     "On a BSP with embedded textures, change their names so they can match what's in materials.txt.",
+						ArgsUsage: " BSP",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "original-materials",
+								Value:    "valve/sound/materials.txt",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "replacement-materials",
+								Value:    "valve_addon/sound/materials.txt",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "out",
+								Required: true,
+								Usage:    "Where to write the remapped BSP.",
+							},
+						},
+						Action: doBSPRemapMaterials,
 					},
 				},
 			},
@@ -350,4 +384,25 @@ func dedupeStrs(in []string) []string {
 	}
 
 	return ret
+}
+
+func doBSPRemapMaterials(cCtx *cli.Context) error {
+	source, err := goldsrc.LoadMaterialsFromFile(cCtx.String("original-materials"))
+	if err != nil {
+		return fmt.Errorf("unable to load original-materials: %w", err)
+	}
+
+	replacement, err := goldsrc.LoadMaterialsFromFile(cCtx.String("replacement-materials"))
+	if err != nil {
+		return fmt.Errorf("unable to load replacement-materials: %w", err)
+	}
+
+	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	_, _, _ = source, replacement, bsp
+
+	return nil
 }
