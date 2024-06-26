@@ -30,109 +30,127 @@ func newApp() *cli.App {
 		Usage:   "GoldSrc modding utility.",
 		Commands: []*cli.Command{
 			{
-				Name:      "map-export",
-				Usage:     "Exports a .map file the way TrenchBroom does, removing all layers marked as not exported. Output is written to stdout.",
-				ArgsUsage: " MAP",
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:  "cleanup-tb",
-						Value: false,
-						Usage: "Removes properties added by TrenchBroom that are not understood by the engine and spam the console with errors.",
+				Name:  "map",
+				Usage: "Read and write MAP files.",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "export",
+						Usage:     "Exports a .map file the way TrenchBroom does, removing all layers marked as not exported. Output is written to stdout.",
+						ArgsUsage: " MAP",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "cleanup-tb",
+								Value: false,
+								Usage: "Removes properties added by TrenchBroom that are not understood by the engine and spam the console with errors.",
+							},
+						},
+						Action: doMapExport,
+					},
+
+					{
+						Name:      "graph",
+						Usage:     "Creates a graphviz digraph of entity caller/callee relationships from a .map file. ripent exports use the same format and can be read too. Output is written to stdout.",
+						ArgsUsage: " MAP",
+						Action:    doMapGraph,
 					},
 				},
-				Action: doMapExport,
 			},
 
 			{
-				Name:      "map-graph",
-				Usage:     "Creates a graphviz digraph of entity caller/callee relationships from a .map file. ripent exports use the same format and can be read too. Output is written to stdout.",
-				ArgsUsage: " MAP",
-				Action:    doMapGraph,
-			},
-
-			{
-				Name:      "sprite-info",
-				Usage:     "Prints parsed frame data from a sprite.",
-				ArgsUsage: " SPR",
-				Action:    doSpriteInfo,
-			},
-
-			{
-				Name:      "sprite-extract",
-				Usage:     "Outputs all frames of a sprite to the current directory. The output files will be named after the original sprite file name plus a frame number suffix and an extension.",
-				ArgsUsage: " SPR",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "dir",
-						Usage: "Outputs frames to the specified directory instead of the current one.",
+				Name:  "spr",
+				Usage: "Read and write SPR files (sprites).",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "info",
+						Usage:     "Prints parsed frame data from a sprite.",
+						ArgsUsage: " SPR",
+						Action:    doSpriteInfo,
 					},
-				},
-				Action: doSpriteExtract,
-			},
 
-			{
-				Name:      "sprite-create",
-				Usage:     "Creates a sprite from the given ordered list of PNG frames and writes it to the given SPR path.\nInput images must be 256 colors paletted PNGs. The palette of the first frame will be used, the other palettes are discarded and all frames will be interpreted using the first frame's palette.  If the palette has under 256 colors it will be extended to 256, putting the last color of the palette in the 256th spot and remapping the image to match this updated palette. This matters for some texture formats.",
-				ArgsUsage: " FRAME0 [FRAMEX…]",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "out",
-						Usage: "Path to the output .spr file.",
+					{
+						Name:      "extract",
+						Usage:     "Outputs all frames of a sprite to the current directory. The output files will be named after the original sprite file name plus a frame number suffix and an extension.",
+						ArgsUsage: " SPR",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "dir",
+								Usage: "Outputs frames to the specified directory instead of the current one.",
+							},
+						},
+						Action: doSpriteExtract,
 					},
-					&cli.StringFlag{
-						Name:  "type",
-						Value: "parallel",
-						Usage: `Sprite type, TYPE can be any one of:
+
+					{
+						Name:      "create",
+						Usage:     "Creates a sprite from the given ordered list of PNG frames and writes it to the given SPR path.\nInput images must be 256 colors paletted PNGs. The palette of the first frame will be used, the other palettes are discarded and all frames will be interpreted using the first frame's palette.  If the palette has under 256 colors it will be extended to 256, putting the last color of the palette in the 256th spot and remapping the image to match this updated palette. This matters for some texture formats.",
+						ArgsUsage: " FRAME0 [FRAMEX…]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "out",
+								Usage: "Path to the output .spr file.",
+							},
+							&cli.StringFlag{
+								Name:  "type",
+								Value: "parallel",
+								Usage: `Sprite type, TYPE can be any one of:
 parallel           Always face camera. (Default)
 parallel-upright   Always face camera except for the locked Z axis.
 oriented           Orientation set by the level.
 parallel-oriented  Faces camera but can be rotated by the level.
 facing-upright     Like parallel upright but faces the player origin instead of the camera.`,
-					},
-					&cli.StringFlag{
-						Name:  "format",
-						Value: "normal",
-						Usage: `Texture format, determines how the palette is interpreted and the texture is rendered by the engine. FORMAT can be any one of:
+							},
+							&cli.StringFlag{
+								Name:  "format",
+								Value: "normal",
+								Usage: `Texture format, determines how the palette is interpreted and the texture is rendered by the engine. FORMAT can be any one of:
 normal      256 colors sprite. (Default)
 additive    Additive 256 colors sprite.
 index-alpha Monochromatic sprite with 256 alpha levels, the base color is determined by the last color on the palette.
 alpha-test  Transparent 255 colors sprite. The 256th color on the palette will be rendered as fully transparent.`,
+							},
+						},
+						Action: doSpriteCreate,
 					},
 				},
-				Action: doSpriteCreate,
 			},
 
 			{
-				Name:      "wad-create",
-				Usage:     "Creates a WAD file from a list of PNG files and directories. Directories are not scanned recursively and only PNG files are used.\nFile base names (without extensions) are uppercased and used as texture names. This means that names exceeding 15 chars will trigger an error.",
-				ArgsUsage: " PATH [PATH…]",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "out",
-						Usage: "Path to the output .wad file.",
+				Name:  "wad",
+				Usage: "Read and write WAD files.",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "create",
+						Usage:     "Creates a WAD file from a list of PNG files and directories. Directories are not scanned recursively and only PNG files are used.\nFile base names (without extensions) are uppercased and used as texture names. This means that names exceeding 15 chars will trigger an error.",
+						ArgsUsage: " PATH [PATH…]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "out",
+								Usage: "Path to the output .wad file.",
+							},
+						},
+						Action: doWADCreate,
+					},
+
+					{
+						Name:      "extract",
+						Usage:     "Extracts a WAD file in the given directory as a bunch of PNG files.",
+						ArgsUsage: " WAD",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "dir",
+								Usage: "Path to the output directory.",
+							},
+						},
+						Action: doWADExtract,
+					},
+
+					{
+						Name:      "info",
+						Usage:     "Prints parsed data from a WAD file.",
+						ArgsUsage: " WAD",
+						Action:    doWADInfo,
 					},
 				},
-				Action: doWADCreate,
-			},
-
-			{
-				Name:      "wad-extract",
-				Usage:     "Extracts a WAD file in the given directory as a bunch of PNG files.",
-				ArgsUsage: " WAD",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "dir",
-						Usage: "Path to the output directory.",
-					},
-				},
-				Action: doWADExtract,
-			},
-
-			{
-				Name:      "wad-info",
-				Usage:     "Prints parsed data from a WAD file.",
-				ArgsUsage: " WAD",
-				Action:    doWADInfo,
 			},
 		},
 	}
