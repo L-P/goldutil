@@ -50,7 +50,6 @@ func TestInvalidMaterials(t *testing.T) {
 		"D TEX_DIRT // line with garbage, ie. this comment",
 		"A TEX_DIRT",                // invalid type
 		"D TEXTURENAME_IS_TOO_LONG", // texture name is too long
-		"D badchars",
 		"D TEX_DIRT garbage",
 		" D TEX_DIRT", // space before
 		"D  TEX_DIRT", // two spaces

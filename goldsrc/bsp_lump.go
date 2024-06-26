@@ -77,9 +77,15 @@ type LumpIndexEntry struct {
 
 type Lump interface {
 	Load(io.ReadSeeker, LumpIndexEntry) error
+	Write(w io.WriteSeeker) (int, error)
 	Validate() error
+	String() string
 }
 type RawLump []byte
+
+func (lump *RawLump) String() string {
+	return " n/a\n"
+}
 
 func (lump *RawLump) Load(r io.ReadSeeker, entry LumpIndexEntry) error {
 	*lump = make([]byte, entry.Length)
@@ -92,6 +98,10 @@ func (lump *RawLump) Load(r io.ReadSeeker, entry LumpIndexEntry) error {
 	}
 
 	return nil
+}
+
+func (lump *RawLump) Write(w io.WriteSeeker) (int, error) {
+	return w.Write(*lump)
 }
 
 func (lump *RawLump) Validate() error {

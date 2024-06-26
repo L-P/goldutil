@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"unsafe"
 )
 
 const BSPVersionGoldSrc = 30
@@ -42,7 +41,7 @@ func (h BSPHeader) Validate() error {
 		return fmt.Errorf("unable to read BSP version other than %d, got: %d", BSPVersionGoldSrc, h.Version)
 	}
 
-	var size = int32(unsafe.Sizeof(h))
+	var size = int32(binary.Size(h))
 	for _, v := range h.LumpIndex {
 		size += v.Length
 	}
@@ -68,10 +67,11 @@ func (h BSPHeader) String() string {
 		typ := LumpType(i)
 		fmt.Fprintf(
 			&b,
-			"  - %-21s[0x%08x;0x%08x] % 8s\n",
+			"  - %-21s[0x%08x;0x%08x] % 8s (%d)\n",
 			typ.String(),
 			v.Offset, v.Offset+v.Length,
 			humanize(int(v.Length)),
+			v.Length,
 		)
 		_ = v
 	}
@@ -79,7 +79,20 @@ func (h BSPHeader) String() string {
 	return b.String()
 }
 
-func (bsp *BSP) Lumps() []Lump {
+func (bsp *BSP) String() string {
+	var b strings.Builder
+	b.WriteString(bsp.BSPHeader.String())
+
+	for i, v := range bsp.Lumps() {
+		typ := LumpType(i)
+		fmt.Fprintf(&b, "%s:", typ.String())
+		b.WriteString(v.String())
+	}
+
+	return b.String()
+}
+
+func (bsp *BSP) Lumps() []Lump { // MUST match LumpIndex order.
 	return []Lump{
 		&bsp.Entities,
 		&bsp.Planes,
@@ -108,7 +121,6 @@ func LoadBSP(r io.ReadSeeker) (*BSP, error) {
 	if err := bsp.BSPHeader.Validate(); err != nil {
 		return nil, fmt.Errorf("unable to validate header: %w", err)
 	}
-	fmt.Println(bsp.BSPHeader.String())
 
 	for i, lump := range bsp.Lumps() {
 		typ := LumpType(i)
@@ -144,4 +156,88 @@ func humanize(bytes int) string {
 	}
 
 	return "0 B"
+}
+
+func (bsp *BSP) WriteToFile(path string) error {
+	out, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("unable to open file for writing: %w", err)
+	}
+
+	if err := bsp.Write(out); err != nil {
+		out.Close()
+		return fmt.Errorf("unable to write to BSP: %w", err)
+	}
+
+	if err := out.Close(); err != nil {
+		return fmt.Errorf("unable to finish writing to BSP: %w", err)
+	}
+
+	return nil
+}
+
+func (bsp *BSP) Write(w io.WriteSeeker) error {
+	if _, err := w.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("unable to seek to start of file: %w", err)
+	}
+
+	bsp.BSPHeader = BSPHeader{Version: BSPVersionGoldSrc}
+	if err := binary.Write(w, binary.LittleEndian, bsp.BSPHeader); err != nil {
+		return fmt.Errorf("unable to write provisional BSP header: %w", err)
+	}
+	offset := binary.Size(bsp.BSPHeader)
+
+	// HACK HACK HACK HACK HACK
+	// Keep order as found in map compiled by ericw, right now we can only
+	// patch textures, full BSP reimplementation is necessary to actually write
+	// the file, there's offsets all around.
+	order := []LumpType{
+		LumpTypePlanes,
+		LumpTypeLeaves,
+		LumpTypeVertices,
+		LumpTypeNodes,
+		LumpTypeTexInfo,
+		LumpTypeFaces,
+		LumpTypeClipNodes,
+		LumpTypeMarkSurfaces,
+		LumpTypeSurfEdges,
+		LumpTypeEdges,
+		LumpTypeModels,
+		LumpTypeLighting,
+		LumpTypeVisibility,
+		LumpTypeEntities,
+		LumpTypeTextures,
+	}
+
+	for _, typ := range order {
+		lump := bsp.Lumps()[typ]
+		n, err := lump.Write(w)
+		if err != nil {
+			return fmt.Errorf("unable to write lump %s: %w", typ.String(), err)
+		}
+
+		bsp.BSPHeader.LumpIndex[typ] = LumpIndexEntry{
+			Offset: int32(offset),
+			Length: int32(n),
+		}
+
+		offset += n
+
+		if delta := offset % 4; delta != 0 {
+			var padding = make([]byte, 4-delta)
+			if _, err := w.Write(padding); err != nil {
+				return fmt.Errorf("unable to write padding: %w", err)
+			}
+			offset += len(padding)
+		}
+	}
+
+	if _, err := w.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("unable to seek to start of file to finalize header: %w", err)
+	}
+	if err := binary.Write(w, binary.LittleEndian, bsp.BSPHeader); err != nil {
+		return fmt.Errorf("unable to write final BSP header: %w", err)
+	}
+
+	return nil
 }

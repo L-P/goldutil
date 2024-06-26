@@ -184,6 +184,13 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 						},
 						Action: doBSPRemapMaterials,
 					},
+
+					{
+						Name:      "info",
+						Usage:     "Prints parsed data from a BSP.",
+						ArgsUsage: " BSP",
+						Action:    doBSPInfo,
+					},
 				},
 			},
 		},
@@ -402,5 +409,20 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	return remapBSPMaterials(bsp, source, replacement)
+	if err := remapBSPMaterials(bsp, source, replacement); err != nil {
+		return fmt.Errorf("unable to remap materials: %w", err)
+	}
+
+	return bsp.WriteToFile(cCtx.String("out"))
+}
+
+func doBSPInfo(cCtx *cli.Context) error {
+	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	fmt.Print(bsp.String())
+
+	return nil
 }

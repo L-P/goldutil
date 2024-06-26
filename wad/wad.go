@@ -215,7 +215,7 @@ func readTextures(r io.ReadSeeker, header Header) ([]texture, error) {
 		}
 
 		var mip MIPTexture
-		if err := mip.Read(r, entry.Offset, entry.Size); err != nil {
+		if err := mip.Read(r, entry.Offset); err != nil {
 			return nil, fmt.Errorf("unable to read entry #%d MIPTexture data: %w", i, err)
 		}
 
@@ -308,30 +308,13 @@ func (wad *WAD) writeTextures(w io.Writer) (map[int]int32, error) {
 	)
 
 	for i, tex := range wad.textures {
-		if err := binary.Write(w, binary.LittleEndian, tex.mip.MIPTextureHeader); err != nil {
-			return nil, fmt.Errorf("unable to write MIPTextureHeader #%d: %w", i, err)
-		}
-
-		for mipID := range tex.mip.MIPData {
-			if err := binary.Write(w, binary.LittleEndian, tex.mip.MIPData[mipID]); err != nil {
-				return nil, fmt.Errorf("unable to write mip data #%d (mipmap #%d): %w", i, mipID, err)
-			}
-		}
-
-		if err := binary.Write(w, binary.LittleEndian, tex.mip.PaletteSize); err != nil {
-			return nil, fmt.Errorf("unable to write PaletteSize in mip #%d: %w", i, err)
-		}
-
-		if err := binary.Write(w, binary.LittleEndian, tex.mip.Palette); err != nil {
-			return nil, fmt.Errorf("unable to write palette in mip #%d: %w", i, err)
-		}
-
-		if err := binary.Write(w, binary.LittleEndian, [2]byte{}); err != nil {
-			return nil, fmt.Errorf("unable to write padding#1 in mip #%d: %w", i, err)
+		n, err := tex.mip.Write(w)
+		if err != nil {
+			return nil, fmt.Errorf("unable to write texture #%d: %w", i, err)
 		}
 
 		offsetMap[i] = offset
-		offset += tex.mip.Size()
+		offset += int32(n)
 	}
 
 	return offsetMap, nil

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
+	"goldutil/wad"
 	"strings"
 )
 
@@ -16,7 +17,11 @@ func remapBSPMaterials(
 	}
 
 	// Pool of assignable texture names, each map texture will expend one entry.
-	var pools = source.Invert()
+	var (
+		pools = source.Invert()
+		err   error
+	)
+
 	for i, tex := range bsp.Textures.Textures {
 		// Uppercase in materials, lowercase in BSP. Case is all over the place.
 		var name = strings.ToUpper(tex.Name.String())
@@ -40,7 +45,10 @@ func remapBSPMaterials(
 		pools[mapToMat] = pools[mapToMat][:end]
 
 		fmt.Printf("Remapping %-15s to %s.\n", name, mapToName)
-		tex.Name = goldsrc.NewTextureName(strings.ToLower(mapToName))
+		bsp.Textures.Textures[i].Name, err = wad.NewTextureName(strings.ToLower(mapToName))
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("\nTexture names still usable in source:")

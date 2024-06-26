@@ -6,50 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/set"
+	"goldutil/wad"
 	"io"
 	"strings"
-	"unsafe"
-)
-
-const (
-	TextureNameLen = 16
-
-	// Fun fact: The letters MIP in the name are an acronym of the Latin phrase
-	// multum in parvo, meaning "much in little". - Wikipedia.org.
-	MIPLevelCount = 4
 )
 
 type TextureLump struct {
 	Count uint32
 	// Type signs are inconsistents in the documentation (VDN).
 	Offsets  []int32 // len = Count, offset from TextureLump start
-	Textures []TextureLumpEntry
-}
-
-type TextureName [TextureNameLen]byte
-
-func (name TextureName) String() string {
-	return string(name[0:bytes.IndexByte(name[:], 0)])
-}
-
-func NewTextureName(str string) TextureName {
-	if len(str) > 15 || len(str) == 0 {
-		panic("invalid name")
-	}
-
-	var ret TextureName // NUL-terminated here, safe as long as len(str) <= 15
-	copy(ret[:], str)
-	return ret
-}
-
-type TextureLumpEntry struct {
-	Name          TextureName
-	Width, Height uint32
-	MIPOffsets    [MIPLevelCount]uint32
-}
-
-func (e TextureLumpEntry) IsEmbedded() bool {
-	return e.MIPOffsets[0] > 0
+	Textures []wad.MIPTexture
 }
 
 func (lump *TextureLump) Load(r io.ReadSeeker, entry LumpIndexEntry) error {
@@ -59,9 +25,6 @@ func (lump *TextureLump) Load(r io.ReadSeeker, entry LumpIndexEntry) error {
 
 	if err := binary.Read(r, binary.LittleEndian, &lump.Count); err != nil {
 		return fmt.Errorf("unable to read TextureLump.Count: %w", err)
-	}
-	if int(lump.Count)*int(unsafe.Sizeof(TextureLumpEntry{})) > int(entry.Length) {
-		return fmt.Errorf("texture count %d exceeds available lump space %d", lump.Count, entry.Length)
 	}
 
 	if err := lump.loadHeader(r, entry); err != nil {
@@ -84,7 +47,11 @@ func (lump *TextureLump) loadHeader(r io.ReadSeeker, entry LumpIndexEntry) error
 			return fmt.Errorf("unable to read texture #%d offset: %w", i, err)
 		}
 		if lump.Offsets[i] < minTextureOffset || lump.Offsets[i] > entry.Length {
-			return fmt.Errorf("texture #%d offset out of bound: %d < %d <", i, minTextureOffset, entry.Length)
+			return fmt.Errorf(
+				"texture #%d offset out of bounds: %d < %d < %d",
+				i,
+				minTextureOffset, lump.Offsets[i], minTextureOffset+entry.Length,
+			)
 		}
 	}
 
@@ -92,13 +59,9 @@ func (lump *TextureLump) loadHeader(r io.ReadSeeker, entry LumpIndexEntry) error
 }
 
 func (lump *TextureLump) loadTextures(r io.ReadSeeker, entry LumpIndexEntry) error {
-	lump.Textures = make([]TextureLumpEntry, lump.Count)
+	lump.Textures = make([]wad.MIPTexture, lump.Count)
 	for i, offset := range lump.Offsets {
-		if _, err := r.Seek(int64(entry.Offset+offset), io.SeekStart); err != nil {
-			return fmt.Errorf("unable to seek to texture #%d start: %w", i, err)
-		}
-
-		if err := binary.Read(r, binary.LittleEndian, &lump.Textures[i]); err != nil {
+		if err := lump.Textures[i].Read(r, entry.Offset+offset); err != nil {
 			return fmt.Errorf("unable to read texture #%d: %w", i, err)
 		}
 	}
@@ -148,4 +111,59 @@ func (lump *TextureLump) Validate() error {
 	}
 
 	return errors.Join(errs...)
+}
+
+func (lump *TextureLump) Write(w io.WriteSeeker) (int, error) {
+	var offset int
+
+	if err := binary.Write(w, binary.LittleEndian, lump.Count); err != nil {
+		return offset, fmt.Errorf("unable to write texture count: %w", err)
+	}
+	offset += binary.Size(lump.Count)
+
+	var offsetsOffset = offset // semantic satiety anyone?
+	if err := binary.Write(w, binary.LittleEndian, lump.Offsets); err != nil {
+		return offset, fmt.Errorf("unable to write provisional texture offsets: %w", err)
+	}
+	offset += binary.Size(lump.Offsets)
+
+	for i, v := range lump.Textures {
+		n, err := v.Write(w)
+		if err != nil {
+			return offset, fmt.Errorf("unable to write texture #%d: %w", i, err)
+		}
+		offset += n
+	}
+
+	if offset < offsetsOffset {
+		panic("unreachable, offset < offsetsOffset")
+	}
+
+	if _, err := w.Seek(-int64(offset-offsetsOffset), io.SeekCurrent); err != nil {
+		return offset, fmt.Errorf("unable to seek to start of file to finalize header: %w", err)
+	}
+	if err := binary.Write(w, binary.LittleEndian, lump.Offsets); err != nil {
+		return offset, fmt.Errorf("unable to write provisional texture offsets: %w", err)
+	}
+
+	return offset, nil
+}
+
+func (lump *TextureLump) String() string {
+	var b strings.Builder
+	b.WriteRune('\n')
+
+	fmt.Fprintf(&b, "  Count: %d\n", lump.Count)
+	b.WriteString("  Offsets: ")
+	for _, v := range lump.Offsets {
+		fmt.Fprintf(&b, "0x%08x ", v)
+	}
+	b.WriteRune('\n')
+
+	for _, v := range lump.Textures {
+		b.WriteString(v.String())
+	}
+
+	return b.String()
+
 }

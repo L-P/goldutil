@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -75,6 +76,11 @@ func (mats Materials) Invert() map[MaterialType][]string {
 
 	for texture, material := range mats {
 		ret[material] = append(ret[material], texture)
+	}
+
+	// Ensure reproducibility in remap-materials.
+	for k := range ret {
+		sort.Strings(ret[k])
 	}
 
 	return ret

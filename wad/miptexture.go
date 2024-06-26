@@ -24,6 +24,10 @@ type MIPTextureHeader struct {
 	MIPOffsets [NumMIPMaps]int32
 }
 
+func (h MIPTextureHeader) IsEmbedded() bool {
+	return h.MIPOffsets[0] > 0
+}
+
 type MIPTexture struct {
 	MIPTextureHeader
 
@@ -70,6 +74,11 @@ func (mip MIPTexture) String() string {
 	fmt.Fprintf(&w, "  Name: %s\n", mip.Name.String())
 	fmt.Fprintf(&w, "  Width: %d\n", mip.Width)
 	fmt.Fprintf(&w, "  Height: %d\n", mip.Height)
+	fmt.Fprintf(&w, "  Embedded: %t\n", mip.IsEmbedded())
+	if !mip.IsEmbedded() {
+		return w.String()
+	}
+
 	fmt.Fprintf(&w, "  PaletteSize: %d\n", mip.PaletteSize)
 
 	for i := range mip.MIPOffsets {
@@ -80,7 +89,7 @@ func (mip MIPTexture) String() string {
 	return w.String()
 }
 
-func (mip *MIPTexture) Read(r io.ReadSeeker, offset, size int32) error {
+func (mip *MIPTexture) Read(r io.ReadSeeker, offset int32) error {
 	if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
 		return fmt.Errorf("unable to seek to offset %x of MIPTexture header", offset)
 	}
@@ -89,11 +98,15 @@ func (mip *MIPTexture) Read(r io.ReadSeeker, offset, size int32) error {
 		return fmt.Errorf("unable to read MIPTextureHeader: %w", err)
 	}
 
+	if !mip.IsEmbedded() {
+		return nil
+	}
+
 	for i := range mip.MIPData {
 		// Each MIPMap is half the size of the previous one.
 		scale := int32(mipIndexToScale(i))
-		size := (mip.Width / scale) * (mip.Height / scale)
-		mip.MIPData[i] = make([]byte, size)
+		pixSize := (mip.Width / scale) * (mip.Height / scale)
+		mip.MIPData[i] = make([]byte, pixSize)
 
 		mipmapOffset := int64(offset + mip.MIPOffsets[i])
 		if _, err := r.Seek(mipmapOffset, io.SeekStart); err != nil {
@@ -109,7 +122,7 @@ func (mip *MIPTexture) Read(r io.ReadSeeker, offset, size int32) error {
 		return fmt.Errorf("unable to read PaletteSize: %w", err)
 	}
 
-	paletteOffset := int64(offset + size - PaletteDataSize - 2)
+	paletteOffset := int64(offset + mip.Size() - PaletteDataSize - 2)
 	if _, err := r.Seek(paletteOffset, io.SeekStart); err != nil {
 		return fmt.Errorf("unable to seek to palette data offset 0x%x: %w", paletteOffset, err)
 	}
@@ -148,4 +161,30 @@ func (mip *MIPTexture) SetData(pix []byte) error {
 	}
 
 	return nil
+}
+
+func (mip *MIPTexture) Write(w io.Writer) (int, error) {
+	if err := binary.Write(w, binary.LittleEndian, mip.MIPTextureHeader); err != nil {
+		return 0, fmt.Errorf("unable to write MIPTextureHeader: %w", err)
+	}
+
+	for mipID := range mip.MIPData {
+		if err := binary.Write(w, binary.LittleEndian, mip.MIPData[mipID]); err != nil {
+			return 0, fmt.Errorf("unable to write mip data #%d: %w", mipID, err)
+		}
+	}
+
+	if err := binary.Write(w, binary.LittleEndian, mip.PaletteSize); err != nil {
+		return 0, fmt.Errorf("unable to write PaletteSize in mip: %w", err)
+	}
+
+	if err := binary.Write(w, binary.LittleEndian, mip.Palette); err != nil {
+		return 0, fmt.Errorf("unable to write palette: %w", err)
+	}
+
+	if err := binary.Write(w, binary.LittleEndian, [2]byte{}); err != nil {
+		return 0, fmt.Errorf("unable to write padding: %w", err)
+	}
+
+	return int(mip.Size()), nil
 }
