@@ -79,18 +79,8 @@ func (h BSPHeader) String() string {
 	return b.String()
 }
 
-func LoadBSP(r io.ReadSeeker) (*BSP, error) {
-	var bsp BSP
-
-	if err := binary.Read(r, binary.LittleEndian, &bsp.BSPHeader); err != nil {
-		return nil, fmt.Errorf("unable to read header: %w", err)
-	}
-	if err := bsp.BSPHeader.Validate(); err != nil {
-		return nil, fmt.Errorf("unable to validate header: %w", err)
-	}
-	fmt.Println(bsp.BSPHeader.String())
-
-	var lumps = []Lump{
+func (bsp *BSP) Lumps() []Lump {
+	return []Lump{
 		&bsp.Entities,
 		&bsp.Planes,
 		&bsp.Textures,
@@ -107,8 +97,20 @@ func LoadBSP(r io.ReadSeeker) (*BSP, error) {
 		&bsp.SurfEdges,
 		&bsp.Models,
 	}
+}
 
-	for i, lump := range lumps {
+func LoadBSP(r io.ReadSeeker) (*BSP, error) {
+	var bsp BSP
+
+	if err := binary.Read(r, binary.LittleEndian, &bsp.BSPHeader); err != nil {
+		return nil, fmt.Errorf("unable to read header: %w", err)
+	}
+	if err := bsp.BSPHeader.Validate(); err != nil {
+		return nil, fmt.Errorf("unable to validate header: %w", err)
+	}
+	fmt.Println(bsp.BSPHeader.String())
+
+	for i, lump := range bsp.Lumps() {
 		typ := LumpType(i)
 		if err := lump.Load(r, bsp.BSPHeader.LumpIndex[i]); err != nil {
 			return nil, fmt.Errorf("unable to load %s: %w", typ.String(), err)

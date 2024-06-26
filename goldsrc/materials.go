@@ -2,6 +2,7 @@ package goldsrc
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,8 @@ import (
 type MaterialType rune
 
 const (
-	MaterialTypeInvalid  MaterialType = 0
+	MaterialTypeInvalid MaterialType = 0
+
 	MaterialTypeComputer MaterialType = 'P'
 	MaterialTypeDirt     MaterialType = 'D'
 	MaterialTypeGlass    MaterialType = 'Y'
@@ -24,7 +26,39 @@ const (
 	MaterialTypeWood     MaterialType = 'W'
 )
 
+func (t MaterialType) String() string {
+	switch t {
+	case MaterialTypeComputer:
+		return "MaterialTypeComputer"
+	case MaterialTypeDirt:
+		return "MaterialTypeDirt"
+	case MaterialTypeGlass:
+		return "MaterialTypeGlass"
+	case MaterialTypeGrate:
+		return "MaterialTypeGrate"
+	case MaterialTypeLiquid:
+		return "MaterialTypeLiquid"
+	case MaterialTypeMetal:
+		return "MaterialTypeMetal"
+	case MaterialTypeTile:
+		return "MaterialTypeTile"
+	case MaterialTypeVents:
+		return "MaterialTypeVents"
+	case MaterialTypeWood:
+		return "MaterialTypeWood"
+	case MaterialTypeInvalid:
+		return "MaterialTypeInvalid"
+	}
+
+	return fmt.Sprintf("<invalid: %d>", t)
+}
+
+const MaterialTypeCount = 9 + 1
+
 type Materials map[string]MaterialType // texture name => material type
+func (m Materials) IsEmpty() bool {
+	return len(m) == 0
+}
 
 func LoadMaterialsFromFile(path string) (Materials, error) {
 	f, err := os.Open(path)
@@ -46,14 +80,21 @@ func (mats Materials) Invert() map[MaterialType][]string {
 	return ret
 }
 
+const MaxMaterials = 512
+
 func LoadMaterials(r io.Reader) (Materials, error) {
 	var (
 		mats    = Materials(make(map[string]MaterialType))
 		scanner = bufio.NewScanner(r)
 	)
 
-	var number int
+	var (
+		lineNumber = -1
+		entries    = 0
+	)
+
 	for scanner.Scan() {
+		lineNumber++
 		var line = scanner.Text()
 		if line == "" || strings.HasPrefix(line, "//") {
 			continue
@@ -61,10 +102,15 @@ func LoadMaterials(r io.Reader) (Materials, error) {
 
 		typ, name, err := parseMaterialsLine(line)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse materials: line #%d: %w", number, err)
+			return nil, fmt.Errorf("unable to parse materials: line #%d: %w", lineNumber, err)
+		}
+
+		if entries > MaxMaterials {
+			return nil, errors.New("too many materials, max is 512")
 		}
 
 		mats[name] = typ
+		entries++
 	}
 
 	return mats, scanner.Err()
@@ -102,7 +148,7 @@ func isValidTextureName(str string) bool {
 			return false
 		}
 
-		if !unicode.IsUpper(char) && !unicode.IsNumber(char) && char != '_' {
+		if !unicode.IsPrint(char) || unicode.IsSpace(char) {
 			return false
 		}
 	}

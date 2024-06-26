@@ -5,7 +5,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"goldutil/set"
 	"io"
+	"strings"
 	"unsafe"
 )
 
@@ -30,10 +32,24 @@ func (name TextureName) String() string {
 	return string(name[0:bytes.IndexByte(name[:], 0)])
 }
 
+func NewTextureName(str string) TextureName {
+	if len(str) > 15 || len(str) == 0 {
+		panic("invalid name")
+	}
+
+	var ret TextureName // NUL-terminated here, safe as long as len(str) <= 15
+	copy(ret[:], str)
+	return ret
+}
+
 type TextureLumpEntry struct {
 	Name          TextureName
 	Width, Height uint32
 	MIPOffsets    [MIPLevelCount]uint32
+}
+
+func (e TextureLumpEntry) IsEmbedded() bool {
+	return e.MIPOffsets[0] > 0
 }
 
 func (lump *TextureLump) Load(r io.ReadSeeker, entry LumpIndexEntry) error {
@@ -91,23 +107,44 @@ func (lump *TextureLump) loadTextures(r io.ReadSeeker, entry LumpIndexEntry) err
 }
 
 func (lump *TextureLump) Validate() error {
-	var errs []error
+	var (
+		errs []error
+		seen = set.NewPresenceSet[string](len(lump.Textures))
+	)
 
 	for i, v := range lump.Textures {
 		if v.Name[0] == 0 {
 			errs = append(errs, fmt.Errorf("texture %d: empty texture name", i))
 		}
-
 		if n := bytes.IndexByte(v.Name[:], 0); n < 0 {
 			errs = append(errs, fmt.Errorf("texture %d: no NUL", i))
 		}
+		var name = v.Name.String()
+		if !isValidTextureName(strings.ToUpper(name)) {
+			errs = append(errs, fmt.Errorf("texture %d: invalid chars in name", i))
+		}
 
 		if v.Width%16 != 0 {
-			errs = append(errs, fmt.Errorf("texture %d (%s): width is not a multiple of 16: %d", i, v.Name.String(), v.Width))
+			errs = append(errs, fmt.Errorf("texture %d (%s): width is not a multiple of 16: %d", i, name, v.Width))
 		}
 		if v.Height%16 != 0 {
-			errs = append(errs, fmt.Errorf("texture %d (%s): height is not a multiple of 16: %d", i, v.Name.String(), v.Height))
+			errs = append(errs, fmt.Errorf("texture %d (%s): height is not a multiple of 16: %d", i, name, v.Height))
 		}
+
+		var zeroes int
+		for _, v := range v.MIPOffsets {
+			if v == 0 {
+				zeroes++
+			}
+		}
+		if zeroes != 0 && zeroes != len(v.MIPOffsets) {
+			errs = append(errs, fmt.Errorf("texture %d (%s): missing some mimap offsets", i, name))
+		}
+
+		if seen.Has(name) {
+			errs = append(errs, fmt.Errorf("texture %d (%s): duplicate texture name", i, name))
+		}
+		seen.Set(name)
 	}
 
 	return errors.Join(errs...)

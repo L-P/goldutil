@@ -402,7 +402,5 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	_, _, _ = source, replacement, bsp
-
-	return nil
+	return remapBSPMaterials(bsp, source, replacement)
 }
