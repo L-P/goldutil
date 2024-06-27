@@ -1,37 +1,29 @@
-package main
+package goldsrc
 
 import (
 	"fmt"
-	"goldutil/goldsrc"
 	"goldutil/wad"
 	"sort"
 	"strings"
 )
 
-// TODO:
-// 1. Decouple from BSP:
-//   - Input texture names
-//   - Output mappings
-//   - Write to BSP outside of remapper
-//
-// 2. Tests
-type remapper struct {
+type MaterialsRemapper struct {
 	// Available textures names we can remap to. Last entry will pop when we
 	// use one.
-	pools map[goldsrc.MaterialType][]string
+	pools map[MaterialType][]string
 
 	// Templated texture names for the 12-chars hack. See getTemplatedName().
 	templates templateListSet
 
 	// Next available index for templated texture names.
-	tplIndices map[goldsrc.MaterialType][]int
+	tplIndices map[MaterialType][]int
 }
 
 // One list per texture prefix length.
-type templateListSet [3]map[goldsrc.MaterialType][]materialTemplate
+type templateListSet [3]map[MaterialType][]materialTemplate
 
-func generatePools(mats goldsrc.Materials) map[goldsrc.MaterialType][]string {
-	var ret = make(map[goldsrc.MaterialType][]string, 10)
+func generatePools(mats Materials) map[MaterialType][]string {
+	var ret = make(map[MaterialType][]string, 10)
 
 	for texture, material := range mats {
 		ret[material] = append(ret[material], texture)
@@ -50,14 +42,14 @@ type materialTemplate struct {
 	uses int    // used as hex in tpl
 }
 
-func generateTemplates(mats goldsrc.Materials) templateListSet {
+func generateTemplates(mats Materials) templateListSet {
 	var (
 		ret       templateListSet
 		formatTpl = "%%0%dx"
 	)
 
 	for prefixLen := 0; prefixLen <= 2; prefixLen++ {
-		ret[prefixLen] = make(map[goldsrc.MaterialType][]materialTemplate, 10)
+		ret[prefixLen] = make(map[MaterialType][]materialTemplate, 10)
 
 		for texture, material := range mats {
 			// Only use exact matches to ensure we don't conflict with source
@@ -78,16 +70,24 @@ func generateTemplates(mats goldsrc.Materials) templateListSet {
 	return ret
 }
 
-func newRemapper(source goldsrc.Materials) remapper {
-	return remapper{
+func NewMaterialsRemapper(source Materials) MaterialsRemapper {
+	return MaterialsRemapper{
 		pools:      generatePools(source),
 		templates:  generateTemplates(source),
-		tplIndices: make(map[goldsrc.MaterialType][]int),
+		tplIndices: make(map[MaterialType][]int),
 	}
 }
 
-func (r *remapper) remap(bsp *goldsrc.BSP, replacements goldsrc.Materials) (err error) {
-	for i, tex := range bsp.Textures.Textures {
+func (r *MaterialsRemapper) ReMap(
+	from []wad.MIPTexture,
+	replacements Materials,
+) (map[wad.TextureName]wad.TextureName, error) {
+	var (
+		ret = make(map[wad.TextureName]wad.TextureName)
+		err error
+	)
+
+	for i, tex := range from {
 		// Uppercase in materials, lowercase in BSP. Case is all over the place.
 		var name = strings.ToUpper(tex.Name.String())
 
@@ -102,43 +102,33 @@ func (r *remapper) remap(bsp *goldsrc.BSP, replacements goldsrc.Materials) (err 
 			continue
 		}
 
-		var reuse bool
 		mapToName, ok := r.getTemplatedName(name, mapToMat)
 		if !ok { // Material as no template-able texture name.
 			mapToName, err = r.getReusableTexture(mapToMat)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			reuse = true
 		}
 
 		// Re-apply prefix.
 		mapToName = name[:prefixLen] + mapToName
 
-		fmt.Printf("Remapping %-15s to %c %s", name, mapToMat, mapToName)
-		if reuse {
-			fmt.Println(" (reused existing name).")
-		} else {
-			fmt.Println(".")
-		}
-		bsp.Textures.Textures[i].Name, err = wad.NewTextureName(strings.ToLower(mapToName))
+		ret[tex.Name], err = wad.NewTextureName(strings.ToLower(mapToName))
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	r.printAvailable()
-
-	return nil
+	return ret, nil
 }
 
-func (r *remapper) printAvailable() {
+func (r *MaterialsRemapper) PrintAvailable() {
 	fmt.Println("\nTexture names still usable in source:")
 	for mat, v := range r.pools {
 		fmt.Printf("  - %-20s: %d\n", mat.String(), len(v))
 	}
 
-	var totals = map[goldsrc.MaterialType][3]int{}
+	var totals = map[MaterialType][3]int{}
 	for prefixLen, set := range r.templates {
 		for mat, list := range set {
 			perPrefix := totals[mat]
@@ -156,7 +146,7 @@ func (r *remapper) printAvailable() {
 
 // Returns a texture name we can reuse to give a specific material type to
 // another texture.
-func (r *remapper) getReusableTexture(mapToMat goldsrc.MaterialType) (string, error) {
+func (r *MaterialsRemapper) getReusableTexture(mapToMat MaterialType) (string, error) {
 	if len(r.pools[mapToMat]) == 0 {
 		return "", fmt.Errorf("exhausted material pool for %s", mapToMat.String())
 	}
@@ -168,9 +158,9 @@ func (r *remapper) getReusableTexture(mapToMat goldsrc.MaterialType) (string, er
 	return mapToName, nil
 }
 
-func (r *remapper) getFirstAvailableTemplate(
+func (r *MaterialsRemapper) getFirstAvailableTemplate(
 	prefixLen int,
-	mapToMat goldsrc.MaterialType,
+	mapToMat MaterialType,
 ) (int, materialTemplate, bool) {
 	var max = maxUses(prefixLen)
 	for i, v := range r.templates[prefixLen][mapToMat] {
@@ -212,7 +202,7 @@ func maxUses(prefixLen int) int {
  *   - https://github.com/ValveSoftware/halflife/issues/102
  *   - https://github.com/ValveSoftware/halflife/issues/3102
  */
-func (r *remapper) getTemplatedName(name string, mapToMat goldsrc.MaterialType) (string, bool) {
+func (r *MaterialsRemapper) getTemplatedName(name string, mapToMat MaterialType) (string, bool) {
 	prefixLen := getTexturePrefixLength(name)
 	index, tpl, ok := r.getFirstAvailableTemplate(prefixLen, mapToMat)
 	if !ok {

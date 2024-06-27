@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 )
@@ -163,9 +164,12 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 				Subcommands: []*cli.Command{
 					{
 						Name:      "remap-materials",
-						Usage:     "On a BSP with embedded textures, change their names so they can match what's in materials.txt.",
+						Usage:     "On a BSP with embedded textures, change their names so they can match what's in materials.txt. No texture listed in the original materials.txt can be used in the BSP.",
 						ArgsUsage: " BSP",
 						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name: "verbose",
+							},
 							&cli.StringFlag{
 								Name:     "original-materials",
 								Value:    "valve/sound/materials.txt",
@@ -413,12 +417,41 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	remapper := newRemapper(source)
-	if err := remapper.remap(bsp, replacement); err != nil {
+	var (
+		verbose  = cCtx.Bool("verbose")
+		remapper = goldsrc.NewMaterialsRemapper(source)
+	)
+	mapping, err := remapper.ReMap(bsp.Textures.Textures, replacement)
+	if err != nil {
 		return fmt.Errorf("unable to remap materials: %w", err)
 	}
 
-	return bsp.WriteToFile(cCtx.String("out"))
+	for i, tex := range bsp.Textures.Textures {
+		mapTo, ok := mapping[tex.Name]
+		if !ok {
+			continue
+		}
+
+		if verbose {
+			fmt.Printf(
+				"Remapping %-15s to %s\n",
+				strings.ToUpper(tex.Name.String()),
+				strings.ToUpper(mapTo.String()),
+			)
+		}
+
+		bsp.Textures.Textures[i].Name = mapTo
+	}
+
+	if err := bsp.WriteToFile(cCtx.String("out")); err != nil {
+		return fmt.Errorf("unable to write BSP: %w", err)
+	}
+
+	if cCtx.Bool("verbose") {
+		remapper.PrintAvailable()
+	}
+
+	return nil
 }
 
 func doBSPInfo(cCtx *cli.Context) error {
