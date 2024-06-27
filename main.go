@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
+	"goldutil/goldsrc"
 	"goldutil/qmap"
 	"goldutil/set"
 	"goldutil/sprite"
@@ -11,146 +11,198 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
+
+	"github.com/urfave/cli/v2"
 )
 
 var Version = "unknown version"
 
-var help = `goldutil (%s)
-
-Usage: %s COMMAND [ARGS…]
-
-Commands:
-    map-export [-cleanup-tb] MAP
-        Exports a .map file the way TrenchBroom does, removing all layers
-        marked as not exported.
-        Output is written to stdout.
-
-        Options:
-            -cleanup-tb Removes properties added by TrenchBroom that are not
-                        understood by the engine and spam the console with
-                        errors.
-
-    map-graph MAP
-        Creates a graphviz digraph of entity caller/callee relationships from a
-        .map file. ripent exports use the same format and can be read too.
-        Output is written to stdout.
-
-    sprite-info SPR
-        Prints parsed frame data from a sprite.
-
-    sprite-extract [-dir DIR] SPR
-        Outputs all frames of a sprite to the current directory. The output
-        files will be named after the original sprite file name plus a frame
-        number suffix and an extension.
-
-        Options:
-            -dir DIR    Outputs frames to the specified directory instead of
-                        the current one.
-
-    sprite-create [-type TYPE] [-format FORMAT] FRAME0 [FRAMEX…]
-        Creates a sprite from the given ordered list of PNG frames and writes
-        it to the given SPR path.
-        Input images must be 256 colors paletted PNGs. The palette of
-        the first frame will be used, the other palettes are discarded and all
-        frames will be interpreted using the first frame's palette.
-        If the palette has under 256 colors it will be extended to 256,
-        putting the last color of the palette in the 256th spot and remapping
-        the image to match this updated palette. This matters for some texture
-        formats.
-
-        Options:
-            -out SPR
-                Path to the output .spr file.
-
-            -type TYPE
-                Sprite type, TYPE can be any one of:
-
-                parallel           Always face camera. (Default)
-                parallel-upright   Always face camera except for the locked Z axis.
-                oriented           Orientation set by the level.
-                parallel-oriented  Faces camera but can be rotated by the level.
-                facing-upright     Like parallel upright but faces the player
-                                   origin instead of the camera.
-
-            -format FORMAT
-                Texture format, determines how the palette is interpreted and the
-                texture is rendered by the engine. FORMAT can be any one of:
-
-                normal      256 colors sprite. (Default)
-                additive    Additive 256 colors sprite.
-                index-alpha Monochromatic sprite with 256 alpha levels, the base
-                            color is determined by the last color on the palette.
-                alpha-test  Transparent 255 colors sprite. The 256th color on the
-                            palette will be rendered as fully transparent.
-
-    wad-create -out WAD PATH [PATH…]
-        Creates a WAD file from a list of PNG files and directories. Directories
-        are not scanned recursively and only PNG files are used.
-        File base names (without extensions) are uppercased and used as texture
-        names. This means that names exceeding 15 chars will trigger an error.
-
-    wad-extract -out DIR WAD
-        Extracts a WAD file in the given directory as a bunch of PNG files.
-
-    wad-info WAD
-        Prints parsed data from a WAD file.
-`
-
-func usage() {
-	fmt.Fprintf(flag.CommandLine.Output(), help, Version, os.Args[0])
-}
-
 func main() {
-	flag.Usage = usage
-
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, help, Version, os.Args[0])
-		os.Exit(1)
-	}
-
-	if err := dispatch(os.Args[1], os.Args[2:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			flag.Usage()
-			return
-		}
-
-		fmt.Fprintln(os.Stderr, err.Error())
+	var app = newApp()
+	if err := app.Run(os.Args); err != nil {
+		panic(err)
 	}
 }
 
-func dispatch(command string, args []string) error {
-	switch command {
-	case "map-graph":
-		return doEntGraph(args)
-	case "map-export":
-		return doMapExport(args)
-	case "sprite-info":
-		return doSpriteInfo(args)
-	case "sprite-extract":
-		return doSpriteExtract(args)
-	case "sprite-create":
-		return doSpriteCreate(args)
-	case "wad-extract":
-		return doWADExtract(args)
-	case "wad-create":
-		return doWADCreate(args)
-	case "wad-info":
-		return doWADInfo(args)
-	default:
-		return fmt.Errorf("unrecognized command: %s", command)
+//nolint:lll,funlen // descriptions
+func newApp() *cli.App {
+	return &cli.App{
+		Version: Version,
+		Usage:   "GoldSrc modding utility.",
+		Commands: []*cli.Command{
+			{
+				Name:  "map",
+				Usage: "Read and write MAP files.",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "export",
+						Usage:     "Exports a .map file the way TrenchBroom does, removing all layers marked as not exported. Output is written to stdout.",
+						ArgsUsage: " MAP",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "cleanup-tb",
+								Value: false,
+								Usage: "Removes properties added by TrenchBroom that are not understood by the engine and spam the console with errors.",
+							},
+						},
+						Action: doMapExport,
+					},
+
+					{
+						Name:      "graph",
+						Usage:     "Creates a graphviz digraph of entity caller/callee relationships from a .map file. ripent exports use the same format and can be read too. Output is written to stdout.",
+						ArgsUsage: " MAP",
+						Action:    doMapGraph,
+					},
+				},
+			},
+
+			{
+				Name:  "spr",
+				Usage: "Read and write SPR files (sprites).",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "info",
+						Usage:     "Prints parsed frame data from a sprite.",
+						ArgsUsage: " SPR",
+						Action:    doSpriteInfo,
+					},
+
+					{
+						Name:      "extract",
+						Usage:     "Outputs all frames of a sprite to the current directory. The output files will be named after the original sprite file name plus a frame number suffix and an extension.",
+						ArgsUsage: " SPR",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "dir",
+								Usage: "Outputs frames to the specified directory instead of the current one.",
+							},
+						},
+						Action: doSpriteExtract,
+					},
+
+					{
+						Name:      "create",
+						Usage:     "Creates a sprite from the given ordered list of PNG frames and writes it to the given SPR path.\nInput images must be 256 colors paletted PNGs. The palette of the first frame will be used, the other palettes are discarded and all frames will be interpreted using the first frame's palette.  If the palette has under 256 colors it will be extended to 256, putting the last color of the palette in the 256th spot and remapping the image to match this updated palette. This matters for some texture formats.",
+						ArgsUsage: " FRAME0 [FRAMEX…]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "out",
+								Usage:    "Path to the output .spr file.",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:  "type",
+								Value: "parallel",
+								Usage: `Sprite type, TYPE can be any one of:
+parallel           Always face camera. (Default)
+parallel-upright   Always face camera except for the locked Z axis.
+oriented           Orientation set by the level.
+parallel-oriented  Faces camera but can be rotated by the level.
+facing-upright     Like parallel upright but faces the player origin instead of the camera.`,
+							},
+							&cli.StringFlag{
+								Name:  "format",
+								Value: "normal",
+								Usage: `Texture format, determines how the palette is interpreted and the texture is rendered by the engine. FORMAT can be any one of:
+normal      256 colors sprite. (Default)
+additive    Additive 256 colors sprite.
+index-alpha Monochromatic sprite with 256 alpha levels, the base color is determined by the last color on the palette.
+alpha-test  Transparent 255 colors sprite. The 256th color on the palette will be rendered as fully transparent.`,
+							},
+						},
+						Action: doSpriteCreate,
+					},
+				},
+			},
+
+			{
+				Name:  "wad",
+				Usage: "Read and write WAD files.",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "create",
+						Usage:     "Creates a WAD file from a list of PNG files and directories. Directories are not scanned recursively and only PNG files are used.\nFile base names (without extensions) are uppercased and used as texture names. This means that names exceeding 15 chars will trigger an error.",
+						ArgsUsage: " PATH [PATH…]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "out",
+								Usage:    "Path to the output .wad file.",
+								Required: true,
+							},
+						},
+						Action: doWADCreate,
+					},
+
+					{
+						Name:      "extract",
+						Usage:     "Extracts a WAD file in the given directory as a bunch of PNG files.",
+						ArgsUsage: " WAD",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "dir",
+								Usage:    "Path to the output directory.",
+								Required: true,
+							},
+						},
+						Action: doWADExtract,
+					},
+
+					{
+						Name:      "info",
+						Usage:     "Prints parsed data from a WAD file.",
+						ArgsUsage: " WAD",
+						Action:    doWADInfo,
+					},
+				},
+			},
+
+			{
+				Name:  "bsp",
+				Usage: "Read and write BSP files.",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "remap-materials",
+						Usage:     "On a BSP with embedded textures, change their names so they can match what's in materials.txt. No texture listed in the original materials.txt can be used in the BSP.",
+						ArgsUsage: " BSP",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name: "verbose",
+							},
+							&cli.StringFlag{
+								Name:     "original-materials",
+								Value:    "valve/sound/materials.txt",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "replacement-materials",
+								Value:    "valve_addon/sound/materials.txt",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "out",
+								Required: true,
+								Usage:    "Where to write the remapped BSP.",
+							},
+						},
+						Action: doBSPRemapMaterials,
+					},
+
+					{
+						Name:      "info",
+						Usage:     "Prints parsed data from a BSP.",
+						ArgsUsage: " BSP",
+						Action:    doBSPInfo,
+					},
+				},
+			},
+		},
 	}
 }
 
-func doSpriteExtract(args []string) error {
-	fset := flag.NewFlagSet("sprite-extract", flag.ExitOnError)
-	fset.Usage = usage
-	dir := fset.String("dir", "", "destination directory")
-
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	path := fset.Arg(0)
+func doSpriteExtract(cCtx *cli.Context) error {
+	path := cCtx.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .spr to parse and extract")
 	}
@@ -160,26 +212,17 @@ func doSpriteExtract(args []string) error {
 		return fmt.Errorf("unable to open sprite: %w", err)
 	}
 
-	return extractSprite(spr, *dir, filepath.Base(path))
+	return extractSprite(spr, cCtx.String("dir"), filepath.Base(path))
 }
 
-func doSpriteCreate(args []string) error {
-	fset := flag.NewFlagSet("sprite-extract", flag.ExitOnError)
-	fset.Usage = usage
-	formatStr := fset.String("format", "", "texture format (normal, additive, index-alpha, alpha-test)")
-	typeStr := fset.String("type", "", "sprite type (parallel-upright, facing-upright, parallel, oriented, parallel-oriented)") //nolint
-	out := fset.String("out", "", "destination .spr file")                                                                      //nolint
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
+func doSpriteCreate(cCtx *cli.Context) error {
 	typ, ok := map[string]sprite.Type{
 		"parallel-upright":  sprite.ParallelUpright,
 		"facing-upright":    sprite.FacingUpright,
 		"parallel":          sprite.Parallel,
 		"oriented":          sprite.Oriented,
 		"parallel-oriented": sprite.ParallelOriented,
-	}[*typeStr]
+	}[cCtx.String("type")]
 	if !ok {
 		return errors.New("unrecognize sprite type")
 	}
@@ -189,17 +232,17 @@ func doSpriteCreate(args []string) error {
 		"additive":    sprite.Additive,
 		"index-alpha": sprite.IndexAlpha,
 		"alpha-test":  sprite.AlphaTest,
-	}[*formatStr]
+	}[cCtx.String("format")]
 	if !ok {
 		return errors.New("unrecognize texture format")
 	}
 
-	spr, err := createSprite(typ, format, fset.Args())
+	spr, err := createSprite(typ, format, cCtx.Args().Slice())
 	if err != nil {
 		return fmt.Errorf("unable to create sprite: %w", err)
 	}
 
-	dest, err := os.OpenFile(*out, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	dest, err := os.OpenFile(cCtx.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("unable to open dest SPR for writing: %w", err)
 	}
@@ -215,14 +258,8 @@ func doSpriteCreate(args []string) error {
 	return nil
 }
 
-func doSpriteInfo(args []string) error {
-	fset := flag.NewFlagSet("sprite-info", flag.ExitOnError)
-	fset.Usage = usage
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	path := fset.Arg(0)
+func doSpriteInfo(cCtx *cli.Context) error {
+	path := cCtx.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .spr to parse and display")
 	}
@@ -237,14 +274,8 @@ func doSpriteInfo(args []string) error {
 	return nil
 }
 
-func doEntGraph(args []string) error {
-	fset := flag.NewFlagSet("map-graph", flag.ExitOnError)
-	fset.Usage = usage
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	path := fset.Arg(0)
+func doMapGraph(cCtx *cli.Context) error {
+	path := cCtx.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .map to parse and graph")
 	}
@@ -259,15 +290,8 @@ func doEntGraph(args []string) error {
 	return nil
 }
 
-func doMapExport(args []string) error {
-	fset := flag.NewFlagSet("map-export", flag.ExitOnError)
-	cleanupTB := fset.Bool("cleanup-tb", false, "remove TrenchBroom properties")
-	fset.Usage = usage
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	path := fset.Arg(0)
+func doMapExport(cCtx *cli.Context) error {
+	path := cCtx.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .map to export")
 	}
@@ -277,7 +301,7 @@ func doMapExport(args []string) error {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	clean, err := exportQMap(qm, *cleanupTB)
+	clean, err := exportQMap(qm, cCtx.Bool("cleanup-tb"))
 	if err != nil {
 		return fmt.Errorf("unable to export map: %w", err)
 	}
@@ -287,15 +311,9 @@ func doMapExport(args []string) error {
 	return nil
 }
 
-func doWADExtract(args []string) error {
-	fset := flag.NewFlagSet("wad-extract", flag.ExitOnError)
-	fset.Usage = usage
-	dir := fset.String("out", "", "destination directory")
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	stat, err := os.Stat(*dir)
+func doWADExtract(cCtx *cli.Context) error {
+	var dir = cCtx.String("dir")
+	stat, err := os.Stat(dir)
 	if err != nil {
 		return fmt.Errorf("unable to use destination directory: %w", err)
 	}
@@ -303,22 +321,16 @@ func doWADExtract(args []string) error {
 		return errors.New("output directory paths exists but is not a directory")
 	}
 
-	wad3, err := wad.NewFromFile(fset.Arg(0))
+	wad3, err := wad.NewFromFile(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to open and parse WAD file: %w", err)
 	}
 
-	return extractWAD(wad3, *dir)
+	return extractWAD(wad3, dir)
 }
 
-func doWADInfo(args []string) error {
-	fset := flag.NewFlagSet("wad-info", flag.ExitOnError)
-	fset.Usage = usage
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	wad3, err := wad.NewFromFile(fset.Arg(0))
+func doWADInfo(cCtx *cli.Context) error {
+	wad3, err := wad.NewFromFile(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to open and parse WAD file: %w", err)
 	}
@@ -328,20 +340,13 @@ func doWADInfo(args []string) error {
 	return nil
 }
 
-func doWADCreate(args []string) error {
-	fset := flag.NewFlagSet("wad-create", flag.ExitOnError)
-	dest := fset.String("out", "", "destination file")
-	fset.Usage = usage
-	if err := fset.Parse(args); err != nil {
-		return err
-	}
-
-	input, err := collectPaths(fset.Args(), "*.png")
+func doWADCreate(cCtx *cli.Context) error {
+	input, err := collectPaths(cCtx.Args().Slice(), "*.png")
 	if err != nil {
 		return fmt.Errorf("unable to collect paths: %w", err)
 	}
 
-	return createWAD(*dest, input)
+	return createWAD(cCtx.String("out"), input)
 }
 
 // Returns the paths when they're files, and the pattern-matching files inside
@@ -390,4 +395,72 @@ func dedupeStrs(in []string) []string {
 	}
 
 	return ret
+}
+
+func doBSPRemapMaterials(cCtx *cli.Context) error {
+	source, err := goldsrc.LoadMaterialsFromFile(cCtx.String("original-materials"))
+	if err != nil {
+		return fmt.Errorf("unable to load original-materials: %w", err)
+	}
+
+	replacement, err := goldsrc.LoadMaterialsFromFile(cCtx.String("replacement-materials"))
+	if err != nil {
+		return fmt.Errorf("unable to load replacement-materials: %w", err)
+	}
+
+	if source.IsEmpty() || replacement.IsEmpty() {
+		return errors.New("no materials in source or replacement list")
+	}
+
+	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	var (
+		verbose  = cCtx.Bool("verbose")
+		remapper = goldsrc.NewMaterialsRemapper(source)
+	)
+	mapping, err := remapper.ReMap(bsp.Textures.Textures, replacement)
+	if err != nil {
+		return fmt.Errorf("unable to remap materials: %w", err)
+	}
+
+	for i, tex := range bsp.Textures.Textures {
+		mapTo, ok := mapping[tex.Name]
+		if !ok {
+			continue
+		}
+
+		if verbose {
+			fmt.Printf(
+				"Remapping %-15s to %s\n",
+				strings.ToUpper(tex.Name.String()),
+				strings.ToUpper(mapTo.String()),
+			)
+		}
+
+		bsp.Textures.Textures[i].Name = mapTo
+	}
+
+	if err := bsp.WriteToFile(cCtx.String("out")); err != nil {
+		return fmt.Errorf("unable to write BSP: %w", err)
+	}
+
+	if cCtx.Bool("verbose") {
+		remapper.PrintAvailable()
+	}
+
+	return nil
+}
+
+func doBSPInfo(cCtx *cli.Context) error {
+	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	fmt.Print(bsp.String())
+
+	return nil
 }

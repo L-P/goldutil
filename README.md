@@ -8,6 +8,4 @@ GoldSrc CLI utilities, released under the MIT license, see
 - Sprite creation.
 - Entity call graph via Graphviz.
 - .map file cleanup to automate TrenchBroom workflows.
-
-Run `goldutil` without arguments to show the complete help or see
-[main.go:20](./main.go#L20).
+- Materials remapping for BSPs with embedded textures.
