@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strings"
 	"unicode"
 )
@@ -68,35 +67,6 @@ func LoadMaterialsFromFile(path string) (Materials, error) {
 	defer f.Close()
 
 	return LoadMaterials(f)
-}
-
-func (mats Materials) Invert() map[MaterialType][]string {
-	var ret = make(map[MaterialType][]string, 10)
-
-	for texture, material := range mats {
-		ret[material] = append(ret[material], texture)
-	}
-
-	// Ensure reproducibility in remap-materials.
-	for k := range ret {
-		sort.Strings(ret[k])
-	}
-
-	return ret
-}
-
-func (mats Materials) Templates() map[MaterialType]string {
-	var ret = make(map[MaterialType]string, 10)
-
-	for texture, material := range mats {
-		if len(texture) != 12 {
-			continue
-		}
-
-		ret[material] = texture[:12] + "%03d"
-	}
-
-	return ret
 }
 
 func LoadMaterials(r io.Reader) (Materials, error) {

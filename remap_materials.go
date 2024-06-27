@@ -4,26 +4,85 @@ import (
 	"fmt"
 	"goldutil/goldsrc"
 	"goldutil/wad"
+	"sort"
 	"strings"
 )
 
+// TODO:
+// 1. Decouple from BSP:
+//   - Input texture names
+//   - Output mappings
+//   - Write to BSP outside of remapper
+//
+// 2. Tests
 type remapper struct {
 	// Available textures names we can remap to. Last entry will pop when we
 	// use one.
 	pools map[goldsrc.MaterialType][]string
 
-	// Templated texture names for the 12-chars hack. See getTemplate().
-	templates map[goldsrc.MaterialType]string
+	// Templated texture names for the 12-chars hack. See getTemplatedName().
+	templates templateListSet
 
 	// Next available index for templated texture names.
-	tplIndices map[goldsrc.MaterialType]int
+	tplIndices map[goldsrc.MaterialType][]int
+}
+
+// One list per texture prefix length.
+type templateListSet [3]map[goldsrc.MaterialType][]materialTemplate
+
+func generatePools(mats goldsrc.Materials) map[goldsrc.MaterialType][]string {
+	var ret = make(map[goldsrc.MaterialType][]string, 10)
+
+	for texture, material := range mats {
+		ret[material] = append(ret[material], texture)
+	}
+
+	// Ensure determinism.
+	for k := range ret {
+		sort.Strings(ret[k])
+	}
+
+	return ret
+}
+
+type materialTemplate struct {
+	tpl  string // contains a single
+	uses int    // used as hex in tpl
+}
+
+func generateTemplates(mats goldsrc.Materials) templateListSet {
+	var (
+		ret       templateListSet
+		formatTpl = "%%0%dx"
+	)
+
+	for prefixLen := 0; prefixLen <= 2; prefixLen++ {
+		ret[prefixLen] = make(map[goldsrc.MaterialType][]materialTemplate, 10)
+
+		for texture, material := range mats {
+			// Only use exact matches to ensure we don't conflict with source
+			// texture names unless with reuse one in getReusableTexture.
+			if len(texture) != 12 {
+				continue
+			}
+
+			ret[prefixLen][material] = append(
+				ret[prefixLen][material],
+				materialTemplate{
+					tpl: texture[:12] + fmt.Sprintf(formatTpl, 3-prefixLen),
+				},
+			)
+		}
+	}
+
+	return ret
 }
 
 func newRemapper(source goldsrc.Materials) remapper {
 	return remapper{
-		pools:      source.Invert(),
-		templates:  source.Templates(),
-		tplIndices: make(map[goldsrc.MaterialType]int),
+		pools:      generatePools(source),
+		templates:  generateTemplates(source),
+		tplIndices: make(map[goldsrc.MaterialType][]int),
 	}
 }
 
@@ -37,32 +96,62 @@ func (r *remapper) remap(bsp *goldsrc.BSP, replacements goldsrc.Materials) (err 
 			continue
 		}
 
-		mapToMat, ok := replacements[name]
+		var prefixLen = getTexturePrefixLength(name)
+		mapToMat, ok := replacements[name[prefixLen:]]
 		if !ok { // No remapping requested.
 			continue
 		}
 
-		mapToName, ok := r.getTemplate(mapToMat)
-		if !ok {
+		var reuse bool
+		mapToName, ok := r.getTemplatedName(name, mapToMat)
+		if !ok { // Material as no template-able texture name.
 			mapToName, err = r.getReusableTexture(mapToMat)
 			if err != nil {
 				return err
 			}
+			reuse = true
 		}
 
-		fmt.Printf("Remapping %-15s to %c %s.\n", name, mapToMat, mapToName)
+		// Re-apply prefix.
+		mapToName = name[:prefixLen] + mapToName
+
+		fmt.Printf("Remapping %-15s to %c %s", name, mapToMat, mapToName)
+		if reuse {
+			fmt.Println(" (reused existing name).")
+		} else {
+			fmt.Println(".")
+		}
 		bsp.Textures.Textures[i].Name, err = wad.NewTextureName(strings.ToLower(mapToName))
 		if err != nil {
 			return err
 		}
 	}
 
-	fmt.Println("\nTexture names still usable in source:")
-	for mat, v := range r.pools {
-		fmt.Printf("  - %s: %d\n", mat.String(), len(v))
-	}
+	r.printAvailable()
 
 	return nil
+}
+
+func (r *remapper) printAvailable() {
+	fmt.Println("\nTexture names still usable in source:")
+	for mat, v := range r.pools {
+		fmt.Printf("  - %-20s: %d\n", mat.String(), len(v))
+	}
+
+	var totals = map[goldsrc.MaterialType][3]int{}
+	for prefixLen, set := range r.templates {
+		for mat, list := range set {
+			perPrefix := totals[mat]
+			for _, v := range list {
+				perPrefix[prefixLen] += maxUses(prefixLen) - v.uses
+			}
+			totals[mat] = perPrefix
+		}
+	}
+	fmt.Println("\nTemplated texture entries still usable in source (unprefixed, one char, two chars):")
+	for mat, v := range totals {
+		fmt.Printf("  - %-20s: % 6d, % 6d, % 6d\n", mat.String(), v[0], v[1], v[2])
+	}
 }
 
 // Returns a texture name we can reuse to give a specific material type to
@@ -77,6 +166,33 @@ func (r *remapper) getReusableTexture(mapToMat goldsrc.MaterialType) (string, er
 	r.pools[mapToMat] = r.pools[mapToMat][:end]
 
 	return mapToName, nil
+}
+
+func (r *remapper) getFirstAvailableTemplate(
+	prefixLen int,
+	mapToMat goldsrc.MaterialType,
+) (int, materialTemplate, bool) {
+	var max = maxUses(prefixLen)
+	for i, v := range r.templates[prefixLen][mapToMat] {
+		if v.uses < max {
+			return i, v, true
+		}
+	}
+
+	return -1, materialTemplate{}, false
+}
+
+func maxUses(prefixLen int) int {
+	switch prefixLen {
+	case 0:
+		return 16 * 16 * 16
+	case 1:
+		return 16 * 16
+	case 2:
+		return 16
+	default:
+		panic("(prefixLen > 2)")
+	}
 }
 
 /* Returns a fmt template for a %d that generates a usable texture name
@@ -96,13 +212,32 @@ func (r *remapper) getReusableTexture(mapToMat goldsrc.MaterialType) (string, er
  *   - https://github.com/ValveSoftware/halflife/issues/102
  *   - https://github.com/ValveSoftware/halflife/issues/3102
  */
-func (r *remapper) getTemplate(mapToMat goldsrc.MaterialType) (string, bool) {
-	tpl, ok := r.templates[mapToMat]
+func (r *remapper) getTemplatedName(name string, mapToMat goldsrc.MaterialType) (string, bool) {
+	prefixLen := getTexturePrefixLength(name)
+	index, tpl, ok := r.getFirstAvailableTemplate(prefixLen, mapToMat)
 	if !ok {
 		return "", false
 	}
 
-	mapToName := strings.ToUpper(fmt.Sprintf(tpl, r.tplIndices[mapToMat]))
-	r.tplIndices[mapToMat]++
+	mapToName := strings.ToUpper(fmt.Sprintf(tpl.tpl, tpl.uses))
+	tpl.uses++
+	r.templates[prefixLen][mapToMat][index] = tpl
+
 	return mapToName, true
+}
+
+func getTexturePrefixLength(name string) int {
+	if len(name) < 1 {
+		return 0
+	}
+	switch name[0] {
+	case '{', '!', '~', ' ':
+		return 1
+	}
+
+	if name[0] == '-' || name[0] == '+' {
+		return 2
+	}
+
+	return 0
 }
