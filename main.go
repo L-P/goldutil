@@ -404,12 +404,17 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to load replacement-materials: %w", err)
 	}
 
+	if source.IsEmpty() || replacement.IsEmpty() {
+		return errors.New("no materials in source or replacement list")
+	}
+
 	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	if err := remapBSPMaterials(bsp, source, replacement); err != nil {
+	remapper := newRemapper(source)
+	if err := remapper.remap(bsp, replacement); err != nil {
 		return fmt.Errorf("unable to remap materials: %w", err)
 	}
 

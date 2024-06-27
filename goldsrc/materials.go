@@ -2,7 +2,6 @@ package goldsrc
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -86,7 +85,19 @@ func (mats Materials) Invert() map[MaterialType][]string {
 	return ret
 }
 
-const MaxMaterials = 512
+func (mats Materials) Templates() map[MaterialType]string {
+	var ret = make(map[MaterialType]string, 10)
+
+	for texture, material := range mats {
+		if len(texture) != 12 {
+			continue
+		}
+
+		ret[material] = texture[:12] + "%03d"
+	}
+
+	return ret
+}
 
 func LoadMaterials(r io.Reader) (Materials, error) {
 	var (
@@ -109,10 +120,6 @@ func LoadMaterials(r io.Reader) (Materials, error) {
 		typ, name, err := parseMaterialsLine(line)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse materials: line #%d: %w", lineNumber, err)
-		}
-
-		if entries > MaxMaterials {
-			return nil, errors.New("too many materials, max is 512")
 		}
 
 		mats[name] = typ
