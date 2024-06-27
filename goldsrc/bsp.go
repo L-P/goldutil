@@ -187,26 +187,16 @@ func (bsp *BSP) Write(w io.WriteSeeker) error {
 	}
 	offset := binary.Size(bsp.BSPHeader)
 
+	//nolint:dupword // I really want you to know this is a HACK HACK HACK
 	// HACK HACK HACK HACK HACK
 	// Keep order as found in map compiled by ericw, right now we can only
-	// patch textures, full BSP reimplementation is necessary to actually write
-	// the file, there's offsets all around.
+	// want to patch textures and not touch or move any other data to avoid
+	// breaking offsets.
 	order := []LumpType{
-		LumpTypePlanes,
-		LumpTypeLeaves,
-		LumpTypeVertices,
-		LumpTypeNodes,
-		LumpTypeTexInfo,
-		LumpTypeFaces,
-		LumpTypeClipNodes,
-		LumpTypeMarkSurfaces,
-		LumpTypeSurfEdges,
-		LumpTypeEdges,
-		LumpTypeModels,
-		LumpTypeLighting,
-		LumpTypeVisibility,
-		LumpTypeEntities,
-		LumpTypeTextures,
+		LumpTypePlanes, LumpTypeLeaves, LumpTypeVertices,
+		LumpTypeNodes, LumpTypeTexInfo, LumpTypeFaces, LumpTypeClipNodes,
+		LumpTypeMarkSurfaces, LumpTypeSurfEdges, LumpTypeEdges, LumpTypeModels,
+		LumpTypeLighting, LumpTypeVisibility, LumpTypeEntities, LumpTypeTextures,
 	}
 
 	for _, typ := range order {
