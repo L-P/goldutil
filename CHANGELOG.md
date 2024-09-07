@@ -1,3 +1,6 @@
+# v1.1.1
+- Replace help command with a single manpage.
+
 # v1.1.0
 - BC break: migrated to urfave/cli, all commands are now sub-subcommands
 - Add command bsp info

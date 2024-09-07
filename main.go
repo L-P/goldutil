@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
@@ -8,8 +9,11 @@ import (
 	"goldutil/set"
 	"goldutil/sprite"
 	"goldutil/wad"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -21,95 +25,77 @@ var Version = "unknown version"
 func main() {
 	var app = newApp()
 	if err := app.Run(os.Args); err != nil {
-		panic(err)
+		// HACK: -h will panic.
+		if err.Error() != "flag: help requested" {
+			panic(err)
+		}
 	}
 }
 
-//nolint:lll,funlen // descriptions
+//nolint:funlen // descriptions
 func newApp() *cli.App {
+	cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
+		_ = doHelp(nil)
+	}
+
 	return &cli.App{
 		Version: Version,
-		Usage:   "GoldSrc modding utility.",
 		Commands: []*cli.Command{
 			{
-				Name:  "map",
-				Usage: "Read and write MAP files.",
+				Name:   "help",
+				Action: doHelp,
+			},
+			{
+				Name: "map",
 				Subcommands: []*cli.Command{
 					{
-						Name:      "export",
-						Usage:     "Exports a .map file the way TrenchBroom does, removing all layers marked as not exported. Output is written to stdout.",
-						ArgsUsage: " MAP",
+						Name: "export",
 						Flags: []cli.Flag{
 							&cli.BoolFlag{
 								Name:  "cleanup-tb",
 								Value: false,
-								Usage: "Removes properties added by TrenchBroom that are not understood by the engine and spam the console with errors.",
 							},
 						},
 						Action: doMapExport,
 					},
 
 					{
-						Name:      "graph",
-						Usage:     "Creates a graphviz digraph of entity caller/callee relationships from a .map file. ripent exports use the same format and can be read too. Output is written to stdout.",
-						ArgsUsage: " MAP",
-						Action:    doMapGraph,
+						Name:   "graph",
+						Action: doMapGraph,
 					},
 				},
 			},
 
 			{
-				Name:  "spr",
-				Usage: "Read and write SPR files (sprites).",
+				Name: "spr",
 				Subcommands: []*cli.Command{
 					{
-						Name:      "info",
-						Usage:     "Prints parsed frame data from a sprite.",
-						ArgsUsage: " SPR",
-						Action:    doSpriteInfo,
+						Name:   "info",
+						Action: doSpriteInfo,
 					},
 
 					{
-						Name:      "extract",
-						Usage:     "Outputs all frames of a sprite to the current directory. The output files will be named after the original sprite file name plus a frame number suffix and an extension.",
-						ArgsUsage: " SPR",
+						Name: "extract",
 						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:  "dir",
-								Usage: "Outputs frames to the specified directory instead of the current one.",
-							},
+							&cli.StringFlag{Name: "dir"},
 						},
 						Action: doSpriteExtract,
 					},
 
 					{
-						Name:      "create",
-						Usage:     "Creates a sprite from the given ordered list of PNG frames and writes it to the given SPR path.\nInput images must be 256 colors paletted PNGs. The palette of the first frame will be used, the other palettes are discarded and all frames will be interpreted using the first frame's palette.  If the palette has under 256 colors it will be extended to 256, putting the last color of the palette in the 256th spot and remapping the image to match this updated palette. This matters for some texture formats.",
-						ArgsUsage: " FRAME0 [FRAMEX…]",
+						Name: "create",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "out",
-								Usage:    "Path to the output .spr file.",
 								Required: true,
 							},
 							&cli.StringFlag{
 								Name:  "type",
 								Value: "parallel",
-								Usage: `Sprite type, TYPE can be any one of:
-parallel           Always face camera. (Default)
-parallel-upright   Always face camera except for the locked Z axis.
-oriented           Orientation set by the level.
-parallel-oriented  Faces camera but can be rotated by the level.
-facing-upright     Like parallel upright but faces the player origin instead of the camera.`,
 							},
 							&cli.StringFlag{
 								Name:  "format",
 								Value: "normal",
-								Usage: `Texture format, determines how the palette is interpreted and the texture is rendered by the engine. FORMAT can be any one of:
-normal      256 colors sprite. (Default)
-additive    Additive 256 colors sprite.
-index-alpha Monochromatic sprite with 256 alpha levels, the base color is determined by the last color on the palette.
-alpha-test  Transparent 255 colors sprite. The 256th color on the palette will be rendered as fully transparent.`,
 							},
 						},
 						Action: doSpriteCreate,
@@ -118,17 +104,13 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 			},
 
 			{
-				Name:  "wad",
-				Usage: "Read and write WAD files.",
+				Name: "wad",
 				Subcommands: []*cli.Command{
 					{
-						Name:      "create",
-						Usage:     "Creates a WAD file from a list of PNG files and directories. Directories are not scanned recursively and only PNG files are used.\nFile base names (without extensions) are uppercased and used as texture names. This means that names exceeding 15 chars will trigger an error.",
-						ArgsUsage: " PATH [PATH…]",
+						Name: "create",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "out",
-								Usage:    "Path to the output .wad file.",
 								Required: true,
 							},
 						},
@@ -136,13 +118,10 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 					},
 
 					{
-						Name:      "extract",
-						Usage:     "Extracts a WAD file in the given directory as a bunch of PNG files.",
-						ArgsUsage: " WAD",
+						Name: "extract",
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "dir",
-								Usage:    "Path to the output directory.",
 								Required: true,
 							},
 						},
@@ -150,22 +129,17 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 					},
 
 					{
-						Name:      "info",
-						Usage:     "Prints parsed data from a WAD file.",
-						ArgsUsage: " WAD",
-						Action:    doWADInfo,
+						Name:   "info",
+						Action: doWADInfo,
 					},
 				},
 			},
 
 			{
-				Name:  "bsp",
-				Usage: "Read and write BSP files.",
+				Name: "bsp",
 				Subcommands: []*cli.Command{
 					{
-						Name:      "remap-materials",
-						Usage:     "On a BSP with embedded textures, change their names so they can match what's in materials.txt. No texture listed in the original materials.txt can be used in the BSP.",
-						ArgsUsage: " BSP",
+						Name: "remap-materials",
 						Flags: []cli.Flag{
 							&cli.BoolFlag{
 								Name: "verbose",
@@ -183,17 +157,14 @@ alpha-test  Transparent 255 colors sprite. The 256th color on the palette will b
 							&cli.StringFlag{
 								Name:     "out",
 								Required: true,
-								Usage:    "Where to write the remapped BSP.",
 							},
 						},
 						Action: doBSPRemapMaterials,
 					},
 
 					{
-						Name:      "info",
-						Usage:     "Prints parsed data from a BSP.",
-						ArgsUsage: " BSP",
-						Action:    doBSPInfo,
+						Name:   "info",
+						Action: doBSPInfo,
 					},
 				},
 			},
@@ -461,6 +432,37 @@ func doBSPInfo(cCtx *cli.Context) error {
 	}
 
 	fmt.Print(bsp.String())
+
+	return nil
+}
+
+//go:embed goldutil.1
+var manPage string
+
+func doHelp(cCtx *cli.Context) error {
+	if runtime.GOOS == "windows" {
+		return errors.New("man page is only available on *NIX operating systems, see https://l-p.github.io/goldutil/ instead")
+	}
+
+	var cmd = exec.Command("man", "-l", "-")
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("unable to obtain man stdin: %w", err)
+	}
+	go func() {
+		defer stdin.Close()
+		if _, err := io.WriteString(stdin, manPage); err != nil {
+			panic("unable to write to man stdin")
+		}
+	}()
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("unable to run man: %w", err)
+	}
 
 	return nil
 }

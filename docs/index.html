@@ -1,0 +1,168 @@
+<h1>NAME</h1>
+<p>goldutil - GoldSrc modding utility.</p>
+<h1>SYNOPSIS</h1>
+<p><strong>goldutil</strong> [global options] &lt;command&gt; [command
+options]<br />
+<strong>goldutil</strong> bsp info|remap-materials <em>FILE</em><br />
+<strong>goldutil</strong> map export|graph <em>FILE</em><br />
+<strong>goldutil</strong> spr create|extract|info <em>FILE</em><br />
+<strong>goldutil</strong> wad create|extract|info <em>FILE</em></p>
+<h1>DESCRIPTION</h1>
+<p><strong>goldutil</strong> can read, modify, and write multiple file
+formats used by the GoldSrc (Half-Life) engine.</p>
+<h1>BSP MANIPULATION</h1>
+<p><strong>goldutil</strong> bsp info <em>FILE</em></p>
+<blockquote>
+<p>Print parsed data from a BSP.</p>
+</blockquote>
+<p><strong>goldutil</strong> bsp remap-materials --out <em>PATH</em>
+[--verbose] [--original-materials <em>PATH</em>]
+[--replacement-materials <em>PATH</em>] <em>FILE</em></p>
+<blockquote>
+<p>On a BSP with embedded textures, change their names so they can match
+what is in the original game <em>materials.txt</em>.<br />
+This allows setting proper material sounds to custom textures without
+having to distribute a <em>materials.txt</em> file.<br />
+<strong>Warning</strong>: The BSP cannot use any of the textures listed
+in the original <em>materials.txt</em></p>
+<dl>
+<dt>--out PATH</dt>
+<dd>
+<p>Where to write the remapped BSP.</p>
+</dd>
+<dt>--verbose</dt>
+<dd>
+<p>Output to STDOUT the details of what materials were remapped to.</p>
+</dd>
+<dt>--original-materials</dt>
+<dd>
+<p>Path to the <em>materials.txt</em> file of the original game,
+defaults to <em>valve/sound/materials.txt</em>.</p>
+</dd>
+<dt>--replacement-materials</dt>
+<dd>
+<p>Path to the replacement <em>materials.txt</em> file, defaults to
+<em>valve_addon/sound/materials.txt</em>.</p>
+</dd>
+</dl>
+</blockquote>
+<h1>MAP MANIPULATION</h1>
+<p><strong>goldutil</strong> map export [--cleanup-db] <em>FILE</em></p>
+<blockquote>
+<p>Export a .map file the way TrenchBroom does, removing all layers
+marked as not exported. Output is written to stdout.</p>
+<dl>
+<dt>--cleanup-db</dt>
+<dd>
+<p>Also remove properties added by TrenchBroom that are not understood
+by the engine and spam the console with errors.</p>
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> map graph <em>FILE</em></p>
+<blockquote>
+<p>Create a graphviz digraph of entity caller/callee relationships from
+a .map file. ripent exports use the same format and can be read too.
+Output is written to stdout.</p>
+</blockquote>
+<h1>SPR MANIPULATION</h1>
+<p><strong>goldutil</strong> spr create --out <em>PATH</em> [--type
+<em>TYPE</em>] [--format <em>FORMAT</em>] <em>FRAME0</em>
+[<em>FRAMEX</em>…]</p>
+<blockquote>
+<p>Create a sprite from the given ordered list of PNG frames and write
+it to the given output path.</p>
+<p>Input images must be 256 colors paletted PNGs, the palette of the
+first frame will be used, the other palettes are discarded and all
+frames will be interpreted using the first frame's palette.<br />
+If the palette has under 256 colors it will be extended to 256, putting
+the last color of the palette in the 256th spot and remapping the image
+to match this updated palette. This matters for transparent
+formats.<br />
+If you use <strong>pngquant</strong>(1) to create your palletized input
+files, you can use its --pngbug option to ensure the transparent color
+will always be last.</p>
+<dl>
+<dt>--out PATH</dt>
+<dd>
+<p>Path to the output .spr file.</p>
+</dd>
+<dt>--type TYPE</dt>
+<dd>
+<p>Sprite type, <em>TYPE</em> can be any one of:</p>
+<p>· <em>parallel</em> Always face camera (default).<br />
+· <em>parallel-upright</em> Always face camera except for the locked Z
+axis.<br />
+· <em>oriented</em> Orientation set by the level.<br />
+· <em>parallel-oriented</em> Faces camera but can be rotated by the
+level.<br />
+· <em>facing-upright</em> Like <em>parallel-upright</em> but faces the
+player origin instead of the camera.</p>
+</dd>
+<dt>--format FORMAT</dt>
+<dd>
+<p>Texture format, determines how the palette is interpreted and the
+texture is rendered by the engine. <em>FORMAT</em> can be any one
+of:</p>
+<p>· <em>normal</em> 256 colors sprite (default).<br />
+· <em>additive</em> Additive 256 colors sprite, dark values are rendered
+as transparent, the darker the less opacity.<br />
+· <em>index-alpha</em> Monochromatic sprite with 255 alpha levels, the
+base color is determined by the last color on the palette.<br />
+· <em>alpha-test</em> Transparent 255 colors sprite. The 256th color on
+the palette will be rendered as fully transparent.</p>
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> spr extract [--dir <em>PATH</em>]
+<em>FILE</em></p>
+<blockquote>
+<p>Output all frames of a sprite to the current directory. The output
+files will be named after the original sprite file name plus a frame
+number suffix and an extension.</p>
+<dl>
+<dt>--dir PATH</dt>
+<dd>
+<p>Output frames to the specified directory instead of the current
+one.</p>
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> spr info <em>FILE</em></p>
+<blockquote>
+<p>Print parsed frame data from the given <em>FILE</em>.</p>
+</blockquote>
+<h1>WAD MANIPULATION</h1>
+<p><strong>goldutil</strong> wad create --out <em>PATH</em>
+<em>INPUT0</em> [<em>INPUTX</em>…]</p>
+<blockquote>
+<p>Create a WAD file from a list of PNG files and directories.
+Directories are not scanned recursively and only PNG files are
+used.<br />
+File base names (without extensions) are uppercased and used as texture
+names.<br />
+<strong>Warning</strong>: Names exceeding 15 chars will trigger an error
+as this is the maximum length supported by the WAD format.</p>
+<dl>
+<dt>--out PATH</dt>
+<dd>
+<p>Path to the output .wad file.</p>
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> wad extract --dir <em>DIR</em>
+<em>PATH</em></p>
+<blockquote>
+<p>Extract a WAD file in the given <em>DIR</em> as a bunch of PNG
+files.</p>
+<dl>
+<dt>--dir DIR</dt>
+<dd>
+<p>Path to the directory where to write PNG files.</p>
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> wad info <em>PATH</em></p>
+<blockquote>
+<p>Print parsed data from a WAD file.</p>
+</blockquote>

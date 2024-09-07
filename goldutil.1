@@ -1,0 +1,195 @@
+.TH GOLDUTIL 1
+.SH NAME
+goldutil \- GoldSrc modding utility.
+.\"
+.\"
+.\" {{{
+.SH SYNOPSIS
+.B goldutil
+[global options] <command> [command options]
+.br
+.B goldutil
+bsp info|remap-materials
+.I FILE
+.br
+.B goldutil
+map export|graph
+.I FILE
+.br
+.B goldutil
+spr create|extract|info
+.I FILE
+.br
+.B goldutil
+wad create|extract|info
+.I FILE
+.\" }}}
+.\" {{{
+.SH DESCRIPTION
+.B goldutil
+can read, modify, and write multiple file formats used by the GoldSrc
+(Half-Life) engine.
+.\" }}}
+.\" {{{
+.SH BSP MANIPULATION
+.B goldutil
+bsp info
+.I FILE
+.RS 4
+Print parsed data from a BSP.
+.RE
+.\"
+.PP
+.B goldutil
+bsp remap-materials
+-\-out \fIPATH\fR
+[-\-verbose]
+[-\-original-materials \fIPATH\fR]
+[-\-replacement-materials \fIPATH\fR]
+.I FILE
+.RS 4
+On a BSP with embedded textures, change their names so they can match what is
+in the original game \fImaterials.txt\fR.
+.br
+This allows setting proper material sounds to custom textures without having to distribute a \fImaterials.txt\fR file.
+.br
+\fBWarning\fR: The BSP cannot use any of the textures listed in the original \fImaterials.txt\fR
+.IP "-\-out \fIPATH\fR"
+Where to write the remapped BSP.
+.IP -\-verbose
+Output to STDOUT the details of what materials were remapped to.
+.IP -\-original-materials \fIPATH\fR
+Path to the \fImaterials.txt\fR file of the original game, defaults to \fIvalve/sound/materials.txt\fR.
+.IP -\-replacement-materials \fIPATH\fR
+Path to the replacement \fImaterials.txt\fR file, defaults to \fIvalve_addon/sound/materials.txt\fR.
+.RE
+.\" }}}
+.\" {{{
+.SH MAP MANIPULATION
+.B goldutil
+map export [-\-cleanup-db]
+.I FILE
+.RS 4
+Export a .map file the way TrenchBroom does, removing all layers marked as not
+exported. Output is written to stdout.
+.IP -\-cleanup-db 4
+Also remove properties added by TrenchBroom that are not understood by the
+engine and spam the console with errors.
+.RE
+.\"
+.PP
+.B goldutil
+map graph
+.I FILE
+.RS 4
+Create a graphviz digraph of entity caller/callee relationships from a .map
+file. ripent exports use the same format and can be read too. Output is
+written to stdout.
+.RE
+.\" }}}
+.\" {{{
+.SH SPR MANIPULATION
+.B goldutil
+spr create
+-\-out \fIPATH\fR
+[-\-type \fITYPE\fR]
+[-\-format \fIFORMAT\fR]
+\fIFRAME0\fR [\fIFRAMEX\fR…]
+.RS 4
+Create a sprite from the given ordered list of PNG frames and write it to the given output path.
+.PP
+Input images must be 256 colors paletted PNGs, the palette of the first frame
+will be used, the other palettes are discarded and all frames will be
+interpreted using the first frame's palette.
+.br
+If the palette has under 256 colors it will be extended to 256, putting the
+last color of the palette in the 256th spot and remapping the image to match
+this updated palette. This matters for transparent formats.
+.br
+If you use
+.BR pngquant (1)
+to create your palletized input files, you can use its -\-pngbug option to ensure the transparent color will always be last.
+.IP "-\-out \fIPATH\fR" 4
+Path to the output .spr file.
+.IP "-\-type \fITYPE\fR" 4
+Sprite type, \fITYPE\fR can be any one of:
+.RS 8
+\(bu
+\fIparallel\fR\ Always face camera (default).
+.br
+\(bu
+\fIparallel-upright\fR Always face camera except for the locked Z axis.
+.br
+\(bu
+\fIoriented\fR Orientation set by the level.
+.br
+\(bu
+\fIparallel-oriented\fR Faces camera but can be rotated by the level.
+.br
+\(bu
+\fIfacing-upright\fR Like \fIparallel-upright\fR but faces the player origin instead of the camera.
+.RE
+.IP "-\-format \fIFORMAT\fR" 4
+Texture format, determines how the palette is interpreted and the texture is rendered by the engine.
+\fIFORMAT\fR can be any one of:
+.RS 8
+\(bu
+\fInormal\fR\ 256 colors sprite (default).
+.br
+\(bu
+\fIadditive\fR\ Additive 256 colors sprite, dark values are rendered as transparent, the darker the less opacity.
+.br
+\(bu
+\fIindex-alpha\fR\ Monochromatic sprite with 255 alpha levels, the base color is determined by the last color on the palette.
+.br
+\(bu
+\fIalpha-test\fR\ Transparent 255 colors sprite. The 256th color on the palette will be rendered as fully transparent.
+.RE
+.RE
+.PP
+.B goldutil
+spr extract
+[-\-dir \fIPATH\fR]
+.I FILE
+.RS 4
+Output all frames of a sprite to the current directory. The output files will be named after the original sprite file name plus a frame number suffix and an extension.
+.IP "-\-dir \fIPATH\fR"
+Output frames to the specified directory instead of the current one.
+.RE
+.PP
+.B goldutil
+spr info
+.I FILE
+.RS 4
+Print parsed frame data from the given \fIFILE\fR.
+.RE
+.\" }}}
+.\" {{{
+.SH WAD MANIPULATION
+.B goldutil
+wad create -\-out \fIPATH\fR \fIINPUT0\fR [\fIINPUTX\fR…]
+.RS 4
+Create a WAD file from a list of PNG files and directories.
+Directories are not scanned recursively and only PNG files are used.
+.br
+File base names (without extensions) are uppercased and used as texture names.
+.br
+\fBWarning\fR: Names exceeding 15 chars will trigger an error as this is the maximum length supported by the WAD format.
+.IP "-\-out \fIPATH\fR" 4
+Path to the output .wad file.
+.RE
+.PP
+.B goldutil
+wad extract -\-dir \fIDIR\fR \fIPATH\fR
+.RS 4
+Extract a WAD file in the given \fIDIR\fR as a bunch of PNG files.
+.IP "-\-dir \fIDIR\fR" 4
+Path to the directory where to write PNG files.
+.RE
+.PP
+.B goldutil
+wad info \fIPATH\fR
+.RS 4
+Print parsed data from a WAD file.
+.RE
+.\" }}}
