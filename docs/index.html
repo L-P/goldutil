@@ -5,6 +5,7 @@
 options]<br />
 <strong>goldutil</strong> bsp info|remap-materials <em>FILE</em><br />
 <strong>goldutil</strong> map export|graph <em>FILE</em><br />
+<strong>goldutil</strong> nod export <em>FILE</em><br />
 <strong>goldutil</strong> spr create|extract|info <em>FILE</em><br />
 <strong>goldutil</strong> wad create|extract|info <em>FILE</em></p>
 <h1>DESCRIPTION</h1>
@@ -64,6 +65,32 @@ by the engine and spam the console with errors.</p>
 <p>Create a graphviz digraph of entity caller/callee relationships from
 a .map file. ripent exports use the same format and can be read too.
 Output is written to stdout.</p>
+</blockquote>
+<h1>NOD MANIPULATION</h1>
+<p><strong>goldutil</strong> nod export [--input-format <em>FORMAT</em>]
+<em>FILE</em></p>
+<blockquote>
+<p>Extract node positions from a .nod graph into a .map populated with
+corresponding info_node entities.<br />
+Links between nodes are represented using target/targetname, nodes are
+duplicated to allow showing all links, TrenchBroom layers are used to
+separate links by hull type. The resulting .map file is not for engine
+consumption, only for TrenchBroom-assisted archaeology.</p>
+<dl>
+<dt>--input-format FORMAT</dt>
+<dd>
+<p>Parse the .nod file using a different node graph format instead of
+using the PC release format. <em>FORMAT</em> can be any one of:</p>
+<p>· <em>valve</em> Standard Half-Life node graph (default).<br />
+· <em>decay</em> PlayStation 2 release of Half-Life: Decay.</p>
+</dd>
+<dt>--original-positions</dt>
+<dd>
+<p>Use the node positions as they were set in the original .map instead
+of their position after being dropped to the ground during graph
+generation.</p>
+</dd>
+</dl>
 </blockquote>
 <h1>SPR MANIPULATION</h1>
 <p><strong>goldutil</strong> spr create --out <em>PATH</em> [--type
