@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -44,6 +45,24 @@ func newApp() *cli.App {
 			{
 				Name:   "help",
 				Action: doHelp,
+			},
+			{
+				Name: "nod",
+				Subcommands: []*cli.Command{
+					{
+						Name: "export",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name: "original-positions",
+							},
+							&cli.StringFlag{
+								Name:  "input-format",
+								Value: "valve",
+							},
+						},
+						Action: doNodExport,
+					},
+				},
 			},
 			{
 				Name: "map",
@@ -463,6 +482,69 @@ func doHelp(cCtx *cli.Context) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("unable to run man: %w", err)
 	}
+
+	return nil
+}
+
+func doNodExport(cCtx *cli.Context) error {
+	format, ok := map[string]goldsrc.NodeFormat{
+		"valve": goldsrc.NodeFormatValve,
+		"decay": goldsrc.NodeFormatDecay,
+	}[cCtx.String("input-format")]
+	if !ok {
+		return errors.New("unrecognize .nod format")
+	}
+
+	f, err := os.Open(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to open file for reading: %w", err)
+	}
+	defer f.Close()
+
+	nodes, links, err := goldsrc.ReadNodes(f, format)
+	if err != nil {
+		return fmt.Errorf("unable to read nodes: %w", err)
+	}
+
+	var (
+		original = cCtx.Bool("original-positions")
+		entities = make([]qmap.Entity, 0, len(nodes)+len(links))
+	)
+
+	for i, v := range nodes {
+		entities = append(entities, qmap.NewEntity(map[string]string{
+			qmap.KClass:  v.ClassName(),
+			qmap.KOrigin: v.Position(original).String(),
+			qmap.KName:   fmt.Sprintf("node#%d", i),
+		}))
+	}
+
+	for linkTypeBitID := 0; linkTypeBitID <= goldsrc.LinkTypeBitMax; linkTypeBitID++ {
+		entities = append(entities, qmap.NewEntity(map[string]string{
+			qmap.KClass:            "func_group",
+			"_tb_type":             "_tb_layer",
+			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, goldsrc.LinkTypeName(linkTypeBitID)),
+			"_tb_id":               strconv.Itoa(linkTypeBitID + 1),
+			"_tb_layer_sort_index": strconv.Itoa(linkTypeBitID + 1),
+		}))
+
+		for _, v := range links {
+			if (v.LinkInfo & (1 << linkTypeBitID)) == 0 {
+				continue
+			}
+
+			src := entities[v.SrcNode]
+			src.SetProperty("target", fmt.Sprintf("node#%d", v.DstNode))
+			src.SetProperty("_tb_layer", strconv.Itoa(linkTypeBitID+1))
+			entities = append(entities, src)
+		}
+	}
+
+	var out qmap.QMap
+	for _, v := range entities {
+		out.AddEntity(v)
+	}
+	fmt.Println(out.String())
 
 	return nil
 }

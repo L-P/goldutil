@@ -1,3 +1,6 @@
+# v1.2.0
+- Add graph node extraction.
+
 # v1.1.1
 - Replace help command with a single manpage.
 

@@ -30,6 +30,20 @@ type Entity struct {
 	keyLookup          map[string]string
 }
 
+func NewEntity(props map[string]string) Entity {
+	var ent Entity
+	for k, v := range props {
+		ent.addProperty(Property{
+			key:   k,
+			value: v,
+		})
+	}
+
+	ent.finalize()
+
+	return ent
+}
+
 type Property struct {
 	line       int
 	key, value string
@@ -81,6 +95,22 @@ func (e Entity) Brushes() []Brush {
 
 func (e *Entity) addProperty(p Property) {
 	e.props = append(e.props, p)
+}
+
+func (e *Entity) SetProperty(k, v string) {
+	e.keyLookup[k] = v
+
+	for i := range e.props {
+		if e.props[i].key == k {
+			e.props[i].value = v
+			return
+		}
+	}
+
+	e.addProperty(Property{
+		key:   k,
+		value: v,
+	})
 }
 
 func (e *Entity) RemoveProperty(key string) {

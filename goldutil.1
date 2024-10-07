@@ -17,6 +17,10 @@ map export|graph
 .I FILE
 .br
 .B goldutil
+nod export
+.I FILE
+.br
+.B goldutil
 spr create|extract|info
 .I FILE
 .br
@@ -86,6 +90,38 @@ Create a graphviz digraph of entity caller/callee relationships from a .map
 file. ripent exports use the same format and can be read too. Output is
 written to stdout.
 .RE
+.\" }}}
+.\" {{{
+.SH NOD MANIPULATION
+.B goldutil
+nod export
+[-\-input-format \fIFORMAT\fR]
+.I FILE
+.RS 4
+Extract node positions from a .nod graph into a .map populated with
+corresponding info_node entities.
+.br
+Links between nodes are represented using target/targetname, nodes are
+duplicated to allow showing all links, TrenchBroom layers are used to separate
+links by hull type. The resulting .map file is not for engine consumption, only
+for TrenchBroom-assisted archaeology.
+.IP "-\-input-format \fIFORMAT\fR" 4
+Parse the .nod file using a different node graph format  instead of using the
+PC release format.
+\fIFORMAT\fR can be any one of:
+.RS 8
+\(bu
+\fIvalve\fR\ Standard Half-Life node graph (default).
+.br
+\(bu
+\fIdecay\fR\ PlayStation 2 release of Half-Life: Decay.
+.RE
+.IP -\-original-positions 4
+Use the node positions as they were set in the original .map instead of their
+position after being dropped to the ground during graph generation.
+.RE
+.\"
+.PP
 .\" }}}
 .\" {{{
 .SH SPR MANIPULATION
