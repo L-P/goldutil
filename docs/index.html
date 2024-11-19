@@ -48,10 +48,12 @@ defaults to <em>valve/sound/materials.txt</em>.</p>
 </dl>
 </blockquote>
 <h1>MAP MANIPULATION</h1>
-<p><strong>goldutil</strong> map export [--cleanup-db] <em>FILE</em></p>
+<p><strong>goldutil</strong> map export [--cleanup-db]
+<em>[FILE]</em></p>
 <blockquote>
 <p>Export a .map file the way TrenchBroom does, removing all layers
-marked as not exported. Output is written to stdout.</p>
+marked as not exported. Output is written to stdout, if no <em>FILE</em>
+is provided the map will be read from standard input.</p>
 <dl>
 <dt>--cleanup-db</dt>
 <dd>

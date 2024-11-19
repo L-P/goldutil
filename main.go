@@ -281,12 +281,7 @@ func doMapGraph(cCtx *cli.Context) error {
 }
 
 func doMapExport(cCtx *cli.Context) error {
-	path := cCtx.Args().Get(0)
-	if path == "" {
-		return errors.New("expected one argument: the .map to export")
-	}
-
-	qm, err := qmap.LoadFromFile(path)
+	qm, err := loadMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -299,6 +294,14 @@ func doMapExport(cCtx *cli.Context) error {
 	fmt.Print(clean.String())
 
 	return nil
+}
+
+func loadMap(path string) (qmap.QMap, error) {
+	if path == "" {
+		return qmap.LoadFromReader(os.Stdin)
+	} else {
+		return qmap.LoadFromFile(path)
+	}
 }
 
 func doWADExtract(cCtx *cli.Context) error {
