@@ -1,3 +1,6 @@
+# v1.2.1
+- Allow loading maps from stdin
+
 # v1.2.0
 - Add graph node extraction.
 
