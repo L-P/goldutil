@@ -50,7 +50,9 @@ func (mip MIPTexture) Size() int32 {
 }
 
 func NewMIPTexture(nameStr string, width, height int) (MIPTexture, error) {
-	name, err := NewTextureName(nameStr)
+	// Lumps names are lowercase and there's hardcoded case-sensitive checks
+	// on some texture names (eg. "sky").
+	name, err := NewTextureName(strings.ToLower(nameStr))
 	if err != nil {
 		return MIPTexture{}, fmt.Errorf("unable to create texture name: %w", err)
 	}

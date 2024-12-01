@@ -248,7 +248,7 @@ func (wad *WAD) AddTexture(mip MIPTexture) error {
 		return fmt.Errorf("a texture with this name already exists in the wad: %s", mip.Name.String())
 	}
 
-	// Lump names are lowercase, uppercase in halflife.wad. Copy that behavior.
+	// Lump names are lowercase, entry names are uppercase, cf. halflife.wad.
 	entryName, err := NewTextureName(strings.ToUpper(mip.Name.String()))
 	if err != nil {
 		return fmt.Errorf("invalid entry name '%s': %w", entryName.String(), err)

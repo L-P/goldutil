@@ -1,3 +1,6 @@
+# next
+- Ensure lump names are lowercase
+
 # v1.4.1
 - Add `path_track` `message` property to targets when graphing entities.
 - Skip `multi_manager` `angle` property when graphing entities.
@@ -12,10 +15,10 @@
 - Allow loading maps from stdin
 
 # v1.2.0
-- Add graph node extraction.
+- Add graph node extraction
 
 # v1.1.1
-- Replace help command with a single manpage.
+- Replace help command with a single manpage
 
 # v1.1.0
 - BC break: migrated to urfave/cli, all commands are now sub-subcommands
