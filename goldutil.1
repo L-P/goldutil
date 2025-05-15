@@ -72,13 +72,13 @@ Path to the replacement \fImaterials.txt\fR file, defaults to \fIvalve_addon/sou
 .\" {{{
 .SH MAP MANIPULATION
 .B goldutil
-map export [-\-cleanup-db]
+map export [-\-cleanup-tb]
 .I [FILE]
 .RS 4
 Export a .map file the way TrenchBroom does, removing all layers marked as not
 exported. Output is written to stdout, if no \fIFILE\fR is provided the map will
 be read from standard input.
-.IP -\-cleanup-db 4
+.IP -\-cleanup-tb 4
 Also remove properties added by TrenchBroom that are not understood by the
 engine and spam the console with errors.
 .RE
