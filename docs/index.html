@@ -195,3 +195,20 @@ files.</p>
 <blockquote>
 <p>Print parsed data from a WAD file.</p>
 </blockquote>
+<h1>MISC MODDING UTLITIES</h1>
+<p><strong>goldutil</strong> mod filter-materials --in
+<em>MATERIALS</em> <em>BSP0</em> [<em>BSPX</em>…]</p>
+<blockquote>
+<p>Takes a materials.txt file and only keep the texture names that are
+used in the given <em>BSP</em> files.<br />
+This is useful to keep a final materials.txt under 512 entries when
+working with large texture collections.<br />
+Filtered materials are written to STDOUT.<br />
+</p>
+<dl>
+<dt>--in MATERIALS</dt>
+<dd>
+<p>Path to the materials.txt file you want to filter.</p>
+</dd>
+</dl>
+</blockquote>

@@ -65,6 +65,21 @@ func newApp() *cli.App {
 				},
 			},
 			{
+				Name: "mod",
+				Subcommands: []*cli.Command{
+					{
+						Name: "filter-materials",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "in",
+								Value: "sound/materials.full.txt",
+							},
+						},
+						Action: doModFilterMaterials,
+					},
+				},
+			},
+			{
 				Name: "map",
 				Subcommands: []*cli.Command{
 					{

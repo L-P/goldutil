@@ -7,8 +7,8 @@ all: $(EXEC) docs/index.html
 $(EXEC):
 	go build ${BUILDFLAGS}
 
-docs/index.html:
-	pandoc -f man -o docs/index.html goldutil.1
+docs/index.html: goldutil.1
+	pandoc -f man -o "$@" "$<"
 
 .PHONY: $(EXEC) test lint windows
 

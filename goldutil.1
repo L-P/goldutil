@@ -230,3 +230,20 @@ wad info \fIPATH\fR
 Print parsed data from a WAD file.
 .RE
 .\" }}}
+.\" {{{
+.SH MISC MODDING UTLITIES
+.B goldutil
+mod filter-materials \-\-in \fIMATERIALS\fR \fIBSP0\fR [\fIBSPX\fR…]
+.RS 4
+Takes a materials.txt file and only keep the texture names that are used in the
+given \fIBSP\fR files.
+.br
+This is useful to keep a final materials.txt under 512 entries when working
+with large texture collections.
+.br
+Filtered materials are written to STDOUT.
+.br
+.IP "-\-in \fIMATERIALS\fR" 4
+Path to the materials.txt file you want to filter.
+.RE
+.\" }}}
