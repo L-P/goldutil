@@ -1,3 +1,6 @@
+# v1.3.0
+- Add command mod filter-materials
+
 # v1.2.1
 - Allow loading maps from stdin
 
