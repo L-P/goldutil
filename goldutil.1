@@ -25,6 +25,9 @@ wad create|extract|info
 .br
 .B goldutil
 mod filter-materials
+.br
+.B goldutil
+mod filter-wads
 .\" }}}
 .\" {{{
 .SH DESCRIPTION
@@ -243,5 +246,28 @@ Filtered materials are written to STDOUT.
 .br
 .IP "-\-in \fIMATERIALS\fR" 4
 Path to the materials.txt file you want to filter.
+.RE
+.PP
+.B goldutil
+mod filter-wads \-\-out \fIWAD_OUT\fR -bspdir \fIBSPDIR\fR \fIWAD_IN0\fR [\fIWAD_INX\fR…]
+.RS 4
+Reads all BSP files at the given directory and creates a WAD containing only
+the textures used by the BSPs.
+.br
+This allows using large texture collections during development but only
+distribute the smallest possible WAD at release time.
+.br
+Be aware that Half-Life requires the wads from the "wads" property to be
+present and will attempt to load them.
+.br
+Before release you should generate the output WAD, remove the WADs that were
+used during filtering from your worldspawn "wads" property, add the output WAD,
+and then rebuild your maps.
+.br
+.IP "-\-out \fIWAD_OUT\fR" 4
+Path were the output WAD will be written.
+.br
+.IP "-\-bspdir \fIBSPDIR\fR" 4
+Path of the directory containing the BSPs to use as a used texture list.
 .RE
 .\" }}}

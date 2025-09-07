@@ -1,3 +1,6 @@
+# v1.4.0
+- Add command mod filter-wads
+
 # v1.3.0
 - Add command mod filter-materials
 

@@ -77,6 +77,20 @@ func newApp() *cli.App {
 						},
 						Action: doModFilterMaterials,
 					},
+					{
+						Name: "filter-wads",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "bspdir",
+								Value: "valve_addon/maps",
+							},
+							&cli.StringFlag{
+								Name:  "out",
+								Value: "valve_addon/filtered.wad",
+							},
+						},
+						Action: doModFilterWADs,
+					},
 				},
 			},
 			{

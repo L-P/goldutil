@@ -8,7 +8,8 @@ options] [command arguments]<br />
 <strong>goldutil</strong> nod export<br />
 <strong>goldutil</strong> spr create|extract|info<br />
 <strong>goldutil</strong> wad create|extract|info<br />
-<strong>goldutil</strong> mod filter-materials</p>
+<strong>goldutil</strong> mod filter-materials<br />
+<strong>goldutil</strong> mod filter-wads</p>
 <h1>DESCRIPTION</h1>
 <p><strong>goldutil</strong> can read, modify, and write multiple file
 formats used by the GoldSrc (Half-Life) engine.</p>
@@ -210,6 +211,32 @@ Filtered materials are written to STDOUT.<br />
 <dt>--in MATERIALS</dt>
 <dd>
 <p>Path to the materials.txt file you want to filter.</p>
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> mod filter-wads --out <em>WAD_OUT</em>
+-bspdir <em>BSPDIR</em> <em>WAD_IN0</em> [<em>WAD_INX</em>…]</p>
+<blockquote>
+<p>Reads all BSP files at the given directory and creates a WAD
+containing only the textures used by the BSPs.<br />
+This allows using large texture collections during development but only
+distribute the smallest possible WAD at release time.<br />
+Be aware that Half-Life requires the wads from the "wads" property to be
+present and will attempt to load them.<br />
+Before release you should generate the output WAD, remove the WADs that
+were used during filtering from your worldspawn "wads" property, add the
+output WAD, and then rebuild your maps.<br />
+</p>
+<dl>
+<dt>--out WAD_OUT</dt>
+<dd>
+<p>Path were the output WAD will be written.<br />
+</p>
+</dd>
+<dt>--bspdir BSPDIR</dt>
+<dd>
+<p>Path of the directory containing the BSPs to use as a used texture
+list.</p>
 </dd>
 </dl>
 </blockquote>
