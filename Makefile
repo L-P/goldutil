@@ -2,7 +2,7 @@ VERSION=$(shell git describe --tags)
 BUILDFLAGS=-ldflags '-X main.Version=${VERSION}'
 EXEC=$(shell basename "$(shell pwd)")
 
-all: $(EXEC) docs/index.html
+all: $(EXEC)
 
 $(EXEC):
 	go build ${BUILDFLAGS}
