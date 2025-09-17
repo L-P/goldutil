@@ -1,3 +1,7 @@
+# v1.4.1
+- Add `path_track` `message` property to targets when graphing entities.
+- Skip `multi_manager` `angle` property when graphing entities.
+
 # v1.4.0
 - Add command mod filter-wads
 

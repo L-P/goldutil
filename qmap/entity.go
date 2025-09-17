@@ -14,6 +14,7 @@ const (
 	KName       = "targetname"
 	KOrigin     = "origin"
 	KTarget     = "target"
+	KMessage    = "message"
 
 	// Common but not strictly shared.
 	KMaster = "master"

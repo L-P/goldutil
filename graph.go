@@ -29,6 +29,11 @@ func GraphQMap(qm qmap.QMap, w io.Writer) {
 			}
 		}
 
+		message, ok := v.GetProperty(qmap.KMessage)
+		if ok && class == "path_track" {
+			fmt.Fprintf(w, "  %s -> %s;\n", name, message)
+		}
+
 		triggerTarget, ok := v.GetProperty(qmap.KTriggerTarget)
 		if ok && triggerTarget != "" {
 			condition, ok := v.GetProperty(qmap.KTriggerCondition)
@@ -68,6 +73,11 @@ func graphMultiManager(mm qmap.Entity, w io.Writer) {
 		}
 
 		if strings.HasPrefix(target, "_tb_") {
+			continue
+		}
+
+		// HACK: TB adds an angle property to multi_manager belonging to linked groups.
+		if target == "angle" {
 			continue
 		}
 
