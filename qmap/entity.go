@@ -55,7 +55,7 @@ type Brush struct {
 	planes             []string // raw planes, unparsed
 }
 
-func (e Entity) Name() string {
+func (e *Entity) Name() string {
 	name, ok := e.GetProperty(KName)
 	if ok {
 		return name
@@ -64,7 +64,7 @@ func (e Entity) Name() string {
 	return fmt.Sprintf("__%s_L%d", e.Class(), e.startLine)
 }
 
-func (e Entity) Class() string {
+func (e *Entity) Class() string {
 	class, ok := e.GetProperty(KClass)
 	if ok {
 		return class
@@ -90,7 +90,7 @@ func (e *Entity) PropertyMap() map[string]string {
 	return e.keyLookup
 }
 
-func (e Entity) Brushes() []Brush {
+func (e *Entity) Brushes() []Brush {
 	return e.brushes
 }
 
@@ -133,7 +133,7 @@ func (b *Brush) addPlane(plane string) {
 	b.planes = append(b.planes, plane)
 }
 
-func (e Entity) String() string {
+func (e *Entity) String() string {
 	var b strings.Builder
 
 	b.WriteString("{\n")
@@ -153,6 +153,6 @@ func (e Entity) String() string {
 	return b.String()
 }
 
-func (b Brush) String() string {
+func (b *Brush) String() string {
 	return "{\n" + strings.Join(b.planes, "\n") + "\n}\n"
 }

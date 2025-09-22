@@ -54,6 +54,10 @@ linters:
     - zerologlint
   disable:
     - musttag
+  settings:
+    gosec:
+      excludes:
+        - G115 # never a security issue in our cases
   exclusions:
     generated: lax
     presets:

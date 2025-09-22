@@ -61,7 +61,7 @@ type texture struct {
 // Returns available texture names.
 // The canonical name is the directory entry name (all uppercase in halflife.wad).
 // The texture lump name is unused.
-func (wad WAD) Names() []string {
+func (wad *WAD) Names() []string {
 	names := make([]string, 0, len(wad.textures))
 	for i := range wad.textures {
 		names = append(names, wad.textures[i].entry.Name.String())
@@ -70,7 +70,7 @@ func (wad WAD) Names() []string {
 	return names
 }
 
-func (wad WAD) GetTexture(name string) (MIPTexture, bool) {
+func (wad *WAD) GetTexture(name string) (MIPTexture, bool) {
 	index, ok := wad.nameToTextureIndex[name]
 	if !ok {
 		return MIPTexture{}, false
@@ -79,13 +79,13 @@ func (wad WAD) GetTexture(name string) (MIPTexture, bool) {
 	return wad.textures[index].mip, true
 }
 
-func (wad WAD) String() string {
+func (wad *WAD) String() string {
 	var w strings.Builder
 
 	w.WriteString("Header:\n")
 	w.WriteString(wad.Header.String())
 
-	fmt.Fprintf(&w, "\nDirectory (%d entries):", wad.Header.EntriesCount)
+	fmt.Fprintf(&w, "\nDirectory (%d entries):", wad.EntriesCount)
 	for i, tex := range wad.textures {
 		fmt.Fprintf(&w, "\nEntry #%d header:\n", i)
 		w.WriteString(tex.entry.String())
@@ -270,8 +270,8 @@ func (wad *WAD) AddTexture(mip MIPTexture) error {
 
 func (wad *WAD) Write(w io.Writer) error {
 	totalMIPSize := wad.getTotalMIPSize()
-	wad.Header.EntriesCount = int32(len(wad.textures))
-	wad.Header.EntriesOffset = HeaderSize + totalMIPSize
+	wad.EntriesCount = int32(len(wad.textures))
+	wad.EntriesOffset = HeaderSize + totalMIPSize
 
 	if err := binary.Write(w, binary.LittleEndian, wad.Header); err != nil {
 		return fmt.Errorf("unable to write Header: %w", err)
@@ -320,7 +320,7 @@ func (wad *WAD) writeTextures(w io.Writer) (map[int]int32, error) {
 	return offsetMap, nil
 }
 
-func (wad WAD) getTotalMIPSize() int32 {
+func (wad *WAD) getTotalMIPSize() int32 {
 	var ret int32
 
 	for i := range wad.textures {

@@ -495,7 +495,7 @@ func doHelp(cCtx *cli.Context) error {
 		return errors.New("man page is only available on *NIX operating systems, see https://l-p.github.io/goldutil/ instead")
 	}
 
-	var cmd = exec.Command("man", "-l", "-")
+	var cmd = exec.CommandContext(cCtx.Context, "man", "-l", "-")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

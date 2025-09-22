@@ -1,7 +1,7 @@
 package qmap
 
 // Returns TrenchBroom layer entities.
-func (qm QMap) GetTBLayers() []Entity {
+func (qm *QMap) GetTBLayers() []Entity {
 	var ret []Entity
 	for _, v := range qm.entities {
 		if v.Class() != "func_group" {
@@ -16,7 +16,7 @@ func (qm QMap) GetTBLayers() []Entity {
 	return ret
 }
 
-func (qm QMap) GetTBGroups() []Entity {
+func (qm *QMap) GetTBGroups() []Entity {
 	var ret []Entity
 	for _, v := range qm.entities {
 		if v.Class() != "func_group" {

@@ -87,7 +87,7 @@ func (qmap *QMap) String() string {
 }
 
 // Marshalls structs into QMap entities.
-// The qmap: field tags is of the form: property_name[,hardcoded_value]
+// The qmap: field tags is of the form: property_name[,hardcoded_value].
 func Marshal(in any) (string, error) {
 	typ := reflect.TypeOf(in)
 	numFields := typ.NumField()

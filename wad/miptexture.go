@@ -39,7 +39,7 @@ type MIPTexture struct {
 	_           [2]byte
 }
 
-func (mip MIPTexture) Size() int32 {
+func (mip *MIPTexture) Size() int32 {
 	// 2 bytes of padding, 2 bytes of palette size, the palette, the header, and the data
 	var ret = 2 + 2 + PaletteDataSize + MIPTextureHeaderSize
 	for i := range mip.MIPData {
@@ -71,7 +71,7 @@ func NewMIPTexture(nameStr string, width, height int) (MIPTexture, error) {
 	}, nil
 }
 
-func (mip MIPTexture) String() string {
+func (mip *MIPTexture) String() string {
 	var w strings.Builder
 	fmt.Fprintf(&w, "  Name: %s\n", mip.Name.String())
 	fmt.Fprintf(&w, "  Width: %d\n", mip.Width)

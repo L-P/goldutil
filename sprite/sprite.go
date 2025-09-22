@@ -47,7 +47,7 @@ func boundingRadius(iWidth, iHeight int) float32 {
 	))
 }
 
-func (spr Sprite) String() string {
+func (spr *Sprite) String() string {
 	var w strings.Builder
 
 	w.WriteString(spr.Header.String())
@@ -98,7 +98,7 @@ func (spr *Sprite) AddFrame(frame Frame) {
 	spr.NumFrames += 1
 }
 
-func (spr Sprite) Write(w io.Writer) error {
+func (spr *Sprite) Write(w io.Writer) error {
 	if err := spr.Header.Write(w); err != nil {
 		return err
 	}

@@ -32,6 +32,7 @@ func doModFilterMaterials(cCtx *cli.Context) error {
 	return nil
 }
 
+//nolint:funlen // TODO but I don't think I care enough.
 func doModFilterWADs(cCtx *cli.Context) error {
 	bspPaths, err := filepath.Glob(cCtx.String("bspdir") + "/*.bsp")
 	if err != nil {

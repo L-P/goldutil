@@ -127,7 +127,7 @@ func (sh *Header) Read(r io.Reader) error {
 	return nil
 }
 
-func (sh Header) String() string {
+func (sh *Header) String() string {
 	var w strings.Builder
 
 	w.WriteString("Header:\n")
@@ -147,6 +147,6 @@ func (sh Header) String() string {
 	return w.String()
 }
 
-func (sh Header) Write(w io.Writer) error {
+func (sh *Header) Write(w io.Writer) error {
 	return binary.Write(w, binary.LittleEndian, sh)
 }
