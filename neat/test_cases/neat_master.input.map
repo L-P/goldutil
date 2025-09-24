@@ -1,0 +1,55 @@
+// Game: Half-Life
+// Format: Valve
+// entity 0
+{
+"origin" "0 0 0"
+"targetname" "foo"
+"classname" "neat_master"
+}
+// entity 1
+{
+"classname" "trigger_relay"
+"delay" "0"
+"spawnflags" "0"
+"target" "foo"
+"targetname" "triggeron"
+"triggerstate" "1"
+}
+// entity 2
+{
+"spawnflags" "0"
+"target" "foo"
+"targetname" "triggeroff"
+"triggerstate" "0"
+"classname" "trigger_relay"
+"delay" "0"
+}
+// entity 3
+{
+"classname" "trigger_relay"
+"delay" "0"
+"spawnflags" "0"
+"target" "foo"
+"targetname" "triggertoggle"
+"triggerstate" "2"
+}
+// entity 4
+{
+"classname" "multi_manager"
+"flags" "0"
+"targetname" "mm"
+"foo" "0.1"
+"foo_on" "0.42"
+"foo#1" "0.2"
+"foo#4" "0.3"
+}
+// entity 4
+{
+"classname" "path_track"
+"message" "foo"
+}
+// entity 5
+{
+"classname" "path_corner"
+"message" "foo"
+}

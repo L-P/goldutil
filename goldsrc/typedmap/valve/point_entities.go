@@ -3,14 +3,14 @@ package valve
 type Color string // "255 255 255"
 type TriggerState int
 type Position string // "0 0 0"
+type Attenuation int
 
-func GetEntityCollection() []any {
-	return []any{
-		MultiSource{},
-		TriggerRelay{},
-		ButtonTarget{},
-	}
-}
+const (
+	AttenuationSmallRadius Attenuation = iota
+	AttenuationMediumRadius
+	AttenuationLargeRadius
+	AttenuationPlayEverywhere
+)
 
 const (
 	TriggerStateOff TriggerState = iota
@@ -56,6 +56,7 @@ type ButtonTarget struct {
 	Origin    Position
 
 	Target       string
+	TargetName   string `qmap:"targetname"`
 	Master       string
 	RenderFX     *uint8      `qmap:"renderfx,0"`
 	RenderMode   *RenderMode `qmap:"rendermode,0"`

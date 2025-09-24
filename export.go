@@ -101,7 +101,7 @@ func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
 		}
 
 		if cleanupTB {
-			removeTBProps(&v) //nolint:gosec // We don't keep the pointer.
+			removeTBProps(&v)
 		}
 
 		clean.AddEntity(v)

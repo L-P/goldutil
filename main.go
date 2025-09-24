@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
+	"goldutil/goldsrc/typedmap"
+	"goldutil/neat"
 	"goldutil/qmap"
 	"goldutil/set"
 	"goldutil/sprite"
@@ -110,6 +112,11 @@ func newApp() *cli.App {
 					{
 						Name:   "graph",
 						Action: doMapGraph,
+					},
+
+					{
+						Name:   "neat",
+						Action: doNeat,
 					},
 				},
 			},
@@ -309,6 +316,21 @@ func doMapGraph(cCtx *cli.Context) error {
 	return nil
 }
 
+func doNeat(cCtx *cli.Context) error {
+	tmap, err := loadTypedMap(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to read from map: %w", err)
+	}
+
+	if err := neat.Neatify(tmap); err != nil {
+		return fmt.Errorf("unable to neatify map: %w", err)
+	}
+
+	fmt.Print(tmap.String())
+
+	return nil
+}
+
 func doMapExport(cCtx *cli.Context) error {
 	qm, err := loadMap(cCtx.Args().Get(0))
 	if err != nil {
@@ -330,6 +352,14 @@ func loadMap(path string) (qmap.QMap, error) {
 		return qmap.LoadFromReader(os.Stdin)
 	} else {
 		return qmap.LoadFromFile(path)
+	}
+}
+
+func loadTypedMap(path string) (typedmap.TypedMap, error) {
+	if path == "" {
+		return typedmap.LoadFromReader(os.Stdin)
+	} else {
+		return typedmap.LoadFromFile(path)
 	}
 }
 

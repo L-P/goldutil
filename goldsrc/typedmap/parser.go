@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
-	"reflect"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type parserState int
@@ -23,50 +23,17 @@ type parser struct {
 	scanner *bufio.Scanner
 	state   parserState
 	tmap    TypedMap
-	types   map[string]reflect.Type
 
 	curEntity *AnonymousEntity
 	curBrush  Brush
 }
 
-func newParser(r io.Reader, types []any) parser {
+func newParser(r io.Reader) parser {
 	return parser{
 		state:   psOutside,
 		scanner: bufio.NewScanner(r),
-		types:   structsToTypeMap(types),
+		tmap:    New(),
 	}
-}
-
-func structsToTypeMap(structs []any) map[string]reflect.Type {
-	out := make(map[string]reflect.Type, len(structs))
-	for i := range structs {
-		if className, typ, ok := structToType(structs[i]); ok {
-			out[className] = typ
-		}
-	}
-
-	return out
-}
-
-func structToType(v any) (string, reflect.Type, bool) {
-	typ := reflect.TypeOf(v)
-	if typ.Kind() != reflect.Struct {
-		return "", nil, false
-	}
-
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		if !field.IsExported() {
-			continue
-		}
-
-		propName, propDefault, hasDefault := strings.Cut(field.Tag.Get(TagName), ",")
-		if propName == "classname" && hasDefault && propDefault != "" {
-			return propDefault, typ, true
-		}
-	}
-
-	return "", nil, false
 }
 
 func (p *parser) run() (TypedMap, error) {
@@ -115,7 +82,8 @@ func (p *parser) parseOutside(line string, lineNumber int) (parserState, error) 
 		return psNone, ParseError{"expected start of entity", lineNumber, line}
 	}
 
-	p.curEntity = NewAnonymousEntity(nil)
+	newEnt := NewAnonymousEntity()
+	p.curEntity = &newEnt
 
 	return psInEntity, nil
 }
@@ -123,19 +91,12 @@ func (p *parser) parseOutside(line string, lineNumber int) (parserState, error) 
 func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
 	switch line {
 	case "}":
-		classname := p.curEntity.kvs["classname"]
-		typ, hasType := p.types[classname]
-		log.Printf("classname: %s; hasType: %t", classname, hasType)
-		if hasType {
-			dst := reflect.New(typ).Interface()
-			if err := p.curEntity.UnmarshalInto(dst); err != nil {
-				return psNone, fmt.Errorf("unable to unmarshal entity: %w", err)
-			}
-			p.tmap = append(p.tmap, dst)
-		} else {
-			p.tmap = append(p.tmap, p.curEntity)
+		index, err := uuid.NewRandom()
+		if err != nil {
+			return psNone, fmt.Errorf("unable to generate UUID as entity index: %w", err)
 		}
 
+		p.tmap[index] = *p.curEntity
 		p.curEntity = nil
 
 		return psOutside, nil
@@ -152,7 +113,7 @@ func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
 
 	// Only keep last value.
 	// TODO: Double-check that it's what the engine does.
-	p.curEntity.kvs[pKey] = pValue
+	p.curEntity.KVs[pKey] = pValue
 
 	return psInEntity, nil
 }

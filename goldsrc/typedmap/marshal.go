@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"goldutil/goldsrc/typedmap/valve"
+	"maps"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -13,6 +15,24 @@ import (
 const (
 	TagName = "qmap"
 )
+
+// Converts a qmap tagged struct into an anonymous entity.
+// Shortcuts were taken here.
+func NewAnonymousEntityFromStruct(in any) (AnonymousEntity, error) {
+	var zero AnonymousEntity
+
+	marshalled, err := Marshal(in)
+	if err != nil {
+		return zero, fmt.Errorf("unable to marshall struct: %w", err)
+	}
+
+	tmap, err := LoadFromReader(bytes.NewReader(marshalled))
+	if err != nil {
+		return zero, fmt.Errorf("unable to parse entity back: %w", err)
+	}
+
+	return slices.Collect(maps.Values(tmap))[0], nil
+}
 
 // Marshals structs and pointer to structs into TypedMap entities.
 // The qmap: field tags is of the form: property_name[,default_value].
@@ -103,13 +123,11 @@ func toStringValue(in any) string {
 		return strconv.FormatFloat(float64(v), 'f', -1, 32)
 	case float64:
 		return strconv.FormatFloat(v, 'f', -1, 64)
-	case valve.Color:
-		return string(v)
 	case string:
 		return v
+	default:
+		return fmt.Sprintf("%s", v)
 	}
-
-	return ""
 }
 
 func (ent *AnonymousEntity) UnmarshalInto(v any) error {
@@ -131,7 +149,7 @@ func (ent *AnonymousEntity) UnmarshalInto(v any) error {
 			propName = toSnakeCase(destTyp.Field(i).Name)
 		}
 
-		propValue, ok := ent.kvs[propName]
+		propValue, ok := ent.KVs[propName]
 		if !ok {
 			continue
 		}
