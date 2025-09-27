@@ -4,7 +4,7 @@
 <p><strong>goldutil</strong> [global options] &lt;command&gt; [command
 options] [command arguments]<br />
 <strong>goldutil</strong> bsp info|remap-materials<br />
-<strong>goldutil</strong> map export|graph<br />
+<strong>goldutil</strong> map export|graph|neat<br />
 <strong>goldutil</strong> nod export<br />
 <strong>goldutil</strong> spr create|extract|info<br />
 <strong>goldutil</strong> wad create|extract|info<br />
@@ -64,7 +64,18 @@ by the engine and spam the console with errors.</p>
 </dd>
 </dl>
 </blockquote>
-<p><strong>goldutil</strong> map graph <em>FILE</em></p>
+<p><strong>goldutil</strong> map neat [--moddir] <em>FILE</em></p>
+<blockquote>
+<p>Process neat_ entity macros and outputs the generated .map to
+standard output.</p>
+<dl>
+<dt>--moddir</dt>
+<dd>
+
+</dd>
+</dl>
+</blockquote>
+<p><strong>goldutil</strong> map graph <em>[FILE]</em></p>
 <blockquote>
 <p>Create a graphviz digraph of entity caller/callee relationships from
 a .map file. ripent exports use the same format and can be read too.

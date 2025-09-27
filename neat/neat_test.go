@@ -6,6 +6,7 @@ import (
 	"goldutil/neat"
 	"io/fs"
 	"maps"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -31,7 +32,10 @@ func TestNeatify(t *testing.T) {
 			tmap, err := typedmap.LoadFromReader(input)
 			require.NoError(t, err)
 
-			require.NoError(t, neat.Neatify(tmap))
+			mod, err := os.OpenRoot("test_cases")
+			require.NoError(t, err)
+
+			require.NoError(t, neat.Neatify(tmap, mod))
 
 			expected, err := cases.Open(expectedPath)
 			require.NoError(t, err)

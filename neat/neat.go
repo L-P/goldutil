@@ -2,16 +2,22 @@ package neat
 
 import (
 	"fmt"
+	"goldutil/goldsrc"
 	"goldutil/goldsrc/typedmap"
 	"goldutil/goldsrc/typedmap/valve"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
-func Neatify(tmap typedmap.TypedMap) error {
+func Neatify(tmap typedmap.TypedMap, mod *os.Root) error {
 	if err := handleNeatMasters(tmap); err != nil {
 		return fmt.Errorf("unable to handle neat_master: %w", err)
+	}
+
+	if err := handleNeatMessages(tmap, mod); err != nil {
+		return fmt.Errorf("unable to handle neat_message: %w", err)
 	}
 
 	return nil
@@ -97,4 +103,54 @@ func getNeatMasterAdditions(master NeatMaster) []any {
 			TriggerState: valve.TriggerStateToggle,
 		},
 	}
+}
+
+func handleNeatMessages(tmap typedmap.TypedMap, mod *os.Root) error {
+	messages, err := typedmap.FindByKV[NeatMessage](tmap, "classname", "neat_message")
+	if err != nil {
+		return fmt.Errorf("unable to obtain neat_message entitites: %w", err)
+	}
+
+	titles, err := goldsrc.NewTitlesFromModRoot(mod)
+	if err != nil {
+		return fmt.Errorf("unable to parse titles.txt: %w", err)
+	}
+	for _, v := range messages {
+		if err := handleNeatMessage(tmap, v.Index, v.Entity, titles); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func handleNeatMessage(
+	tmap typedmap.TypedMap,
+	index uuid.UUID,
+	msg NeatMessage,
+	titles map[string]goldsrc.Title,
+) error {
+	if err := msg.Validate(titles); err != nil {
+		return err
+	}
+	tmap.Delete(index)
+
+	return tmap.AddEntities([]any{
+		valve.EnvMessage{
+			Origin:      msg.Origin,
+			TargetName:  msg.TargetName,
+			Message:     msg.Message,
+			Flags:       msg.Flags,
+			Sound:       msg.Sound,
+			Volume:      msg.Volume,
+			Attenuation: msg.Attenuation,
+		},
+		valve.TriggerRelay{
+			Origin:       msg.Origin,
+			TargetName:   msg.TargetName,
+			Delay:        titles[msg.Message].HoldTime + msg.Delay,
+			Target:       msg.Target,
+			TriggerState: msg.TriggerState,
+		},
+	})
 }

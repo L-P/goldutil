@@ -64,3 +64,15 @@ type ButtonTarget struct {
 	RenderColor  *Color      `qmap:"rendercolor,255 255 255"`
 	Flags        uint8       `qmap:"spawnflags"`
 }
+
+type EnvMessage struct {
+	ClassName *string `qmap:"classname,env_message"`
+	Origin    Position
+
+	TargetName  string `qmap:"targetname"`
+	Message     string
+	Flags       int         `qmap:"spawnflags"`
+	Sound       string      `qmap:"messagesound"`
+	Volume      string      `qmap:"messagevolume"`
+	Attenuation Attenuation `qmap:"messageattenuation"`
+}

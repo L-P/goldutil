@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -117,6 +118,12 @@ func newApp() *cli.App {
 					{
 						Name:   "neat",
 						Action: doNeat,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "moddir",
+								Value: ".",
+							},
+						},
 					},
 				},
 			},
@@ -322,7 +329,12 @@ func doNeat(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	if err := neat.Neatify(tmap); err != nil {
+	mod, err := os.OpenRoot(cCtx.String("moddir"))
+	if err != nil {
+		return fmt.Errorf("unable to open current working directory: %w", err)
+	}
+
+	if err := neat.Neatify(tmap, mod); err != nil {
 		return fmt.Errorf("unable to neatify map: %w", err)
 	}
 
@@ -525,7 +537,11 @@ func doHelp(cCtx *cli.Context) error {
 		return errors.New("man page is only available on *NIX operating systems, see https://l-p.github.io/goldutil/ instead")
 	}
 
-	var cmd = exec.CommandContext(cCtx.Context, "man", "-l", "-")
+	ctx := context.Background()
+	if cCtx != nil {
+		ctx = cCtx.Context
+	}
+	var cmd = exec.CommandContext(ctx, "man", "-l", "-")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

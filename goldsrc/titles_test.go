@@ -39,8 +39,8 @@ This should only differ by name, message, and holdtime.
 	parsed, err := goldsrc.NewTitlesFromReader(strings.NewReader(input))
 	require.NoError(t, err)
 
-	expected := []goldsrc.Title{
-		goldsrc.Title{
+	expected := map[string]goldsrc.Title{
+		"foo": goldsrc.Title{
 			Name:           "foo",
 			Message:        "This is good content.\nWith a break.",
 			Position:       "0.05 0.85",
@@ -52,7 +52,7 @@ This should only differ by name, message, and holdtime.
 			FXTime:         0,
 			HoldTime:       4,
 		},
-		goldsrc.Title{
+		"bar": goldsrc.Title{
 			Name:           "bar",
 			Message:        "This should only differ by name, message, and holdtime.",
 			Position:       "0.05 0.85",
@@ -66,5 +66,5 @@ This should only differ by name, message, and holdtime.
 		},
 	}
 
-	require.ElementsMatch(t, expected, parsed)
+	require.Equal(t, expected, parsed)
 }

@@ -116,7 +116,7 @@ func toStringValue(in any) string {
 	switch v := in.(type) {
 	case
 		// HACK: Should I use reflection instead of bringing these types here?
-		valve.RenderMode, valve.TriggerState,
+		valve.RenderMode, valve.TriggerState, valve.Attenuation,
 		int, uint8:
 		return fmt.Sprintf("%d", v)
 	case float32:

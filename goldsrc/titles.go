@@ -3,9 +3,8 @@ package goldsrc
 import (
 	"bufio"
 	"fmt"
-	"goldutil/set"
 	"io"
-	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -34,9 +33,19 @@ type Title struct {
 	HoldTime       float32     // $holdtime
 }
 
-func NewTitlesFromReader(r io.Reader) ([]Title, error) {
+func NewTitlesFromReader(r io.Reader) (map[string]Title, error) {
 	parser := newTitlesParser(r)
 	return parser.run()
+}
+
+func NewTitlesFromModRoot(mod *os.Root) (map[string]Title, error) {
+	f, err := mod.Open("titles.txt")
+	if err != nil {
+		return nil, fmt.Errorf("unable to open titles.txt for reading: %w", err)
+	}
+	defer f.Close()
+
+	return NewTitlesFromReader(f)
 }
 
 type titlesParserState int
@@ -50,18 +59,17 @@ const (
 type titlesParser struct {
 	scanner      *bufio.Scanner
 	currentTitle Title
-	output       []Title
-	names        set.PresenceSet[string]
+	output       map[string]Title
 }
 
 func newTitlesParser(r io.Reader) titlesParser {
 	return titlesParser{
 		scanner: bufio.NewScanner(r),
-		names:   set.NewPresenceSet[string](0),
+		output:  make(map[string]Title),
 	}
 }
 
-func (parser *titlesParser) run() ([]Title, error) {
+func (parser *titlesParser) run() (map[string]Title, error) {
 	var curLineNumber int
 	state := tpsOutside
 
@@ -110,7 +118,7 @@ func (parser *titlesParser) parseOutside(line string, lineNumber int) (titlesPar
 
 func (parser *titlesParser) parseMessage(line string, lineNumber int) (titlesParserState, error) {
 	if line == "}" {
-		parser.output = append(parser.output, parser.currentTitle)
+		parser.output[parser.currentTitle.Name] = parser.currentTitle
 		parser.currentTitle.Name = ""
 		parser.currentTitle.Message = ""
 		return tpsOutside, nil
@@ -136,7 +144,6 @@ func (parser *titlesParser) parseParameter(line string, lineNumber int) error {
 
 	key = strings.TrimSpace(key)
 	value = strings.TrimSpace(value)
-	log.Printf("'%s' '%s'", key, value)
 
 	switch key {
 	case "$position":
