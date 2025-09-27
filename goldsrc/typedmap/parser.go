@@ -173,11 +173,11 @@ func (p *parser) parseBrush(line string, _lineNumber int) parserState {
 }
 
 type ParseError struct {
-	mepsage      string
+	message      string
 	lineNumber   int
 	lineContents string
 }
 
 func (e ParseError) Error() string {
-	return fmt.Sprintf("parse error on line #%d: %s", e.lineNumber, e.mepsage)
+	return fmt.Sprintf("parse error on line #%d: %s", e.lineNumber, e.message)
 }
