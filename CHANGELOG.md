@@ -1,4 +1,6 @@
 # next
+- Add "map neat" entity preprocessor command.
+- Add "fgd" command to use along with "map neat".
 - Ensure lump names are lowercase
 - Add `path_track` `message` property to targets when graphing entities.
 - Skip `multi_manager` `angle` property when graphing entities.
