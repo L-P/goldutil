@@ -12,7 +12,7 @@ goldutil \- GoldSrc modding utility.
 bsp info|remap-materials
 .br
 .B goldutil
-map export|graph
+map export|graph|neat
 .br
 .B goldutil
 nod export
@@ -24,10 +24,10 @@ spr create|extract|info
 wad create|extract|info
 .br
 .B goldutil
-mod filter-materials
+mod filter-materials|mod filter-wads
 .br
 .B goldutil
-mod filter-wads
+fgd
 .\" }}}
 .\" {{{
 .SH DESCRIPTION
@@ -85,8 +85,18 @@ engine and spam the console with errors.
 .\"
 .PP
 .B goldutil
-map graph
+map neat [-\-moddir]
 .I FILE
+.RS 4
+Process neat_ entity macros and outputs the generated .map to standard output.
+.IP -\-moddir 4
+root of the mod directory (eg. 'valve'), defaults to the current working directory.
+.RE
+.\"
+.PP
+.B goldutil
+map graph
+.I [FILE]
 .RS 4
 Create a graphviz digraph of entity caller/callee relationships from a .map
 file. ripent exports use the same format and can be read too. Output is
@@ -233,6 +243,12 @@ Print parsed data from a WAD file.
 .\" }}}
 .\" {{{
 .SH MISC MODDING UTLITIES
+.B goldutil
+fgd
+.RS 4
+Outputs the FGD to use with \fIgoldutil map neat\fR.
+.RE
+.PP
 .B goldutil
 mod filter-materials \-\-in \fIMATERIALS\fR \fIBSP0\fR [\fIBSPX\fR…]
 .RS 4

@@ -13,3 +13,4 @@ Features:
 - Entity call graph via Graphviz.
 - .map file cleanup to automate TrenchBroom workflows.
 - Materials remapping for BSPs with embedded textures.
+- Macro-entities.

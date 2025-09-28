@@ -1,45 +1,81 @@
 ---
-run:
-  timeout: 5m
-
+version: "2"
 linters:
-  presets:
-    - bugs
-    - unused
-
   enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
     - containedctx
+    - contextcheck
     - dogsled
     - dupl
     - dupword
+    - durationcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
     - funlen
+    - gocheckcompilerdirectives
+    - gochecksumtype
     - gocognit
     - godot
-    - gofmt
-    - goimports
-    - gosimple
     - goprintffuncname
+    - gosec
+    - gosmopolitan
     - grouper
     - importas
     - interfacebloat
     - lll
+    - loggercheck
+    - makezero
     - misspell
+    - nilerr
+    - nilnesserr
     - nilnil
+    - noctx
     - nolintlint
     - nosprintfhostport
     - prealloc
     - predeclared
     - promlinter
+    - protogetter
     - reassign
-    - tenv
+    - recvcheck
+    - rowserrcheck
+    - spancheck
+    - sqlclosecheck
+    - testifylint
     - testpackage
     - unconvert
+    - unparam
     - usestdlibvars
     - wastedassign
-
+    - zerologlint
   disable:
     - musttag
-
-linter-settigns:
-  staticcheck:
-    checks: ["all"]
+  settings:
+    gosec:
+      excludes:
+        - G115 # never a security issue in our cases
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

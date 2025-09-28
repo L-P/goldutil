@@ -77,7 +77,7 @@ func (fd *Frame) Read(r io.Reader) error {
 	return nil
 }
 
-func (f Frame) String() string {
+func (f *Frame) String() string {
 	var w strings.Builder
 
 	fmt.Fprintf(&w, "  Type: %s\n", f.Type.String())
@@ -90,11 +90,11 @@ func (f Frame) String() string {
 	return w.String()
 }
 
-func (f Frame) Rect() image.Rectangle {
+func (f *Frame) Rect() image.Rectangle {
 	return image.Rect(0, 0, int(f.Width), int(f.Height))
 }
 
-func (f Frame) Write(w io.Writer) error {
+func (f *Frame) Write(w io.Writer) error {
 	if err := binary.Write(w, binary.LittleEndian, f.FrameMeta); err != nil {
 		return fmt.Errorf("unable to write frame header: %w", err)
 	}

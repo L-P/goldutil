@@ -162,9 +162,9 @@ func (r *MaterialsRemapper) getFirstAvailableTemplate(
 	prefixLen int,
 	mapToMat MaterialType,
 ) (int, materialTemplate, bool) {
-	var max = maxUses(prefixLen)
+	uses := maxUses(prefixLen)
 	for i, v := range r.templates[prefixLen][mapToMat] {
-		if v.uses < max {
+		if v.uses < uses {
 			return i, v, true
 		}
 	}

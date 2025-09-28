@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type parserState int
@@ -20,23 +22,24 @@ const (
 type parser struct {
 	scanner *bufio.Scanner
 	state   parserState
-	qmap    QMap
+	qm      *QMap
 
-	curEntity *Entity
-	curBrush  *Brush
+	curEntity *AnonymousEntity
+	curBrush  Brush
 }
 
 func newParser(r io.Reader) parser {
 	return parser{
 		state:   psOutside,
 		scanner: bufio.NewScanner(r),
+		qm:      New(),
 	}
 }
 
-func (p *parser) run() (QMap, error) {
+func (p *parser) run() (*QMap, error) {
 	var (
 		curLineNumber int
-		state         parserState = psOutside
+		state         = psOutside
 	)
 
 	for p.scanner.Scan() {
@@ -55,25 +58,23 @@ func (p *parser) run() (QMap, error) {
 		case psInBrush:
 			state = p.parseBrush(curLine, curLineNumber)
 		case psNone:
-			return QMap{}, ParseError{"reached an invalid state", curLineNumber, curLine}
+			return nil, ParseError{"reached an invalid state", curLineNumber, curLine}
 		}
 
 		if err != nil {
-			return QMap{}, err
+			return nil, err
 		}
 	}
 
 	if err := p.scanner.Err(); err != nil {
-		return QMap{}, fmt.Errorf("unable to read file: %w", err)
+		return nil, fmt.Errorf("unable to read file: %w", err)
 	}
 
 	if state != psOutside {
-		return QMap{}, ParseError{"reached EOF before closing entity or brush", -1, ""}
+		return nil, ParseError{"reached EOF before closing entity or brush", -1, ""}
 	}
 
-	p.qmap.finalize()
-
-	return p.qmap, nil
+	return p.qm, nil
 }
 
 func (p *parser) parseOutside(line string, lineNumber int) (parserState, error) {
@@ -81,43 +82,52 @@ func (p *parser) parseOutside(line string, lineNumber int) (parserState, error) 
 		return psNone, ParseError{"expected start of entity", lineNumber, line}
 	}
 
-	p.curEntity = &Entity{startLine: lineNumber}
+	newEnt := NewAnonymousEntity()
+	p.curEntity = &newEnt
 
 	return psInEntity, nil
 }
 
 func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
-	switch {
-	case line == "}":
-		p.curEntity.endLine = lineNumber
-		p.qmap.AddEntity(*p.curEntity)
+	switch line {
+	case "}":
+		index, err := uuid.NewRandom()
+		if err != nil {
+			return psNone, fmt.Errorf("unable to generate UUID as entity index: %w", err)
+		}
+
+		p.qm.entities[index] = *p.curEntity
+		p.qm.order = append(p.qm.order, index)
 		p.curEntity = nil
 
 		return psOutside, nil
 
-	case line == "{":
-		p.curBrush = &Brush{startLine: lineNumber}
+	case "{":
+		p.curBrush = Brush{}
 		return psInBrush, nil
 	}
 
-	prop, err := parseProp(line, lineNumber)
+	pKey, pValue, err := parseProp(line, lineNumber)
 	if err != nil {
 		return psNone, err
 	}
-	p.curEntity.addProperty(prop)
+
+	// Only keep last value.
+	// TODO: Double-check that it's what the engine does.
+	p.curEntity.KVs[pKey] = pValue
 
 	return psInEntity, nil
 }
 
-func parseProp(line string, lineNumber int) (Property, error) {
+func parseProp(line string, lineNumber int) (string, string, error) {
 	parts := strings.SplitN(strings.Trim(line, " \t"), " ", 2)
 	if len(parts) != 2 {
-		return Property{}, ParseError{"unexpected property format", lineNumber, line}
+		return "", "", ParseError{"unexpected property format", lineNumber, line}
 	}
 
 	key, err := parsePropertyString(parts[0])
 	if err != nil {
-		return Property{}, ParseError{
+		return "", "", ParseError{
 			fmt.Sprintf("could not parse key: %s", err),
 			lineNumber, line,
 		}
@@ -125,17 +135,13 @@ func parseProp(line string, lineNumber int) (Property, error) {
 
 	value, err := parsePropertyString(parts[1])
 	if err != nil {
-		return Property{}, ParseError{
+		return "", "", ParseError{
 			fmt.Sprintf("could not parse value: %s", err),
 			lineNumber, line,
 		}
 	}
 
-	return Property{
-		line:  lineNumber,
-		key:   key,
-		value: value,
-	}, nil
+	return key, value, nil
 }
 
 func parsePropertyString(str string) (string, error) {
@@ -154,26 +160,25 @@ func parsePropertyString(str string) (string, error) {
 	return str[1 : len(str)-1], nil
 }
 
-func (p *parser) parseBrush(line string, lineNumber int) parserState {
+func (p *parser) parseBrush(line string, _lineNumber int) parserState {
 	if line == "}" {
-		p.curBrush.endLine = lineNumber
-		p.curEntity.addBrush(*p.curBrush)
+		p.curEntity.AddBrush(p.curBrush)
 		p.curBrush = nil
 
 		return psInEntity
 	}
 
-	p.curBrush.addPlane(line)
+	p.curBrush = append(p.curBrush, line)
 
 	return psInBrush
 }
 
 type ParseError struct {
-	mepsage      string
+	message      string
 	lineNumber   int
 	lineContents string
 }
 
 func (e ParseError) Error() string {
-	return fmt.Sprintf("parse error on line #%d: %s", e.lineNumber, e.mepsage)
+	return fmt.Sprintf("parse error on line #%d: %s", e.lineNumber, e.message)
 }

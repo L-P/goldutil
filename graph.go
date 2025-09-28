@@ -2,25 +2,25 @@ package main
 
 import (
 	"fmt"
-	"goldutil/qmap"
+	"goldutil/goldsrc/qmap"
 	"io"
 	"strings"
 )
 
-func GraphQMap(qm qmap.QMap, w io.Writer) {
+func GraphQMap(qm *qmap.QMap, w io.Writer) {
 	fmt.Fprintln(w, "digraph TB {")
 	fmt.Fprintln(w, "  overlap = false;")
 
-	for _, v := range qm.RawEntities() {
-		name := v.Name()
-		class := v.Class()
+	for v := range qm.Entities() {
+		name := v.KVs["targetname"]
+		class := v.KVs["classname"]
 
 		if class == "multi_manager" {
 			graphMultiManager(v, w)
 			continue
 		}
 
-		target, ok := v.GetProperty(qmap.KTarget)
+		target, ok := v.KVs["target"]
 		if ok && target != "" {
 			if class == "trigger_relay" {
 				graphTriggerRelayTarget(v, target, w)
@@ -29,14 +29,14 @@ func GraphQMap(qm qmap.QMap, w io.Writer) {
 			}
 		}
 
-		message, ok := v.GetProperty(qmap.KMessage)
-		if ok && class == "path_track" {
+		message, ok := v.KVs["message"]
+		if ok && (class == "path_track" || class == "path_corner") {
 			fmt.Fprintf(w, "  %s -> %s;\n", name, message)
 		}
 
-		triggerTarget, ok := v.GetProperty(qmap.KTriggerTarget)
+		triggerTarget, ok := v.KVs["TriggerTarget"]
 		if ok && triggerTarget != "" {
-			condition, ok := v.GetProperty(qmap.KTriggerCondition)
+			condition, ok := v.KVs["TriggerCondition"]
 			if !ok {
 				condition = "0"
 			}
@@ -44,12 +44,12 @@ func GraphQMap(qm qmap.QMap, w io.Writer) {
 			fmt.Fprintf(w, "  %s -> %s [label=\"cond:%s\"];\n", name, triggerTarget, condition)
 		}
 
-		killTarget, ok := v.GetProperty(qmap.KKillTarget)
+		killTarget, ok := v.KVs["killtarget"]
 		if ok && killTarget != "" {
 			fmt.Fprintf(w, "  %s -> %s [label=\"kill\"];\n", name, killTarget)
 		}
 
-		master, ok := v.GetProperty(qmap.KMaster)
+		master, ok := v.KVs["master"]
 		if ok && master != "" {
 			fmt.Fprintf(w, "  %s -> %s [label=\"master\"];\n", name, master)
 		}
@@ -59,15 +59,15 @@ func GraphQMap(qm qmap.QMap, w io.Writer) {
 }
 
 var mmIgnored = map[string]struct{}{
-	qmap.KName:   {},
-	qmap.KAngles: {},
-	qmap.KClass:  {},
-	qmap.KOrigin: {},
-	qmap.KFlags:  {},
+	"targetname": {},
+	"angles":     {},
+	"classname":  {},
+	"origin":     {},
+	"spawnflags": {},
 }
 
-func graphMultiManager(mm qmap.Entity, w io.Writer) {
-	for target := range mm.PropertyMap() {
+func graphMultiManager(mm qmap.AnonymousEntity, w io.Writer) {
+	for target := range mm.KVs {
 		if _, ok := mmIgnored[target]; ok {
 			continue
 		}
@@ -81,13 +81,13 @@ func graphMultiManager(mm qmap.Entity, w io.Writer) {
 			continue
 		}
 
-		fmt.Fprintf(w, "  %s -> %s;\n", mm.Name(), target)
+		fmt.Fprintf(w, "  %s -> %s;\n", mm.KVs["targetname"], target)
 	}
 }
 
-func graphTriggerRelayTarget(relay qmap.Entity, target string, w io.Writer) {
-	name := relay.Name()
-	state, ok := relay.GetProperty("triggerstate")
+func graphTriggerRelayTarget(relay qmap.AnonymousEntity, target string, w io.Writer) {
+	name := relay.KVs["targetname"]
+	state, ok := relay.KVs["triggerstate"]
 	if !ok {
 		state = "0"
 	}

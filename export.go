@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-	"goldutil/qmap"
+	"goldutil/goldsrc/qmap"
 	"goldutil/set"
 	"strings"
 )
 
-func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
+func getUnexportedLayerSet(qm *qmap.QMap) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
 
-	for _, layer := range qm.GetTBLayers() {
-		locked, ok := layer.GetProperty("_tb_layer_omit_from_export")
+	for _, layer := range qm.FindByClassNameAndKV("func_group", "_tb_type", "_tb_layer") {
+		locked, ok := layer.Entity.KVs["_tb_layer_omit_from_export"]
 		if ok && locked == "1" {
-			id, ok := layer.GetProperty("_tb_id")
+			id, ok := layer.Entity.KVs["_tb_id"]
 			if !ok {
 				return nil, fmt.Errorf("found a layer with no _tb_id")
 			}
@@ -24,25 +24,25 @@ func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
 	return skipIDs, nil
 }
 
-func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
+func getUnexportedGroupSet(qm *qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
 
 	for {
 		var foundMatches bool
 
-		for _, group := range qm.GetTBGroups() {
-			groupID, ok := group.GetProperty("_tb_id")
+		for _, group := range qm.FindByClassNameAndKV("func_group", "_tb_type", "_tb_group") {
+			groupID, ok := group.Entity.KVs["_tb_id"]
 			if !ok {
 				return nil, fmt.Errorf("found a group with no _tb_id")
 			}
 
-			parentGroupID, ok := group.GetProperty("_tb_group")
+			parentGroupID, ok := group.Entity.KVs["_tb_group"]
 			if ok && !skipIDs.Has(groupID) && skipIDs.Has(parentGroupID) {
 				skipIDs.Set(groupID)
 				foundMatches = true
 			}
 
-			layerID, ok := group.GetProperty("_tb_layer")
+			layerID, ok := group.Entity.KVs["_tb_layer"]
 			if ok && !skipIDs.Has(groupID) && unexportedLayerIDs.Has(layerID) {
 				skipIDs.Set(groupID)
 				foundMatches = true
@@ -62,58 +62,74 @@ func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[stri
 	return skipIDs, nil
 }
 
-func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
+func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
 	skipLayerIDs, err := getUnexportedLayerSet(qm)
 	if err != nil {
-		return qmap.QMap{}, err
+		return nil, err
 	}
 
 	skipGroupIDs, err := getUnexportedGroupSet(qm, skipLayerIDs)
 	if err != nil {
-		return qmap.QMap{}, err
+		return nil, err
 	}
 
-	var clean qmap.QMap
-	for _, v := range qm.RawEntities() {
-		layerID, ok := v.GetProperty("_tb_layer")
-		if ok && skipLayerIDs.Has(layerID) {
+	var clean []qmap.AnonymousEntity //nolint:prealloc
+	for v := range qm.Entities() {
+		if shouldSkipEntity(v, skipLayerIDs, skipGroupIDs) {
 			continue
-		}
-
-		groupID, ok := v.GetProperty("_tb_group")
-		if ok && skipGroupIDs.Has(groupID) {
-			continue
-		}
-
-		id, ok := v.GetProperty("_tb_id")
-		if ok && v.Class() == "func_group" {
-			if typ, ok := v.GetProperty("_tb_type"); ok {
-				if typ == "_tb_group" && skipGroupIDs.Has(id) {
-					continue
-				}
-			}
-
-			if typ, ok := v.GetProperty("_tb_type"); ok {
-				if typ == "_tb_layer" && skipLayerIDs.Has(id) {
-					continue
-				}
-			}
 		}
 
 		if cleanupTB {
-			removeTBProps(&v) //nolint:gosec // We don't keep the pointer.
+			removeTBProps(v)
 		}
 
-		clean.AddEntity(v)
+		clean = append(clean, v)
 	}
 
-	return clean, nil
+	out := qmap.New()
+	if err := out.AddAnonymousEntities(clean...); err != nil {
+		return nil, fmt.Errorf("unable to fill output qmap: %w", err)
+	}
+
+	return out, nil
 }
 
-func removeTBProps(ent *qmap.Entity) {
-	for k := range ent.PropertyMap() {
+func shouldSkipEntity(ent qmap.AnonymousEntity,
+	skipLayerIDs set.PresenceSet[string],
+	skipGroupIDs set.PresenceSet[string],
+) bool {
+	layerID, ok := ent.KVs["_tb_layer"]
+	if ok && skipLayerIDs.Has(layerID) {
+		return true
+	}
+
+	groupID, ok := ent.KVs["_tb_group"]
+	if ok && skipGroupIDs.Has(groupID) {
+		return true
+	}
+
+	id, ok := ent.KVs["_tb_id"]
+	if ok && ent.KVs["classname"] == "func_group" {
+		if typ, ok := ent.KVs["_tb_type"]; ok {
+			if typ == "_tb_group" && skipGroupIDs.Has(id) {
+				return true
+			}
+		}
+
+		if typ, ok := ent.KVs["_tb_type"]; ok {
+			if typ == "_tb_layer" && skipLayerIDs.Has(id) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func removeTBProps(ent qmap.AnonymousEntity) {
+	for k := range ent.KVs {
 		if strings.HasPrefix(k, "_tb_") {
-			ent.RemoveProperty(k)
+			delete(ent.KVs, k)
 		}
 	}
 }

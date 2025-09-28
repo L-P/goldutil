@@ -1,0 +1,13 @@
+// Game: Half-Life
+// Format: Valve
+// entity 0
+{
+"origin" "1 2 3"
+"targetname" "foo"
+"classname" "neat_message"
+"message" "msgname"
+"messageattenuation" "0"
+"messagesound" "sndname"
+"triggerstate" "2"
+"delay" "0.66"
+}

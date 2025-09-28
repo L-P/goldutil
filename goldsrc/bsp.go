@@ -118,13 +118,13 @@ func LoadBSP(r io.ReadSeeker) (*BSP, error) {
 	if err := binary.Read(r, binary.LittleEndian, &bsp.BSPHeader); err != nil {
 		return nil, fmt.Errorf("unable to read header: %w", err)
 	}
-	if err := bsp.BSPHeader.Validate(); err != nil {
+	if err := bsp.BSPHeader.Validate(); err != nil { //nolint:staticcheck
 		return nil, fmt.Errorf("unable to validate header: %w", err)
 	}
 
 	for i, lump := range bsp.Lumps() {
 		typ := LumpType(i)
-		if err := lump.Load(r, bsp.BSPHeader.LumpIndex[i]); err != nil {
+		if err := lump.Load(r, bsp.LumpIndex[i]); err != nil {
 			return nil, fmt.Errorf("unable to load %s: %w", typ.String(), err)
 		}
 
@@ -206,7 +206,7 @@ func (bsp *BSP) Write(w io.WriteSeeker) error {
 			return fmt.Errorf("unable to write lump %s: %w", typ.String(), err)
 		}
 
-		bsp.BSPHeader.LumpIndex[typ] = LumpIndexEntry{
+		bsp.LumpIndex[typ] = LumpIndexEntry{
 			Offset: int32(offset),
 			Length: int32(n),
 		}

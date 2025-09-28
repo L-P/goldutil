@@ -1,0 +1,21 @@
+// Game: Half-Life
+// Format: Valve
+// entity 0
+{
+"origin" "1 2 3"
+"targetname" "foo"
+"classname" "env_message"
+"message" "msgname"
+"messageattenuation" "0"
+"messagesound" "sndname"
+"spawnflags" "0"
+}
+// entity 1
+{
+"origin" "1 2 3"
+"targetname" "foo"
+"classname" "trigger_relay"
+"triggerstate" "2"
+"delay" "13"
+"spawnflags" "0"
+}

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
-	"goldutil/qmap"
+	"goldutil/goldsrc/qmap"
+	"goldutil/neat"
 	"goldutil/set"
 	"goldutil/sprite"
 	"goldutil/wad"
@@ -22,6 +24,9 @@ import (
 )
 
 var Version = "unknown version"
+
+//go:embed goldutil.fgd
+var fgd string
 
 func main() {
 	var app = newApp()
@@ -45,6 +50,13 @@ func newApp() *cli.App {
 			{
 				Name:   "help",
 				Action: doHelp,
+			},
+			{
+				Name: "fgd",
+				Action: func(cCtx *cli.Context) error {
+					fmt.Print(fgd)
+					return nil
+				},
 			},
 			{
 				Name: "nod",
@@ -110,6 +122,17 @@ func newApp() *cli.App {
 					{
 						Name:   "graph",
 						Action: doMapGraph,
+					},
+
+					{
+						Name:   "neat",
+						Action: doNeat,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "moddir",
+								Value: ".",
+							},
+						},
 					},
 				},
 			},
@@ -299,7 +322,7 @@ func doMapGraph(cCtx *cli.Context) error {
 		return errors.New("expected one argument: the .map to parse and graph")
 	}
 
-	qm, err := qmap.LoadFromFile(path)
+	qm, err := loadQMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -309,8 +332,28 @@ func doMapGraph(cCtx *cli.Context) error {
 	return nil
 }
 
+func doNeat(cCtx *cli.Context) error {
+	qm, err := loadQMap(cCtx.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to read from map: %w", err)
+	}
+
+	mod, err := os.OpenRoot(cCtx.String("moddir"))
+	if err != nil {
+		return fmt.Errorf("unable to open current working directory: %w", err)
+	}
+
+	if err := neat.Neatify(qm, mod); err != nil {
+		return fmt.Errorf("unable to neatify map: %w", err)
+	}
+
+	fmt.Print(qm.String())
+
+	return nil
+}
+
 func doMapExport(cCtx *cli.Context) error {
-	qm, err := loadMap(cCtx.Args().Get(0))
+	qm, err := loadQMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -325,7 +368,7 @@ func doMapExport(cCtx *cli.Context) error {
 	return nil
 }
 
-func loadMap(path string) (qmap.QMap, error) {
+func loadQMap(path string) (*qmap.QMap, error) {
 	if path == "" {
 		return qmap.LoadFromReader(os.Stdin)
 	} else {
@@ -495,7 +538,11 @@ func doHelp(cCtx *cli.Context) error {
 		return errors.New("man page is only available on *NIX operating systems, see https://l-p.github.io/goldutil/ instead")
 	}
 
-	var cmd = exec.Command("man", "-l", "-")
+	ctx := context.Background()
+	if cCtx != nil {
+		ctx = cCtx.Context
+	}
+	var cmd = exec.CommandContext(ctx, "man", "-l", "-")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -538,27 +585,24 @@ func doNodExport(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to read nodes: %w", err)
 	}
 
-	var (
-		original = cCtx.Bool("original-positions")
-		entities = make([]qmap.Entity, 0, len(nodes)+len(links))
-	)
-
+	original := cCtx.Bool("original-positions")
+	entities := make([]qmap.AnonymousEntity, 0, len(nodes)+len(links))
 	for i, v := range nodes {
-		entities = append(entities, qmap.NewEntity(map[string]string{
-			qmap.KClass:  v.ClassName(),
-			qmap.KOrigin: v.Position(original).String(),
-			qmap.KName:   fmt.Sprintf("node#%d", i),
-		}))
+		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
+			"classname":  v.ClassName(),
+			"origin":     v.Position(original).String(),
+			"targetname": fmt.Sprintf("node#%d", i),
+		}})
 	}
 
 	for linkTypeBitID := 0; linkTypeBitID <= goldsrc.LinkTypeBitMax; linkTypeBitID++ {
-		entities = append(entities, qmap.NewEntity(map[string]string{
-			qmap.KClass:            "func_group",
+		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
+			"classname":            "func_group",
 			"_tb_type":             "_tb_layer",
 			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, goldsrc.LinkTypeName(linkTypeBitID)),
 			"_tb_id":               strconv.Itoa(linkTypeBitID + 1),
 			"_tb_layer_sort_index": strconv.Itoa(linkTypeBitID + 1),
-		}))
+		}})
 
 		for _, v := range links {
 			if (v.LinkInfo & (1 << linkTypeBitID)) == 0 {
@@ -566,16 +610,17 @@ func doNodExport(cCtx *cli.Context) error {
 			}
 
 			src := entities[v.SrcNode]
-			src.SetProperty("target", fmt.Sprintf("node#%d", v.DstNode))
-			src.SetProperty("_tb_layer", strconv.Itoa(linkTypeBitID+1))
+			src.KVs["target"] = fmt.Sprintf("node#%d", v.DstNode)
+			src.KVs["_tb_layer"] = strconv.Itoa(linkTypeBitID + 1)
 			entities = append(entities, src)
 		}
 	}
 
-	var out qmap.QMap
-	for _, v := range entities {
-		out.AddEntity(v)
+	out := qmap.New()
+	if err := out.AddAnonymousEntities(entities...); err != nil {
+		return fmt.Errorf("unable to append entities to output map: %w", err)
 	}
+
 	fmt.Println(out.String())
 
 	return nil
