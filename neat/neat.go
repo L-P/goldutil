@@ -69,24 +69,29 @@ func handleNeatMaster(tmap typedmap.TypedMap, index uuid.UUID, master NeatMaster
 func getNeatMasterAdditions(master NeatMaster) []any {
 	return []any{
 		valve.MultiSource{
+			Origin:     master.Origin,
 			TargetName: master.TargetName,
 			Target:     master.Target,
 		},
 		valve.ButtonTarget{
+			Origin:     master.Origin,
 			TargetName: master.TargetName + "_proxy",
 			Target:     master.TargetName,
 		},
 		valve.TriggerRelay{
+			Origin:       master.Origin,
 			TargetName:   master.TargetName + "_on",
 			Target:       master.TargetName + "_proxy",
 			TriggerState: valve.TriggerStateOn,
 		},
 		valve.TriggerRelay{
+			Origin:       master.Origin,
 			TargetName:   master.TargetName + "_off",
 			Target:       master.TargetName + "_proxy",
 			TriggerState: valve.TriggerStateOff,
 		},
 		valve.TriggerRelay{
+			Origin:       master.Origin,
 			TargetName:   master.TargetName + "_toggle",
 			Target:       master.TargetName + "_proxy",
 			TriggerState: valve.TriggerStateToggle,

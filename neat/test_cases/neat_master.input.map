@@ -8,6 +8,7 @@
 }
 // entity 1
 {
+"origin" "16 0 0"
 "classname" "trigger_relay"
 "delay" "0"
 "spawnflags" "0"
@@ -17,6 +18,7 @@
 }
 // entity 2
 {
+"origin" "16 0 0"
 "spawnflags" "0"
 "target" "foo"
 "targetname" "triggeroff"
@@ -26,6 +28,7 @@
 }
 // entity 3
 {
+"origin" "16 0 0"
 "classname" "trigger_relay"
 "delay" "0"
 "spawnflags" "0"
@@ -35,6 +38,7 @@
 }
 // entity 4
 {
+"origin" "16 0 0"
 "classname" "multi_manager"
 "flags" "0"
 "targetname" "mm"
@@ -45,11 +49,13 @@
 }
 // entity 4
 {
+"origin" "16 0 0"
 "classname" "path_track"
 "message" "foo"
 }
 // entity 5
 {
+"origin" "16 0 0"
 "classname" "path_corner"
 "message" "foo"
 }
