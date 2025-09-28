@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"goldutil/goldsrc/typedmap"
-	"goldutil/qmap"
 	"io"
 	"strings"
 )
@@ -60,11 +59,11 @@ func GraphTypedMap(tmap typedmap.TypedMap, w io.Writer) {
 }
 
 var mmIgnored = map[string]struct{}{
-	qmap.KName:   {},
-	qmap.KAngles: {},
-	qmap.KClass:  {},
-	qmap.KOrigin: {},
-	qmap.KFlags:  {},
+	"targetname": {},
+	"angles":     {},
+	"classname":  {},
+	"origin":     {},
+	"spawnflags": {},
 }
 
 func graphMultiManager(mm typedmap.AnonymousEntity, w io.Writer) {
