@@ -105,8 +105,8 @@ func (qm *QMap) String() string {
 	b.WriteString("// Format: Valve\n")
 
 	// Compilers require worldspawn to be the first entity.
-	if ents := qm.FindByKV("classname", "worldspawn"); len(ents) > 0 {
-		b.WriteString(ents[0].Entity.String())
+	for _, v := range qm.FindByKV("classname", "worldspawn") {
+		b.WriteString(v.Entity.String())
 	}
 
 	var i int
