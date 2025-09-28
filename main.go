@@ -26,6 +26,9 @@ import (
 
 var Version = "unknown version"
 
+//go:embed goldutil.fgd
+var fgd string
+
 func main() {
 	var app = newApp()
 	if err := app.Run(os.Args); err != nil {
@@ -48,6 +51,13 @@ func newApp() *cli.App {
 			{
 				Name:   "help",
 				Action: doHelp,
+			},
+			{
+				Name: "fgd",
+				Action: func(cCtx *cli.Context) error {
+					fmt.Print(fgd)
+					return nil
+				},
 			},
 			{
 				Name: "nod",

@@ -24,10 +24,10 @@ spr create|extract|info
 wad create|extract|info
 .br
 .B goldutil
-mod filter-materials
+mod filter-materials|mod filter-wads
 .br
 .B goldutil
-mod filter-wads
+fgd
 .\" }}}
 .\" {{{
 .SH DESCRIPTION
@@ -242,6 +242,12 @@ Print parsed data from a WAD file.
 .\" }}}
 .\" {{{
 .SH MISC MODDING UTLITIES
+.B goldutil
+fgd
+.RS 4
+Outputs the FGD to use with \fIgoldutil map neat\fR.
+.RE
+.PP
 .B goldutil
 mod filter-materials \-\-in \fIMATERIALS\fR \fIBSP0\fR [\fIBSPX\fR…]
 .RS 4
