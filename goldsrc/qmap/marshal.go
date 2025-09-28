@@ -31,7 +31,7 @@ func NewAnonymousEntityFromStruct(in any) (AnonymousEntity, error) {
 		return zero, fmt.Errorf("unable to parse entity back: %w", err)
 	}
 
-	return slices.Collect(maps.Values(qm))[0], nil
+	return slices.Collect(maps.Values(qm.entities))[0], nil
 }
 
 // Marshals structs and pointer to structs into QMap entities.

@@ -5,7 +5,6 @@ import (
 	"goldutil/goldsrc/qmap"
 	"goldutil/neat"
 	"io/fs"
-	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -39,13 +38,13 @@ func TestNeatify(t *testing.T) {
 
 			expected, err := cases.Open(expectedPath)
 			require.NoError(t, err)
-			expectedTMap, err := qmap.LoadFromReader(expected)
+			expectedQM, err := qmap.LoadFromReader(expected)
 			require.NoError(t, err)
 
 			require.ElementsMatch(
 				t,
-				slices.Collect(maps.Values(expectedTMap)),
-				slices.Collect(maps.Values(qm)),
+				slices.Collect(expectedQM.Entities()),
+				slices.Collect(qm.Entities()),
 			)
 		})
 	}

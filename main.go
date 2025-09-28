@@ -368,7 +368,7 @@ func doMapExport(cCtx *cli.Context) error {
 	return nil
 }
 
-func loadQMap(path string) (qmap.QMap, error) {
+func loadQMap(path string) (*qmap.QMap, error) {
 	if path == "" {
 		return qmap.LoadFromReader(os.Stdin)
 	} else {

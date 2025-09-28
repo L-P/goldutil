@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
+func getUnexportedLayerSet(qm *qmap.QMap) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
 
 	for _, layer := range qm.FindByClassNameAndKV("func_group", "_tb_type", "_tb_layer") {
@@ -24,7 +24,7 @@ func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
 	return skipIDs, nil
 }
 
-func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
+func getUnexportedGroupSet(qm *qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
 
 	for {
@@ -62,19 +62,19 @@ func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[stri
 	return skipIDs, nil
 }
 
-func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
+func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
 	skipLayerIDs, err := getUnexportedLayerSet(qm)
 	if err != nil {
-		return qmap.QMap{}, err
+		return nil, err
 	}
 
 	skipGroupIDs, err := getUnexportedGroupSet(qm, skipLayerIDs)
 	if err != nil {
-		return qmap.QMap{}, err
+		return nil, err
 	}
 
-	clean := make([]qmap.AnonymousEntity, 0, len(qm))
-	for _, v := range qm {
+	var clean []qmap.AnonymousEntity //nolint:prealloc
+	for v := range qm.Entities() {
 		if shouldSkipEntity(v, skipLayerIDs, skipGroupIDs) {
 			continue
 		}

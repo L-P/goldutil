@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func Neatify(qm qmap.QMap, mod *os.Root) error {
+func Neatify(qm *qmap.QMap, mod *os.Root) error {
 	if err := handleNeatMasters(qm); err != nil {
 		return fmt.Errorf("unable to handle neat_master: %w", err)
 	}
@@ -23,7 +23,7 @@ func Neatify(qm qmap.QMap, mod *os.Root) error {
 	return nil
 }
 
-func handleNeatMasters(qm qmap.QMap) error {
+func handleNeatMasters(qm *qmap.QMap) error {
 	masters, err := qmap.FindByKV[NeatMaster](qm, "classname", "neat_master")
 	if err != nil {
 		return fmt.Errorf("unable to obtain neat_master entitites: %w", err)
@@ -38,7 +38,7 @@ func handleNeatMasters(qm qmap.QMap) error {
 	return nil
 }
 
-func handleNeatMaster(qm qmap.QMap, index uuid.UUID, master NeatMaster) error {
+func handleNeatMaster(qm *qmap.QMap, index uuid.UUID, master NeatMaster) error {
 	if err := master.Validate(); err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func getNeatMasterAdditions(master NeatMaster) []any {
 	}
 }
 
-func handleNeatMessages(qm qmap.QMap, mod *os.Root) error {
+func handleNeatMessages(qm *qmap.QMap, mod *os.Root) error {
 	messages, err := qmap.FindByKV[NeatMessage](qm, "classname", "neat_message")
 	if err != nil {
 		return fmt.Errorf("unable to obtain neat_message entitites: %w", err)
@@ -126,7 +126,7 @@ func handleNeatMessages(qm qmap.QMap, mod *os.Root) error {
 }
 
 func handleNeatMessage(
-	qm qmap.QMap,
+	qm *qmap.QMap,
 	index uuid.UUID,
 	msg NeatMessage,
 	titles map[string]goldsrc.Title,

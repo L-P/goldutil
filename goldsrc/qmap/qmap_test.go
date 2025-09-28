@@ -3,7 +3,6 @@ package qmap_test
 
 import (
 	"goldutil/goldsrc/qmap"
-	"maps"
 	"slices"
 	"testing"
 
@@ -74,7 +73,7 @@ func TestQMap(t *testing.T) { //nolint:funlen
 
 	require.ElementsMatch(
 		t,
-		slices.Collect(maps.Values(expected)),
-		slices.Collect(maps.Values(qm)),
+		slices.Collect(expected.Entities()),
+		slices.Collect(qm.Entities()),
 	)
 }

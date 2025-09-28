@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-func GraphQMap(qm qmap.QMap, w io.Writer) {
+func GraphQMap(qm *qmap.QMap, w io.Writer) {
 	fmt.Fprintln(w, "digraph TB {")
 	fmt.Fprintln(w, "  overlap = false;")
 
-	for _, v := range qm {
+	for v := range qm.Entities() {
 		name := v.KVs["targetname"]
 		class := v.KVs["classname"]
 

@@ -17,7 +17,7 @@ type SearchResult[T any] struct {
 func (qm *QMap) FindByKV(key, value string) []SearchResult[AnonymousEntity] {
 	var out []SearchResult[AnonymousEntity]
 
-	for index, ent := range *qm {
+	for index, ent := range qm.entities {
 		propValue, ok := ent.KVs[key]
 		if ok && propValue == value {
 			out = append(out, SearchResult[AnonymousEntity]{
@@ -34,7 +34,7 @@ func (qm *QMap) FindByKV(key, value string) []SearchResult[AnonymousEntity] {
 func (qm *QMap) FindByClassNameAndKV(className, key, value string) []SearchResult[AnonymousEntity] {
 	var out []SearchResult[AnonymousEntity]
 
-	for index, ent := range *qm {
+	for index, ent := range qm.entities {
 		if ent.KVs["classname"] != className {
 			continue
 		}
@@ -52,10 +52,10 @@ func (qm *QMap) FindByClassNameAndKV(className, key, value string) []SearchResul
 	return out
 }
 
-func FindByKV[T any](qm QMap, key, value string) ([]SearchResult[T], error) {
+func FindByKV[T any](qm *QMap, key, value string) ([]SearchResult[T], error) {
 	var out []SearchResult[T] //nolint:prealloc // unknowable
 
-	for index, ent := range qm {
+	for index, ent := range qm.entities {
 		propValue, ok := ent.KVs[key]
 		if !ok || propValue != value {
 			continue

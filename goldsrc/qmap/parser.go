@@ -22,7 +22,7 @@ const (
 type parser struct {
 	scanner *bufio.Scanner
 	state   parserState
-	qm      QMap
+	qm      *QMap
 
 	curEntity *AnonymousEntity
 	curBrush  Brush
@@ -36,7 +36,7 @@ func newParser(r io.Reader) parser {
 	}
 }
 
-func (p *parser) run() (QMap, error) {
+func (p *parser) run() (*QMap, error) {
 	var (
 		curLineNumber int
 		state         = psOutside
@@ -58,20 +58,20 @@ func (p *parser) run() (QMap, error) {
 		case psInBrush:
 			state = p.parseBrush(curLine, curLineNumber)
 		case psNone:
-			return QMap{}, ParseError{"reached an invalid state", curLineNumber, curLine}
+			return nil, ParseError{"reached an invalid state", curLineNumber, curLine}
 		}
 
 		if err != nil {
-			return QMap{}, err
+			return nil, err
 		}
 	}
 
 	if err := p.scanner.Err(); err != nil {
-		return QMap{}, fmt.Errorf("unable to read file: %w", err)
+		return nil, fmt.Errorf("unable to read file: %w", err)
 	}
 
 	if state != psOutside {
-		return QMap{}, ParseError{"reached EOF before closing entity or brush", -1, ""}
+		return nil, ParseError{"reached EOF before closing entity or brush", -1, ""}
 	}
 
 	return p.qm, nil
@@ -96,7 +96,8 @@ func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
 			return psNone, fmt.Errorf("unable to generate UUID as entity index: %w", err)
 		}
 
-		p.qm[index] = *p.curEntity
+		p.qm.entities[index] = *p.curEntity
+		p.qm.order = append(p.qm.order, index)
 		p.curEntity = nil
 
 		return psOutside, nil
