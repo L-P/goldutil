@@ -82,6 +82,17 @@ func (ent *AnonymousEntity) String() string {
 		fmt.Fprintf(&b, `"%s" "%s"`, k, v)
 		b.WriteRune('\n')
 	}
+
+	for i, brush := range ent.Brushes {
+		fmt.Fprintf(&b, "// brush %d\n", i)
+		b.WriteString("{\n")
+		for _, v := range brush {
+			b.WriteString(v)
+			b.WriteRune('\n')
+		}
+		b.WriteString("}\n")
+	}
+
 	b.WriteString("}\n")
 
 	return b.String()
@@ -93,8 +104,16 @@ func (tmap *TypedMap) String() string {
 	b.WriteString("// Game: Half-Life\n")
 	b.WriteString("// Format: Valve\n")
 
+	// Compilers require worldspawn to be the first entity.
+	if ents := tmap.FindByKV("classname", "worldspawn"); len(ents) > 0 {
+		b.WriteString(ents[0].Entity.String())
+	}
+
 	var i int
 	for _, ent := range *tmap {
+		if ent.KVs["classname"] == "worldspawn" {
+			continue
+		}
 		// Not sure why TrenchBroom does this, but let's keep the tradition alive.
 		fmt.Fprintf(&b, "// entity %d\n", i)
 		b.WriteString(ent.String())
