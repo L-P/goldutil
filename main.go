@@ -323,12 +323,12 @@ func doMapGraph(cCtx *cli.Context) error {
 		return errors.New("expected one argument: the .map to parse and graph")
 	}
 
-	qm, err := qmap.LoadFromFile(path)
+	tmap, err := loadTypedMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	GraphQMap(qm, os.Stdout)
+	GraphTypedMap(tmap, os.Stdout)
 
 	return nil
 }
