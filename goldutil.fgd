@@ -2,13 +2,14 @@
 [
     targetname(target_source) : "Name"
     target(target_destination) : "Target"
-	globalstate(string) : "Global State Master"
+    globalstate(string) : "Global State Master"
 ]
 
 @PointClass = neat_message : "Neat Message"
 [
     targetname(target_source) : "Name"
     target(target_destination) : "Target"
+    delay(string) : "Delay before trigger" : "0"
 
     message(string) : "Message Name"
     spawnflags(flags) =
@@ -24,5 +25,12 @@
         1 : "Medium Radius"
         2 : "Large  Radius"
         3 : "Play Everywhere"
+    ]
+
+    triggerstate(choices) : "Trigger State" : 2 =
+    [
+        0 : "Off"
+        1 : "On"
+        2 : "Toggle"
     ]
 ]
