@@ -36,7 +36,7 @@ func newParser(r io.Reader) parser {
 func (p *parser) run() (QMap, error) {
 	var (
 		curLineNumber int
-		state         = psOutside
+		state         parserState = psOutside
 	)
 
 	for p.scanner.Scan() {
@@ -87,15 +87,15 @@ func (p *parser) parseOutside(line string, lineNumber int) (parserState, error) 
 }
 
 func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
-	switch line {
-	case "}":
+	switch {
+	case line == "}":
 		p.curEntity.endLine = lineNumber
 		p.qmap.AddEntity(*p.curEntity)
 		p.curEntity = nil
 
 		return psOutside, nil
 
-	case "{":
+	case line == "{":
 		p.curBrush = &Brush{startLine: lineNumber}
 		return psInBrush, nil
 	}

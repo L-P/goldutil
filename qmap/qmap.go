@@ -11,6 +11,8 @@ import (
 
 type QMap struct {
 	entities []Entity
+
+	targetNameLookup map[string]int
 }
 
 func LoadFromFile(path string) (QMap, error) {
@@ -65,9 +67,25 @@ func (qmap *QMap) ComputeStats() Stats {
 }
 
 func (qmap *QMap) finalize() {
-	for _, v := range qmap.entities {
+	qmap.targetNameLookup = make(map[string]int, len(qmap.entities))
+
+	for i, v := range qmap.entities {
 		v.finalize()
+		qmap.entities[i] = v
+
+		if targetName, ok := v.GetProperty(KName); ok {
+			qmap.targetNameLookup[targetName] = i
+		}
 	}
+}
+
+func (qmap *QMap) GetEntityByName(name string) (Entity, bool) {
+	i, ok := qmap.targetNameLookup[name]
+	if !ok {
+		return Entity{}, false
+	}
+
+	return qmap.entities[i], true
 }
 
 func (qmap *QMap) String() string {
