@@ -75,9 +75,10 @@ func handleNeatMaster(tmap typedmap.TypedMap, index uuid.UUID, master NeatMaster
 func getNeatMasterAdditions(master NeatMaster) []any {
 	return []any{
 		valve.MultiSource{
-			Origin:     master.Origin,
-			TargetName: master.TargetName,
-			Target:     master.Target,
+			Origin:      master.Origin,
+			TargetName:  master.TargetName,
+			Target:      master.Target,
+			GlobalState: master.GlobalState,
 		},
 		valve.ButtonTarget{
 			Origin:     master.Origin,

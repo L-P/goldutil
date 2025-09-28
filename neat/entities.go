@@ -27,8 +27,9 @@ type NeatMaster struct {
 	Classname *string `qmap:"classname,neat_master"`
 	Origin    valve.Position
 
-	Target     string
-	TargetName string `qmap:"targetname"`
+	GlobalState string `qmap:"globalstate"`
+	Target      string
+	TargetName  string `qmap:"targetname"`
 }
 
 func (ent NeatMaster) Validate() error {

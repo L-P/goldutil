@@ -2,6 +2,7 @@
 [
     targetname(target_source) : "Name"
     target(target_destination) : "Target"
+	globalstate(string) : "Global State Master"
 ]
 
 @PointClass = neat_message : "Neat Message"
