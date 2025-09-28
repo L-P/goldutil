@@ -585,11 +585,8 @@ func doNodExport(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to read nodes: %w", err)
 	}
 
-	var (
-		original = cCtx.Bool("original-positions")
-		entities = make([]qmap.AnonymousEntity, 0, len(nodes)+len(links))
-	)
-
+	original := cCtx.Bool("original-positions")
+	entities := make([]qmap.AnonymousEntity, 0, len(nodes)+len(links))
 	for i, v := range nodes {
 		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":  v.ClassName(),

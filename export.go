@@ -73,44 +73,60 @@ func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
 		return qmap.QMap{}, err
 	}
 
-	clean := qmap.New()
+	clean := make([]qmap.AnonymousEntity, 0, len(qm))
 	for _, v := range qm {
-		layerID, ok := v.KVs["_tb_layer"]
-		if ok && skipLayerIDs.Has(layerID) {
+		if shouldSkipEntity(v, skipLayerIDs, skipGroupIDs) {
 			continue
-		}
-
-		groupID, ok := v.KVs["_tb_group"]
-		if ok && skipGroupIDs.Has(groupID) {
-			continue
-		}
-
-		id, ok := v.KVs["_tb_id"]
-		if ok && v.KVs["classname"] == "func_group" {
-			if typ, ok := v.KVs["_tb_type"]; ok {
-				if typ == "_tb_group" && skipGroupIDs.Has(id) {
-					continue
-				}
-			}
-
-			if typ, ok := v.KVs["_tb_type"]; ok {
-				if typ == "_tb_layer" && skipLayerIDs.Has(id) {
-					continue
-				}
-			}
 		}
 
 		if cleanupTB {
-			removeTBProps(&v)
+			removeTBProps(v)
 		}
 
-		clean.AddAnonymousEntities(v)
+		clean = append(clean, v)
 	}
 
-	return clean, nil
+	out := qmap.New()
+	if err := out.AddAnonymousEntities(clean...); err != nil {
+		return nil, fmt.Errorf("unable to fill output qmap: %w", err)
+	}
+
+	return out, nil
 }
 
-func removeTBProps(ent *qmap.AnonymousEntity) {
+func shouldSkipEntity(ent qmap.AnonymousEntity,
+	skipLayerIDs set.PresenceSet[string],
+	skipGroupIDs set.PresenceSet[string],
+) bool {
+	layerID, ok := ent.KVs["_tb_layer"]
+	if ok && skipLayerIDs.Has(layerID) {
+		return true
+	}
+
+	groupID, ok := ent.KVs["_tb_group"]
+	if ok && skipGroupIDs.Has(groupID) {
+		return true
+	}
+
+	id, ok := ent.KVs["_tb_id"]
+	if ok && ent.KVs["classname"] == "func_group" {
+		if typ, ok := ent.KVs["_tb_type"]; ok {
+			if typ == "_tb_group" && skipGroupIDs.Has(id) {
+				return true
+			}
+		}
+
+		if typ, ok := ent.KVs["_tb_type"]; ok {
+			if typ == "_tb_layer" && skipLayerIDs.Has(id) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func removeTBProps(ent qmap.AnonymousEntity) {
 	for k := range ent.KVs {
 		if strings.HasPrefix(k, "_tb_") {
 			delete(ent.KVs, k)
