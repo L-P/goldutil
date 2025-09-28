@@ -1,9 +1,9 @@
-package typedmap
+package qmap
 
 import (
 	"bytes"
 	"fmt"
-	"goldutil/goldsrc/typedmap/valve"
+	"goldutil/goldsrc/qmap/valve"
 	"maps"
 	"reflect"
 	"slices"
@@ -26,15 +26,15 @@ func NewAnonymousEntityFromStruct(in any) (AnonymousEntity, error) {
 		return zero, fmt.Errorf("unable to marshall struct: %w", err)
 	}
 
-	tmap, err := LoadFromReader(bytes.NewReader(marshalled))
+	qm, err := LoadFromReader(bytes.NewReader(marshalled))
 	if err != nil {
 		return zero, fmt.Errorf("unable to parse entity back: %w", err)
 	}
 
-	return slices.Collect(maps.Values(tmap))[0], nil
+	return slices.Collect(maps.Values(qm))[0], nil
 }
 
-// Marshals structs and pointer to structs into TypedMap entities.
+// Marshals structs and pointer to structs into QMap entities.
 // The qmap: field tags is of the form: property_name[,default_value].
 func Marshal(in any) ([]byte, error) {
 	typ := reflect.TypeOf(in)

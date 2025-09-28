@@ -3,34 +3,34 @@ package neat
 import (
 	"fmt"
 	"goldutil/goldsrc"
-	"goldutil/goldsrc/typedmap"
-	"goldutil/goldsrc/typedmap/valve"
+	"goldutil/goldsrc/qmap"
+	"goldutil/goldsrc/qmap/valve"
 	"os"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
-func Neatify(tmap typedmap.TypedMap, mod *os.Root) error {
-	if err := handleNeatMasters(tmap); err != nil {
+func Neatify(qm qmap.QMap, mod *os.Root) error {
+	if err := handleNeatMasters(qm); err != nil {
 		return fmt.Errorf("unable to handle neat_master: %w", err)
 	}
 
-	if err := handleNeatMessages(tmap, mod); err != nil {
+	if err := handleNeatMessages(qm, mod); err != nil {
 		return fmt.Errorf("unable to handle neat_message: %w", err)
 	}
 
 	return nil
 }
 
-func handleNeatMasters(tmap typedmap.TypedMap) error {
-	masters, err := typedmap.FindByKV[NeatMaster](tmap, "classname", "neat_master")
+func handleNeatMasters(qm qmap.QMap) error {
+	masters, err := qmap.FindByKV[NeatMaster](qm, "classname", "neat_master")
 	if err != nil {
 		return fmt.Errorf("unable to obtain neat_master entitites: %w", err)
 	}
 
 	for _, v := range masters {
-		if err := handleNeatMaster(tmap, v.Index, v.Entity); err != nil {
+		if err := handleNeatMaster(qm, v.Index, v.Entity); err != nil {
 			return err
 		}
 	}
@@ -38,13 +38,13 @@ func handleNeatMasters(tmap typedmap.TypedMap) error {
 	return nil
 }
 
-func handleNeatMaster(tmap typedmap.TypedMap, index uuid.UUID, master NeatMaster) error {
+func handleNeatMaster(qm qmap.QMap, index uuid.UUID, master NeatMaster) error {
 	if err := master.Validate(); err != nil {
 		return err
 	}
-	tmap.Delete(index)
+	qm.Delete(index)
 
-	for _, caller := range tmap.FindCallers(master.TargetName) {
+	for _, caller := range qm.FindCallers(master.TargetName) {
 		if caller.Entity.KVs["classname"] == "trigger_relay" {
 			caller.Entity.KVs[caller.MatchedKey] = master.TargetName + "_proxy"
 			continue
@@ -65,7 +65,7 @@ func handleNeatMaster(tmap typedmap.TypedMap, index uuid.UUID, master NeatMaster
 	}
 
 	additions := getNeatMasterAdditions(master)
-	if err := tmap.AddEntities(additions); err != nil {
+	if err := qm.AddEntities(additions); err != nil {
 		return fmt.Errorf("unable to append entities: %w", err)
 	}
 
@@ -106,8 +106,8 @@ func getNeatMasterAdditions(master NeatMaster) []any {
 	}
 }
 
-func handleNeatMessages(tmap typedmap.TypedMap, mod *os.Root) error {
-	messages, err := typedmap.FindByKV[NeatMessage](tmap, "classname", "neat_message")
+func handleNeatMessages(qm qmap.QMap, mod *os.Root) error {
+	messages, err := qmap.FindByKV[NeatMessage](qm, "classname", "neat_message")
 	if err != nil {
 		return fmt.Errorf("unable to obtain neat_message entitites: %w", err)
 	}
@@ -117,7 +117,7 @@ func handleNeatMessages(tmap typedmap.TypedMap, mod *os.Root) error {
 		return fmt.Errorf("unable to parse titles.txt: %w", err)
 	}
 	for _, v := range messages {
-		if err := handleNeatMessage(tmap, v.Index, v.Entity, titles); err != nil {
+		if err := handleNeatMessage(qm, v.Index, v.Entity, titles); err != nil {
 			return err
 		}
 	}
@@ -126,7 +126,7 @@ func handleNeatMessages(tmap typedmap.TypedMap, mod *os.Root) error {
 }
 
 func handleNeatMessage(
-	tmap typedmap.TypedMap,
+	qm qmap.QMap,
 	index uuid.UUID,
 	msg NeatMessage,
 	titles map[string]goldsrc.Title,
@@ -134,9 +134,9 @@ func handleNeatMessage(
 	if err := msg.Validate(titles); err != nil {
 		return err
 	}
-	tmap.Delete(index)
+	qm.Delete(index)
 
-	return tmap.AddEntities([]any{
+	return qm.AddEntities([]any{
 		valve.EnvMessage{
 			Origin:      msg.Origin,
 			TargetName:  msg.TargetName,

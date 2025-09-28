@@ -1,4 +1,4 @@
-package typedmap
+package qmap
 
 import (
 	"fmt"
@@ -14,10 +14,10 @@ type SearchResult[T any] struct {
 	MatchedKey string
 }
 
-func (tmap *TypedMap) FindByKV(key, value string) []SearchResult[AnonymousEntity] {
+func (qm *QMap) FindByKV(key, value string) []SearchResult[AnonymousEntity] {
 	var out []SearchResult[AnonymousEntity]
 
-	for index, ent := range *tmap {
+	for index, ent := range *qm {
 		propValue, ok := ent.KVs[key]
 		if ok && propValue == value {
 			out = append(out, SearchResult[AnonymousEntity]{
@@ -31,10 +31,10 @@ func (tmap *TypedMap) FindByKV(key, value string) []SearchResult[AnonymousEntity
 	return out
 }
 
-func (tmap *TypedMap) FindByClassNameAndKV(className, key, value string) []SearchResult[AnonymousEntity] {
+func (qm *QMap) FindByClassNameAndKV(className, key, value string) []SearchResult[AnonymousEntity] {
 	var out []SearchResult[AnonymousEntity]
 
-	for index, ent := range *tmap {
+	for index, ent := range *qm {
 		if ent.KVs["classname"] != className {
 			continue
 		}
@@ -52,10 +52,10 @@ func (tmap *TypedMap) FindByClassNameAndKV(className, key, value string) []Searc
 	return out
 }
 
-func FindByKV[T any](tmap TypedMap, key, value string) ([]SearchResult[T], error) {
+func FindByKV[T any](qm QMap, key, value string) ([]SearchResult[T], error) {
 	var out []SearchResult[T] //nolint:prealloc // unknowable
 
-	for index, ent := range tmap {
+	for index, ent := range qm {
 		propValue, ok := ent.KVs[key]
 		if !ok || propValue != value {
 			continue
@@ -78,17 +78,17 @@ func FindByKV[T any](tmap TypedMap, key, value string) ([]SearchResult[T], error
 
 // Returns all entities targeting a given targetname.
 // A single entity can appear multiple times using different targeting means.
-func (tmap *TypedMap) FindCallers(callee string) []SearchResult[AnonymousEntity] {
+func (qm *QMap) FindCallers(callee string) []SearchResult[AnonymousEntity] {
 	out := slices.Concat(
-		tmap.FindByKV("target", callee),
-		tmap.FindByKV("killtarget", callee),
-		tmap.FindByKV("TriggerTarget", callee), // monster_*
-		tmap.FindByClassNameAndKV("trigger_changetarget", "m_iszNewTarget", callee),
-		tmap.FindByClassNameAndKV("path_track", "message", callee),
-		tmap.FindByClassNameAndKV("path_corner", "message", callee),
+		qm.FindByKV("target", callee),
+		qm.FindByKV("killtarget", callee),
+		qm.FindByKV("TriggerTarget", callee), // monster_*
+		qm.FindByClassNameAndKV("trigger_changetarget", "m_iszNewTarget", callee),
+		qm.FindByClassNameAndKV("path_track", "message", callee),
+		qm.FindByClassNameAndKV("path_corner", "message", callee),
 	)
 
-	for _, mm := range tmap.FindByKV("classname", "multi_manager") {
+	for _, mm := range qm.FindByKV("classname", "multi_manager") {
 		for key := range mm.Entity.KVs {
 			if key == callee || strings.HasPrefix(key, callee+"#") {
 				mm.MatchedKey = key

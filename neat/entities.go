@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
-	"goldutil/goldsrc/typedmap/valve"
+	"goldutil/goldsrc/qmap/valve"
 )
 
 // Generic entity that can be used as a "master" in other entities.

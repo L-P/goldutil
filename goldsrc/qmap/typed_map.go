@@ -1,7 +1,6 @@
 // Package typed_map parses Quake .map files in the Valve 220 format as struct
 // containers.
-// TODO: The map being untyped, a rename is warranted. Replace qmap with this.
-package typedmap
+package qmap
 
 import (
 	"fmt"
@@ -12,18 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
-// TypedMap holds the entities of a .map file. While it essentially is an array
+// QMap holds the entities of a .map file. While it essentially is an array
 // of entities, it is stored into a UUID-keyed map to allow CRUD operations
 // without having to deal with moving indexes.
 // It is safe to rewrite entities with a different order because the engine is
-// not supposed to care about the order of entities.
+// not supposed to care about the order of entities, ericw requires worldspawn
+// and that's taken care of in String().
 // Because we have lot of "keys" and "values" floating around, by convention
 // variables containing keys of this map are called "index" (not "i", not "k").
 // KVs being stored as maps, obtaining an entity and updating its KVs will
-// update the contents of the TypedMap.
-type TypedMap map[uuid.UUID]AnonymousEntity
+// update the contents of the QMap.
+type QMap map[uuid.UUID]AnonymousEntity
 
-func New() TypedMap {
+func New() QMap {
 	return make(map[uuid.UUID]AnonymousEntity)
 }
 
@@ -54,24 +54,24 @@ func (ent *AnonymousEntity) IsZero() bool {
 
 type Brush []string // raw planes, unparsed
 
-func LoadFromFile(path string) (TypedMap, error) {
+func LoadFromFile(path string) (QMap, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return TypedMap{}, err
+		return QMap{}, err
 	}
 	defer f.Close()
 
 	return LoadFromReader(f)
 }
 
-func LoadFromReader(r io.Reader) (TypedMap, error) {
+func LoadFromReader(r io.Reader) (QMap, error) {
 	parser := newParser(r)
-	tmap, err := parser.run()
+	qm, err := parser.run()
 	if err != nil {
-		return TypedMap{}, fmt.Errorf("unable to parse qmap: %w", err)
+		return QMap{}, fmt.Errorf("unable to parse qmap: %w", err)
 	}
 
-	return tmap, nil
+	return qm, nil
 }
 
 func (ent *AnonymousEntity) String() string {
@@ -98,19 +98,19 @@ func (ent *AnonymousEntity) String() string {
 	return b.String()
 }
 
-func (tmap *TypedMap) String() string {
+func (qm *QMap) String() string {
 	var b strings.Builder
 
 	b.WriteString("// Game: Half-Life\n")
 	b.WriteString("// Format: Valve\n")
 
 	// Compilers require worldspawn to be the first entity.
-	if ents := tmap.FindByKV("classname", "worldspawn"); len(ents) > 0 {
+	if ents := qm.FindByKV("classname", "worldspawn"); len(ents) > 0 {
 		b.WriteString(ents[0].Entity.String())
 	}
 
 	var i int
-	for _, ent := range *tmap {
+	for _, ent := range *qm {
 		if ent.KVs["classname"] == "worldspawn" {
 			continue
 		}
@@ -123,7 +123,7 @@ func (tmap *TypedMap) String() string {
 	return b.String()
 }
 
-func (tmap *TypedMap) AddEntities(ents []any) error {
+func (qm *QMap) AddEntities(ents []any) error {
 	for _, v := range ents {
 		index, err := uuid.NewRandom()
 		if err != nil {
@@ -135,25 +135,25 @@ func (tmap *TypedMap) AddEntities(ents []any) error {
 			return fmt.Errorf("unable to convert back to AnonymousEntity: %w", err)
 		}
 
-		(*tmap)[index] = anon
+		(*qm)[index] = anon
 	}
 
 	return nil
 }
 
-func (tmap *TypedMap) AddAnonymousEntities(ents ...AnonymousEntity) error {
+func (qm *QMap) AddAnonymousEntities(ents ...AnonymousEntity) error {
 	for _, ent := range ents {
 		index, err := uuid.NewRandom()
 		if err != nil {
 			return fmt.Errorf("unable to generate UUID as entity index: %w", err)
 		}
 
-		(*tmap)[index] = ent
+		(*qm)[index] = ent
 	}
 
 	return nil
 }
 
-func (tmap *TypedMap) Delete(index uuid.UUID) {
-	delete(*tmap, index)
+func (qm *QMap) Delete(index uuid.UUID) {
+	delete(*qm, index)
 }

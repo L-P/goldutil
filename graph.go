@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"goldutil/goldsrc/typedmap"
+	"goldutil/goldsrc/qmap"
 	"io"
 	"strings"
 )
 
-func GraphTypedMap(tmap typedmap.TypedMap, w io.Writer) {
+func GraphQMap(qm qmap.QMap, w io.Writer) {
 	fmt.Fprintln(w, "digraph TB {")
 	fmt.Fprintln(w, "  overlap = false;")
 
-	for _, v := range tmap {
+	for _, v := range qm {
 		name := v.KVs["targetname"]
 		class := v.KVs["classname"]
 
@@ -66,7 +66,7 @@ var mmIgnored = map[string]struct{}{
 	"spawnflags": {},
 }
 
-func graphMultiManager(mm typedmap.AnonymousEntity, w io.Writer) {
+func graphMultiManager(mm qmap.AnonymousEntity, w io.Writer) {
 	for target := range mm.KVs {
 		if _, ok := mmIgnored[target]; ok {
 			continue
@@ -85,7 +85,7 @@ func graphMultiManager(mm typedmap.AnonymousEntity, w io.Writer) {
 	}
 }
 
-func graphTriggerRelayTarget(relay typedmap.AnonymousEntity, target string, w io.Writer) {
+func graphTriggerRelayTarget(relay qmap.AnonymousEntity, target string, w io.Writer) {
 	name := relay.KVs["targetname"]
 	state, ok := relay.KVs["triggerstate"]
 	if !ok {

@@ -2,7 +2,7 @@ package neat_test
 
 import (
 	"embed"
-	"goldutil/goldsrc/typedmap"
+	"goldutil/goldsrc/qmap"
 	"goldutil/neat"
 	"io/fs"
 	"maps"
@@ -29,23 +29,23 @@ func TestNeatify(t *testing.T) {
 		t.Run(inputPath, func(t *testing.T) {
 			input, err := cases.Open(inputPath)
 			require.NoError(t, err)
-			tmap, err := typedmap.LoadFromReader(input)
+			qm, err := qmap.LoadFromReader(input)
 			require.NoError(t, err)
 
 			mod, err := os.OpenRoot("test_cases")
 			require.NoError(t, err)
 
-			require.NoError(t, neat.Neatify(tmap, mod))
+			require.NoError(t, neat.Neatify(qm, mod))
 
 			expected, err := cases.Open(expectedPath)
 			require.NoError(t, err)
-			expectedTMap, err := typedmap.LoadFromReader(expected)
+			expectedTMap, err := qmap.LoadFromReader(expected)
 			require.NoError(t, err)
 
 			require.ElementsMatch(
 				t,
 				slices.Collect(maps.Values(expectedTMap)),
-				slices.Collect(maps.Values(tmap)),
+				slices.Collect(maps.Values(qm)),
 			)
 		})
 	}

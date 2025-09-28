@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
-	"goldutil/goldsrc/typedmap"
+	"goldutil/goldsrc/qmap"
 	"goldutil/neat"
 	"goldutil/set"
 	"goldutil/sprite"
@@ -322,18 +322,18 @@ func doMapGraph(cCtx *cli.Context) error {
 		return errors.New("expected one argument: the .map to parse and graph")
 	}
 
-	tmap, err := loadTypedMap(cCtx.Args().Get(0))
+	qm, err := loadQMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	GraphTypedMap(tmap, os.Stdout)
+	GraphQMap(qm, os.Stdout)
 
 	return nil
 }
 
 func doNeat(cCtx *cli.Context) error {
-	tmap, err := loadTypedMap(cCtx.Args().Get(0))
+	qm, err := loadQMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -343,22 +343,22 @@ func doNeat(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to open current working directory: %w", err)
 	}
 
-	if err := neat.Neatify(tmap, mod); err != nil {
+	if err := neat.Neatify(qm, mod); err != nil {
 		return fmt.Errorf("unable to neatify map: %w", err)
 	}
 
-	fmt.Print(tmap.String())
+	fmt.Print(qm.String())
 
 	return nil
 }
 
 func doMapExport(cCtx *cli.Context) error {
-	tmap, err := loadTypedMap(cCtx.Args().Get(0))
+	qm, err := loadQMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	clean, err := exportTypedMap(tmap, cCtx.Bool("cleanup-tb"))
+	clean, err := exportQMap(qm, cCtx.Bool("cleanup-tb"))
 	if err != nil {
 		return fmt.Errorf("unable to export map: %w", err)
 	}
@@ -368,11 +368,11 @@ func doMapExport(cCtx *cli.Context) error {
 	return nil
 }
 
-func loadTypedMap(path string) (typedmap.TypedMap, error) {
+func loadQMap(path string) (qmap.QMap, error) {
 	if path == "" {
-		return typedmap.LoadFromReader(os.Stdin)
+		return qmap.LoadFromReader(os.Stdin)
 	} else {
-		return typedmap.LoadFromFile(path)
+		return qmap.LoadFromFile(path)
 	}
 }
 
@@ -587,11 +587,11 @@ func doNodExport(cCtx *cli.Context) error {
 
 	var (
 		original = cCtx.Bool("original-positions")
-		entities = make([]typedmap.AnonymousEntity, 0, len(nodes)+len(links))
+		entities = make([]qmap.AnonymousEntity, 0, len(nodes)+len(links))
 	)
 
 	for i, v := range nodes {
-		entities = append(entities, typedmap.AnonymousEntity{KVs: map[string]string{
+		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":  v.ClassName(),
 			"origin":     v.Position(original).String(),
 			"targetname": fmt.Sprintf("node#%d", i),
@@ -599,7 +599,7 @@ func doNodExport(cCtx *cli.Context) error {
 	}
 
 	for linkTypeBitID := 0; linkTypeBitID <= goldsrc.LinkTypeBitMax; linkTypeBitID++ {
-		entities = append(entities, typedmap.AnonymousEntity{KVs: map[string]string{
+		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":            "func_group",
 			"_tb_type":             "_tb_layer",
 			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, goldsrc.LinkTypeName(linkTypeBitID)),
@@ -619,7 +619,7 @@ func doNodExport(cCtx *cli.Context) error {
 		}
 	}
 
-	out := typedmap.New()
+	out := qmap.New()
 	if err := out.AddAnonymousEntities(entities...); err != nil {
 		return fmt.Errorf("unable to append entities to output map: %w", err)
 	}

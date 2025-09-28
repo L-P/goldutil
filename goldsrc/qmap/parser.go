@@ -1,4 +1,4 @@
-package typedmap
+package qmap
 
 import (
 	"bufio"
@@ -22,7 +22,7 @@ const (
 type parser struct {
 	scanner *bufio.Scanner
 	state   parserState
-	tmap    TypedMap
+	qm    QMap
 
 	curEntity *AnonymousEntity
 	curBrush  Brush
@@ -32,11 +32,11 @@ func newParser(r io.Reader) parser {
 	return parser{
 		state:   psOutside,
 		scanner: bufio.NewScanner(r),
-		tmap:    New(),
+		qm:    New(),
 	}
 }
 
-func (p *parser) run() (TypedMap, error) {
+func (p *parser) run() (QMap, error) {
 	var (
 		curLineNumber int
 		state         = psOutside
@@ -58,23 +58,23 @@ func (p *parser) run() (TypedMap, error) {
 		case psInBrush:
 			state = p.parseBrush(curLine, curLineNumber)
 		case psNone:
-			return TypedMap{}, ParseError{"reached an invalid state", curLineNumber, curLine}
+			return QMap{}, ParseError{"reached an invalid state", curLineNumber, curLine}
 		}
 
 		if err != nil {
-			return TypedMap{}, err
+			return QMap{}, err
 		}
 	}
 
 	if err := p.scanner.Err(); err != nil {
-		return TypedMap{}, fmt.Errorf("unable to read file: %w", err)
+		return QMap{}, fmt.Errorf("unable to read file: %w", err)
 	}
 
 	if state != psOutside {
-		return TypedMap{}, ParseError{"reached EOF before closing entity or brush", -1, ""}
+		return QMap{}, ParseError{"reached EOF before closing entity or brush", -1, ""}
 	}
 
-	return p.tmap, nil
+	return p.qm, nil
 }
 
 func (p *parser) parseOutside(line string, lineNumber int) (parserState, error) {
@@ -96,7 +96,7 @@ func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
 			return psNone, fmt.Errorf("unable to generate UUID as entity index: %w", err)
 		}
 
-		p.tmap[index] = *p.curEntity
+		p.qm[index] = *p.curEntity
 		p.curEntity = nil
 
 		return psOutside, nil

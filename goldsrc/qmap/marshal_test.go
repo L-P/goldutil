@@ -1,8 +1,8 @@
-package typedmap_test
+package qmap_test
 
 import (
 	"fmt"
-	"goldutil/goldsrc/typedmap"
+	"goldutil/goldsrc/qmap"
 	"goldutil/nullable"
 	"testing"
 
@@ -22,7 +22,7 @@ func ExampleMarshal() {
 
 	overridden := "overridden"
 
-	marshalled, _ := typedmap.Marshal(Foo{
+	marshalled, _ := qmap.Marshal(Foo{
 		RegularProperty:   "regular",
 		OverriddenDefault: &overridden,
 		HardcodedKey:      "hardcoded key",
@@ -65,7 +65,7 @@ type Foo struct {
 }
 
 func TestUnmarshal(t *testing.T) {
-	input := typedmap.AnonymousEntity{KVs: map[string]string{
+	input := qmap.AnonymousEntity{KVs: map[string]string{
 		"string":          "string",
 		"aliased_string":  "aliased",
 		"nullable_string": "string",
@@ -111,7 +111,7 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestMarshal(t *testing.T) {
-	actual, err := typedmap.Marshal(Foo{
+	actual, err := qmap.Marshal(Foo{
 		AliasedString:                       "aliased",
 		NullableString:                      nullable.New("string"),
 		NullableStringWithDefault:           nullable.New("default"),
@@ -182,7 +182,7 @@ func TestRoundTrip(t *testing.T) {
 		OverriddenNullableFloat32WithDefault: nullable.New[float32](-1),
 	}
 
-	anonymous, err := typedmap.NewAnonymousEntityFromStruct(expected)
+	anonymous, err := qmap.NewAnonymousEntityFromStruct(expected)
 	require.NoError(t, err)
 
 	var reparsed Foo

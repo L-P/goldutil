@@ -1,8 +1,8 @@
 //nolint:gofmt // BUG
-package typedmap_test
+package qmap_test
 
 import (
-	"goldutil/goldsrc/typedmap"
+	"goldutil/goldsrc/qmap"
 	"maps"
 	"slices"
 	"testing"
@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTypedMap(t *testing.T) { //nolint:funlen
-	tmap, err := typedmap.LoadFromFile("test.map")
+func TestQMap(t *testing.T) { //nolint:funlen
+	qm, err := qmap.LoadFromFile("test.map")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := typedmap.New()
+	expected := qmap.New()
 	require.NoError(t, expected.AddAnonymousEntities(
-		typedmap.AnonymousEntity{KVs: map[string]string{
+		qmap.AnonymousEntity{KVs: map[string]string{
 			"mapversion":  "220",
 			"wad":         "",
 			"classname":   "worldspawn",
@@ -29,14 +29,14 @@ func TestTypedMap(t *testing.T) { //nolint:funlen
 			"newunit":     "0",
 			"defaultteam": "0",
 		}},
-		typedmap.AnonymousEntity{KVs: map[string]string{
+		qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":   "multisource",
 			"origin":      "0 0 0",
 			"target":      "mstarget",
 			"globalstate": "msglobalstate",
 			"targetname":  "mstargetname",
 		}},
-		typedmap.AnonymousEntity{KVs: map[string]string{
+		qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":    "trigger_relay",
 			"spawnflags":   "0",
 			"triggerstate": "1",
@@ -46,7 +46,7 @@ func TestTypedMap(t *testing.T) { //nolint:funlen
 			"target":       "relaytarget",
 			"targetname":   "relaytargetname",
 		}},
-		typedmap.AnonymousEntity{
+		qmap.AnonymousEntity{
 			KVs: map[string]string{
 				"classname":   "button_target",
 				"spawnflags":  "1",
@@ -57,9 +57,9 @@ func TestTypedMap(t *testing.T) { //nolint:funlen
 				"master":      "btnmaster",
 				"target":      "btntarget",
 			},
-			BrushEntity: typedmap.BrushEntity{
-				Brushes: []typedmap.Brush{
-					typedmap.Brush{
+			BrushEntity: qmap.BrushEntity{
+				Brushes: []qmap.Brush{
+					qmap.Brush{
 						"( 16 -16 0 ) ( 16 -15 0 ) ( 16 -16 1 ) __TB_empty [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1",
 						"( 16 -16 0 ) ( 16 -16 1 ) ( 17 -16 0 ) __TB_empty [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1",
 						"( 16 -16 0 ) ( 17 -16 0 ) ( 16 -15 0 ) __TB_empty [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1",
@@ -75,6 +75,6 @@ func TestTypedMap(t *testing.T) { //nolint:funlen
 	require.ElementsMatch(
 		t,
 		slices.Collect(maps.Values(expected)),
-		slices.Collect(maps.Values(tmap)),
+		slices.Collect(maps.Values(qm)),
 	)
 }

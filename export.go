@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"goldutil/goldsrc/typedmap"
+	"goldutil/goldsrc/qmap"
 	"goldutil/set"
 	"strings"
 )
 
-func getUnexportedLayerSet(tmap typedmap.TypedMap) (set.PresenceSet[string], error) {
+func getUnexportedLayerSet(qm qmap.QMap) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
 
-	for _, layer := range tmap.FindByClassNameAndKV("func_group", "_tb_type", "_tb_layer") {
+	for _, layer := range qm.FindByClassNameAndKV("func_group", "_tb_type", "_tb_layer") {
 		locked, ok := layer.Entity.KVs["_tb_layer_omit_from_export"]
 		if ok && locked == "1" {
 			id, ok := layer.Entity.KVs["_tb_id"]
@@ -24,13 +24,13 @@ func getUnexportedLayerSet(tmap typedmap.TypedMap) (set.PresenceSet[string], err
 	return skipIDs, nil
 }
 
-func getUnexportedGroupSet(tmap typedmap.TypedMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
+func getUnexportedGroupSet(qm qmap.QMap, unexportedLayerIDs set.PresenceSet[string]) (set.PresenceSet[string], error) {
 	var skipIDs = set.NewPresenceSet[string](0)
 
 	for {
 		var foundMatches bool
 
-		for _, group := range tmap.FindByClassNameAndKV("func_group", "_tb_type", "_tb_group") {
+		for _, group := range qm.FindByClassNameAndKV("func_group", "_tb_type", "_tb_group") {
 			groupID, ok := group.Entity.KVs["_tb_id"]
 			if !ok {
 				return nil, fmt.Errorf("found a group with no _tb_id")
@@ -62,19 +62,19 @@ func getUnexportedGroupSet(tmap typedmap.TypedMap, unexportedLayerIDs set.Presen
 	return skipIDs, nil
 }
 
-func exportTypedMap(tmap typedmap.TypedMap, cleanupTB bool) (typedmap.TypedMap, error) {
-	skipLayerIDs, err := getUnexportedLayerSet(tmap)
+func exportQMap(qm qmap.QMap, cleanupTB bool) (qmap.QMap, error) {
+	skipLayerIDs, err := getUnexportedLayerSet(qm)
 	if err != nil {
-		return typedmap.TypedMap{}, err
+		return qmap.QMap{}, err
 	}
 
-	skipGroupIDs, err := getUnexportedGroupSet(tmap, skipLayerIDs)
+	skipGroupIDs, err := getUnexportedGroupSet(qm, skipLayerIDs)
 	if err != nil {
-		return typedmap.TypedMap{}, err
+		return qmap.QMap{}, err
 	}
 
-	clean := typedmap.New()
-	for _, v := range tmap {
+	clean := qmap.New()
+	for _, v := range qm {
 		layerID, ok := v.KVs["_tb_layer"]
 		if ok && skipLayerIDs.Has(layerID) {
 			continue
@@ -110,7 +110,7 @@ func exportTypedMap(tmap typedmap.TypedMap, cleanupTB bool) (typedmap.TypedMap, 
 	return clean, nil
 }
 
-func removeTBProps(ent *typedmap.AnonymousEntity) {
+func removeTBProps(ent *qmap.AnonymousEntity) {
 	for k := range ent.KVs {
 		if strings.HasPrefix(k, "_tb_") {
 			delete(ent.KVs, k)
