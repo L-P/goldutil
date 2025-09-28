@@ -354,12 +354,12 @@ func doNeat(cCtx *cli.Context) error {
 }
 
 func doMapExport(cCtx *cli.Context) error {
-	qm, err := loadMap(cCtx.Args().Get(0))
+	tmap, err := loadTypedMap(cCtx.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	clean, err := exportQMap(qm, cCtx.Bool("cleanup-tb"))
+	clean, err := exportTypedMap(tmap, cCtx.Bool("cleanup-tb"))
 	if err != nil {
 		return fmt.Errorf("unable to export map: %w", err)
 	}

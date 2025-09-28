@@ -17,7 +17,7 @@ func TestTypedMap(t *testing.T) { //nolint:funlen
 	}
 
 	expected := typedmap.New()
-	require.NoError(t, expected.AddAnonymousEntities([]typedmap.AnonymousEntity{
+	require.NoError(t, expected.AddAnonymousEntities(
 		typedmap.AnonymousEntity{KVs: map[string]string{
 			"mapversion":  "220",
 			"wad":         "",
@@ -70,7 +70,7 @@ func TestTypedMap(t *testing.T) { //nolint:funlen
 				},
 			},
 		},
-	}))
+	))
 
 	require.ElementsMatch(
 		t,

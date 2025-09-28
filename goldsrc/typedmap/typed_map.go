@@ -141,7 +141,7 @@ func (tmap *TypedMap) AddEntities(ents []any) error {
 	return nil
 }
 
-func (tmap *TypedMap) AddAnonymousEntities(ents []AnonymousEntity) error {
+func (tmap *TypedMap) AddAnonymousEntities(ents ...AnonymousEntity) error {
 	for _, ent := range ents {
 		index, err := uuid.NewRandom()
 		if err != nil {
