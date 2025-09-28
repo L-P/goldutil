@@ -11,9 +11,14 @@ func GraphQMap(qm *qmap.QMap, w io.Writer) {
 	fmt.Fprintln(w, "digraph TB {")
 	fmt.Fprintln(w, "  overlap = false;")
 
+	var entNumber int
 	for v := range qm.Entities() {
-		name := v.KVs["targetname"]
+		entNumber++
 		class := v.KVs["classname"]
+		name, ok := v.KVs["targetname"]
+		if !ok {
+			name = fmt.Sprintf("_%s_%d", class, entNumber)
+		}
 
 		if class == "multi_manager" {
 			graphMultiManager(v, w)
