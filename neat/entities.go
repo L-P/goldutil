@@ -23,7 +23,7 @@ import (
 // <targetname>_off, and <targetname>_toggle).
 // trigger_relays targeting <targetname> are redirected to <targetname>_proxy.
 // All other entities targeting <targetname> will be rewritten to call <targetname>_toggle.
-type NeatMaster struct {
+type Master struct {
 	Classname *string `qmap:"classname,neat_master"`
 	Origin    valve.Position
 
@@ -32,7 +32,7 @@ type NeatMaster struct {
 	TargetName  string `qmap:"targetname"`
 }
 
-func (ent NeatMaster) Validate() error {
+func (ent Master) Validate() error {
 	if ent.TargetName == "" {
 		return errors.New("empty targetname on neat_master")
 	}
@@ -47,7 +47,7 @@ func (ent NeatMaster) Validate() error {
 //   - The message duration is read from titles.txt.
 //   - The target isn't fired until the message ends.
 //   - The delay is used as padding in addition to message length.
-type NeatMessage struct {
+type Message struct {
 	Classname *string `qmap:"classname,neat_message"`
 	Origin    valve.Position
 
@@ -62,7 +62,7 @@ type NeatMessage struct {
 	TriggerState valve.TriggerState `qmap:"triggerstate"`
 }
 
-func (ent NeatMessage) Validate(titles map[string]goldsrc.Title) error {
+func (ent Message) Validate(titles map[string]goldsrc.Title) error {
 	if ent.TargetName == "" {
 		return errors.New("empty targetname")
 	}

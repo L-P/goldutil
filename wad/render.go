@@ -15,7 +15,7 @@ func (mip *MIPTexture) Render(mipIndex int) (image.Image, error) {
 // TODO merge with Sprite render code.
 func (mip *MIPTexture) PaletteNRGBA() color.Palette {
 	palette := make([]color.Color, len(mip.Palette))
-	for i := 0; i < len(mip.Palette); i++ {
+	for i := range len(mip.Palette) {
 		palette[i] = color.NRGBA{
 			mip.Palette[i].R,
 			mip.Palette[i].G,

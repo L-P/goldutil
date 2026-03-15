@@ -7,12 +7,23 @@ linters:
       - comments
     rules:
       - linters:
-        - staticcheck
+          - revive
+        text: "^unused-parameter"
+      - linters:
+          - errcheck
+        text: "^Error return value of `fmt\\.F?[pP]rint(f|ln)?` is not checked$"
+      - linters:
+          - staticcheck
         # Errors often start with a type name.
         text: "ST1005: error strings should not be capitalized"
+      - linters:
+          - gosec
+        # errcheck does this already
+        text: "G104: Errors unhandled"
 
   disable:
     - "cyclop" # trips too easily on validation-heavy funcs
+    - "depguard"
     - "err113" # not designing a lib
     - "exhaustruct" # zero values are a good thing
     - "forcetypeassert" # the resulting panics are used to denote explicit programming errors

@@ -12,6 +12,7 @@ import (
 // See sprgen.c and the Quake engine.
 type Sprite struct {
 	Header
+
 	Frames []Frame
 }
 
@@ -66,7 +67,7 @@ func (spr *Sprite) Read(r io.Reader) error {
 	}
 
 	spr.Frames = make([]Frame, 0, spr.NumFrames)
-	for i := int32(0); i < spr.NumFrames; i += 1 {
+	for i := range spr.NumFrames {
 		var frame Frame
 		if err := frame.Read(r); err != nil {
 			return fmt.Errorf("unable to read frame %d: %w", i, err)
@@ -83,7 +84,7 @@ func NewFromFile(path string) (Sprite, error) {
 	if err != nil {
 		return Sprite{}, fmt.Errorf("unable to open file: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	var sprite Sprite
 	if err := sprite.Read(f); err != nil {
@@ -95,7 +96,7 @@ func NewFromFile(path string) (Sprite, error) {
 
 func (spr *Sprite) AddFrame(frame Frame) {
 	spr.Frames = append(spr.Frames, frame)
-	spr.NumFrames += 1
+	spr.NumFrames++
 }
 
 func (spr *Sprite) Write(w io.Writer) error {

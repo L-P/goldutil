@@ -19,7 +19,7 @@ func extractWAD(wad3 wad.WAD, dir string) error {
 		if strings.ContainsRune(name, os.PathSeparator) {
 			return fmt.Errorf("texture name contains a separator: %s", name)
 		}
-		destPath := filepath.Join(dir, fmt.Sprintf("%s.png", name))
+		destPath := filepath.Join(dir, name+".png")
 
 		if err := writeTexture(tex, destPath); err != nil {
 			return fmt.Errorf("unable to write texture: %w", err)
@@ -35,13 +35,13 @@ func writeTexture(tex wad.MIPTexture, destPath string) error {
 		return fmt.Errorf("unable to render texture: %w", err)
 	}
 
-	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open '%s' for writing: %w", destPath, err)
 	}
 
 	if err := png.Encode(dest, img); err != nil {
-		dest.Close()
+		dest.Close() //nolint:errcheck // in another error path already
 		return fmt.Errorf("unable to encode png: %w", err)
 	}
 
@@ -66,7 +66,7 @@ func createWAD(destPath string, inputFiles []string) error {
 		}
 	}
 
-	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open '%s' for writing: %w", destPath, err)
 	}

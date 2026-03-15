@@ -3,6 +3,7 @@ package goldsrc_test
 import (
 	"goldutil/goldsrc"
 	"goldutil/wad"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,12 +64,14 @@ func TestMaterialsRemapper(t *testing.T) {
 		}
 	)
 
-	actual, err := remapper.ReMap(textures, replacement)
+	actual, err := remapper.ReMap(io.Discard, textures, replacement)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
 func mustTextureSlice(t *testing.T, names []string) []wad.MIPTexture {
+	t.Helper()
+
 	var ret = make([]wad.MIPTexture, len(names))
 	for i, name := range names {
 		ret[i] = wad.MIPTexture{
@@ -87,6 +90,8 @@ func mustTextureSlice(t *testing.T, names []string) []wad.MIPTexture {
 }
 
 func mustTextureName(t *testing.T, str string) wad.TextureName {
+	t.Helper()
+
 	ret, err := wad.NewTextureName(str)
 	require.NoError(t, err)
 	return ret
@@ -111,6 +116,6 @@ func TestMaterialsRemapperExhaust(t *testing.T) {
 		remapper = goldsrc.NewMaterialsRemapper(source)
 	)
 
-	_, err := remapper.ReMap(textures, replacement)
+	_, err := remapper.ReMap(io.Discard, textures, replacement)
 	require.Error(t, err, "exhausted material pool for MaterialTypeDirt")
 }

@@ -141,7 +141,7 @@ func LoadBSPFromFile(path string) (*BSP, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open BSP for reading: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // read-only
 
 	return LoadBSP(f)
 }
@@ -159,13 +159,13 @@ func humanize(bytes int) string {
 }
 
 func (bsp *BSP) WriteToFile(path string) error {
-	out, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	out, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open file for writing: %w", err)
 	}
 
 	if err := bsp.Write(out); err != nil {
-		out.Close()
+		out.Close() //nolint:errcheck // inconsequential, already in an error path
 		return fmt.Errorf("unable to write to BSP: %w", err)
 	}
 

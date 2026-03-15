@@ -40,7 +40,7 @@ func main() {
 
 //nolint:funlen // descriptions
 func newApp() *cli.Command {
-	cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
+	cli.HelpPrinter = func(w io.Writer, templ string, data any) {
 		_ = doHelp(context.Background(), nil)
 	}
 
@@ -54,7 +54,7 @@ func newApp() *cli.Command {
 			{
 				Name: "fgd",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Print(fgd)
+					fmt.Fprint(cmd.Writer, fgd)
 					return nil
 				},
 			},
@@ -284,7 +284,7 @@ func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to create sprite: %w", err)
 	}
 
-	dest, err := os.OpenFile(cmd.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	dest, err := os.OpenFile(cmd.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open dest SPR for writing: %w", err)
 	}
@@ -311,7 +311,7 @@ func doSpriteInfo(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to open sprite: %w", err)
 	}
 
-	fmt.Println(spr.String())
+	fmt.Fprintln(cmd.Writer, spr.String())
 
 	return nil
 }
@@ -347,7 +347,7 @@ func doNeat(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to neatify map: %w", err)
 	}
 
-	fmt.Print(qm.String())
+	fmt.Fprint(cmd.Writer, qm.String())
 
 	return nil
 }
@@ -363,7 +363,7 @@ func doMapExport(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to export map: %w", err)
 	}
 
-	fmt.Print(clean.String())
+	fmt.Fprint(cmd.Writer, clean.String())
 
 	return nil
 }
@@ -371,9 +371,9 @@ func doMapExport(ctx context.Context, cmd *cli.Command) error {
 func loadQMap(path string) (*qmap.QMap, error) {
 	if path == "" {
 		return qmap.LoadFromReader(os.Stdin)
-	} else {
-		return qmap.LoadFromFile(path)
 	}
+
+	return qmap.LoadFromFile(path)
 }
 
 func doWADExtract(ctx context.Context, cmd *cli.Command) error {
@@ -400,7 +400,7 @@ func doWADInfo(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to open and parse WAD file: %w", err)
 	}
 
-	fmt.Println(wad3.String())
+	fmt.Fprintln(cmd.Writer, wad3.String())
 
 	return nil
 }
@@ -486,7 +486,7 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 		verbose  = cmd.Bool("verbose")
 		remapper = goldsrc.NewMaterialsRemapper(source)
 	)
-	mapping, err := remapper.ReMap(bsp.Textures.Textures, replacement)
+	mapping, err := remapper.ReMap(cmd.ErrWriter, bsp.Textures.Textures, replacement)
 	if err != nil {
 		return fmt.Errorf("unable to remap materials: %w", err)
 	}
@@ -498,7 +498,8 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		if verbose {
-			fmt.Printf(
+			fmt.Fprintf(
+				cmd.Writer,
 				"Remapping %-15s to %s\n",
 				strings.ToUpper(tex.Name.String()),
 				strings.ToUpper(mapTo.String()),
@@ -513,7 +514,7 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if cmd.Bool("verbose") {
-		remapper.PrintAvailable()
+		remapper.PrintAvailable(cmd.Writer)
 	}
 
 	return nil
@@ -525,7 +526,7 @@ func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	fmt.Print(bsp.String())
+	fmt.Fprint(cmd.Writer, bsp.String())
 
 	return nil
 }
@@ -545,7 +546,7 @@ func doHelp(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to obtain man stdin: %w", err)
 	}
 	go func() {
-		defer stdin.Close()
+		defer stdin.Close() //nolint:errcheck // readonly
 		if _, err := io.WriteString(stdin, manPage); err != nil {
 			panic("unable to write to man stdin")
 		}
@@ -574,7 +575,7 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return fmt.Errorf("unable to open file for reading: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	nodes, links, err := goldsrc.ReadNodes(f, format)
 	if err != nil {
@@ -591,7 +592,7 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 		}})
 	}
 
-	for linkTypeBitID := 0; linkTypeBitID <= goldsrc.LinkTypeBitMax; linkTypeBitID++ {
+	for linkTypeBitID := range goldsrc.LinkTypeBitMax {
 		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":            "func_group",
 			"_tb_type":             "_tb_layer",
@@ -617,7 +618,7 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to append entities to output map: %w", err)
 	}
 
-	fmt.Println(out.String())
+	fmt.Fprintln(cmd.Writer, out.String())
 
 	return nil
 }

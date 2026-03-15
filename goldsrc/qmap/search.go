@@ -53,7 +53,7 @@ func (qm *QMap) FindByClassNameAndKV(className, key, value string) []SearchResul
 }
 
 func FindByKV[T any](qm *QMap, key, value string) ([]SearchResult[T], error) {
-	var out []SearchResult[T] //nolint:prealloc // unknowable
+	var out []SearchResult[T]
 
 	for index, ent := range qm.entities {
 		propValue, ok := ent.KVs[key]

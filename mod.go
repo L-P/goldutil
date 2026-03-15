@@ -26,7 +26,7 @@ func doModFilterMaterials(ctx context.Context, cmd *cli.Command) error {
 
 	for name, typ := range materials {
 		if seen.Has(name) {
-			fmt.Printf("%c %s\n", typ, name)
+			fmt.Fprintf(cmd.Writer, "%c %s\n", typ, name)
 		}
 	}
 
@@ -59,11 +59,11 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		if path == destPath {
-			fmt.Printf("Skipping WAD %d/%d at '%s' (output wad)\n", i+1, cmd.Args().Len(), path)
+			fmt.Fprintf(cmd.Writer, "Skipping WAD %d/%d at '%s' (output wad)\n", i+1, cmd.Args().Len(), path)
 			continue
 		}
 
-		fmt.Printf("Parsing WAD %d/%d at '%s'\n", i+1, cmd.Args().Len(), path)
+		fmt.Fprintf(cmd.Writer, "Parsing WAD %d/%d at '%s'\n", i+1, cmd.Args().Len(), path)
 		wad3, err := wad.NewFromFile(path)
 		if err != nil {
 			return fmt.Errorf("unable to open WAD at '%s': %w", path, err)
@@ -90,7 +90,7 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 		}
 	}
 
-	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open '%s' for writing: %w", destPath, err)
 	}
@@ -103,7 +103,7 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to finalize writing to '%s': %w", destPath, err)
 	}
 
-	fmt.Printf("Wrote %d textures to '%s'.\n", len(seen), destPath)
+	fmt.Fprintf(cmd.Writer, "Wrote %d textures to '%s'.\n", len(seen), destPath)
 
 	return nil
 }

@@ -12,25 +12,25 @@ import (
 )
 
 func Neatify(qm *qmap.QMap, mod *os.Root) error {
-	if err := handleNeatMasters(qm); err != nil {
+	if err := handleMasters(qm); err != nil {
 		return fmt.Errorf("unable to handle neat_master: %w", err)
 	}
 
-	if err := handleNeatMessages(qm, mod); err != nil {
+	if err := handleMessages(qm, mod); err != nil {
 		return fmt.Errorf("unable to handle neat_message: %w", err)
 	}
 
 	return nil
 }
 
-func handleNeatMasters(qm *qmap.QMap) error {
-	masters, err := qmap.FindByKV[NeatMaster](qm, "classname", "neat_master")
+func handleMasters(qm *qmap.QMap) error {
+	masters, err := qmap.FindByKV[Master](qm, "classname", "neat_master")
 	if err != nil {
 		return fmt.Errorf("unable to obtain neat_master entitites: %w", err)
 	}
 
 	for _, v := range masters {
-		if err := handleNeatMaster(qm, v.Index, v.Entity); err != nil {
+		if err := handleMaster(qm, v.Index, v.Entity); err != nil {
 			return err
 		}
 	}
@@ -38,7 +38,7 @@ func handleNeatMasters(qm *qmap.QMap) error {
 	return nil
 }
 
-func handleNeatMaster(qm *qmap.QMap, index uuid.UUID, master NeatMaster) error {
+func handleMaster(qm *qmap.QMap, index uuid.UUID, master Master) error {
 	if err := master.Validate(); err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func handleNeatMaster(qm *qmap.QMap, index uuid.UUID, master NeatMaster) error {
 		caller.Entity.KVs[caller.MatchedKey] = master.TargetName + "_toggle"
 	}
 
-	additions := getNeatMasterAdditions(master)
+	additions := getMasterAdditions(master)
 	if err := qm.AddEntities(additions); err != nil {
 		return fmt.Errorf("unable to append entities: %w", err)
 	}
@@ -72,7 +72,7 @@ func handleNeatMaster(qm *qmap.QMap, index uuid.UUID, master NeatMaster) error {
 	return nil
 }
 
-func getNeatMasterAdditions(master NeatMaster) []any {
+func getMasterAdditions(master Master) []any {
 	return []any{
 		valve.MultiSource{
 			Origin:      master.Origin,
@@ -106,8 +106,8 @@ func getNeatMasterAdditions(master NeatMaster) []any {
 	}
 }
 
-func handleNeatMessages(qm *qmap.QMap, mod *os.Root) error {
-	messages, err := qmap.FindByKV[NeatMessage](qm, "classname", "neat_message")
+func handleMessages(qm *qmap.QMap, mod *os.Root) error {
+	messages, err := qmap.FindByKV[Message](qm, "classname", "neat_message")
 	if err != nil {
 		return fmt.Errorf("unable to obtain neat_message entitites: %w", err)
 	}
@@ -117,7 +117,7 @@ func handleNeatMessages(qm *qmap.QMap, mod *os.Root) error {
 		return fmt.Errorf("unable to parse titles.txt: %w", err)
 	}
 	for _, v := range messages {
-		if err := handleNeatMessage(qm, v.Index, v.Entity, titles); err != nil {
+		if err := handleMessage(qm, v.Index, v.Entity, titles); err != nil {
 			return err
 		}
 	}
@@ -125,10 +125,10 @@ func handleNeatMessages(qm *qmap.QMap, mod *os.Root) error {
 	return nil
 }
 
-func handleNeatMessage(
+func handleMessage(
 	qm *qmap.QMap,
 	index uuid.UUID,
-	msg NeatMessage,
+	msg Message,
 	titles map[string]goldsrc.Title,
 ) error {
 	if err := msg.Validate(titles); err != nil {

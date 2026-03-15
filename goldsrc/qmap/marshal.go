@@ -47,7 +47,7 @@ func Marshal(in any) ([]byte, error) {
 
 	fmt.Fprint(&out, "{\n")
 
-	for i := 0; i < numFields; i++ {
+	for i := range numFields {
 		field := typ.Field(i)
 		if !field.IsExported() {
 			continue
@@ -138,7 +138,7 @@ func (ent *AnonymousEntity) UnmarshalInto(v any) error {
 	destTyp := reflect.TypeOf(v).Elem()
 	numFields := destTyp.NumField()
 
-	for i := 0; i < numFields; i++ {
+	for i := range numFields {
 		field := destTyp.Field(i)
 		if !field.IsExported() {
 			continue
