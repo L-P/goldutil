@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"goldutil/goldsrc"
 	"goldutil/set"
@@ -9,16 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-func doModFilterMaterials(cCtx *cli.Context) error {
-	materials, err := goldsrc.LoadMaterialsFromFile(cCtx.String("in"))
+func doModFilterMaterials(ctx context.Context, cmd *cli.Command) error {
+	materials, err := goldsrc.LoadMaterialsFromFile(cmd.String("in"))
 	if err != nil {
 		return fmt.Errorf("unable to load in: %w", err)
 	}
 
-	seen, err := getUsedTextureNames(cCtx.Args().Slice())
+	seen, err := getUsedTextureNames(cmd.Args().Slice())
 	if err != nil {
 		return fmt.Errorf("unable to obtain textures list: %w", err)
 	}
@@ -33,8 +34,8 @@ func doModFilterMaterials(cCtx *cli.Context) error {
 }
 
 //nolint:funlen // TODO but I don't think I care enough.
-func doModFilterWADs(cCtx *cli.Context) error {
-	bspPaths, err := filepath.Glob(cCtx.String("bspdir") + "/*.bsp")
+func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
+	bspPaths, err := filepath.Glob(cmd.String("bspdir") + "/*.bsp")
 	if err != nil {
 		return fmt.Errorf("unable to glob for BSP files: %w", err)
 	}
@@ -46,23 +47,23 @@ func doModFilterWADs(cCtx *cli.Context) error {
 
 	output := wad.New()
 	stored := set.NewPresenceSet[string](0)
-	destPath, err := filepath.Abs(cCtx.String("out"))
+	destPath, err := filepath.Abs(cmd.String("out"))
 	if err != nil {
 		return fmt.Errorf("unable to obtain absolute output path: %w", err)
 	}
 
-	for i, rawPath := range cCtx.Args().Slice() {
+	for i, rawPath := range cmd.Args().Slice() {
 		path, err := filepath.Abs(rawPath)
 		if err != nil {
 			return fmt.Errorf("unable to obtain absolute path for WAD at '%s' : %w", rawPath, err)
 		}
 
 		if path == destPath {
-			fmt.Printf("Skipping WAD %d/%d at '%s' (output wad)\n", i+1, cCtx.Args().Len(), path)
+			fmt.Printf("Skipping WAD %d/%d at '%s' (output wad)\n", i+1, cmd.Args().Len(), path)
 			continue
 		}
 
-		fmt.Printf("Parsing WAD %d/%d at '%s'\n", i+1, cCtx.Args().Len(), path)
+		fmt.Printf("Parsing WAD %d/%d at '%s'\n", i+1, cmd.Args().Len(), path)
 		wad3, err := wad.NewFromFile(path)
 		if err != nil {
 			return fmt.Errorf("unable to open WAD at '%s': %w", path, err)
