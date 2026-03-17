@@ -17,7 +17,7 @@ func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
 				"%s.frame%03d.png",
 				originalBaseName, i,
 			))
-			dest, err = os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+			dest, err = os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 		)
 		if err != nil {
 			return fmt.Errorf("unable to open '%s' for writing: %w", destPath, err)
@@ -25,12 +25,12 @@ func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
 
 		img, err := spr.RenderFrame(i)
 		if err != nil {
-			dest.Close()
+			dest.Close() //nolint:errcheck // in another error path already
 			return fmt.Errorf("unable to encode frame %d: %w", i, err)
 		}
 
 		if err := png.Encode(dest, img); err != nil {
-			dest.Close()
+			dest.Close() //nolint:errcheck // in another error path already
 			return fmt.Errorf("unable to encode png: %w", err)
 		}
 
@@ -81,7 +81,7 @@ func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldR
 
 	rect := img.Bounds()
 	if rect.Dx() != int(spr.Width) || rect.Dy() != int(spr.Height) {
-		return fmt.Errorf("image size does not match sprite size")
+		return errors.New("image size does not match sprite size")
 	}
 
 	if shouldRemap {
@@ -102,7 +102,7 @@ func imageSize(path string) (int, int, error) {
 	if err != nil {
 		return 0, 0, fmt.Errorf("unable to open image for reading: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	cfg, _, err := image.DecodeConfig(f)
 	if err != nil {

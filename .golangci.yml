@@ -1,81 +1,54 @@
 ---
 version: "2"
 linters:
-  enable:
-    - asasalint
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - containedctx
-    - contextcheck
-    - dogsled
-    - dupl
-    - dupword
-    - durationcheck
-    - errchkjson
-    - errorlint
-    - exhaustive
-    - funlen
-    - gocheckcompilerdirectives
-    - gochecksumtype
-    - gocognit
-    - godot
-    - goprintffuncname
-    - gosec
-    - gosmopolitan
-    - grouper
-    - importas
-    - interfacebloat
-    - lll
-    - loggercheck
-    - makezero
-    - misspell
-    - nilerr
-    - nilnesserr
-    - nilnil
-    - noctx
-    - nolintlint
-    - nosprintfhostport
-    - prealloc
-    - predeclared
-    - promlinter
-    - protogetter
-    - reassign
-    - recvcheck
-    - rowserrcheck
-    - spancheck
-    - sqlclosecheck
-    - testifylint
-    - testpackage
-    - unconvert
-    - unparam
-    - usestdlibvars
-    - wastedassign
-    - zerologlint
+  default: "all"
+  exclusions:
+    presets:
+      - comments
+    rules:
+      - linters:
+          - revive
+        text: "^unused-parameter"
+      - linters:
+          - errcheck
+        text: "^Error return value of `fmt\\.F?[pP]rint(f|ln)?` is not checked$"
+      - linters:
+          - staticcheck
+        # Errors often start with a type name.
+        text: "ST1005: error strings should not be capitalized"
+      - linters:
+          - gosec
+        # errcheck does this already
+        text: "G104: Errors unhandled"
+
   disable:
-    - musttag
+    - "cyclop" # trips too easily on validation-heavy funcs
+    - "depguard"
+    - "err113" # not designing a lib
+    - "exhaustruct" # zero values are a good thing
+    - "forcetypeassert" # the resulting panics are used to denote explicit programming errors
+    - "funcorder"
+    - "gochecknoglobals"
+    - "gochecknoinits"
+    - "godoclint"
+    - "godox"
+    - "inamedparam"
+    - "mnd"
+    - "musttag"
+    - "nlreturn"
+    - "noinlineerr"
+    - "nonamedreturns"
+    - "paralleltest"
+    - "recvcheck"
+    - "unparam"
+    - "unqueryvet"
+    - "varnamelen"
+    - "wrapcheck"
+    - "wsl"
+    - "wsl_v5"
+
   settings:
     gosec:
       excludes:
         - G115 # never a security issue in our cases
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
-formatters:
-  enable:
-    - gofmt
-    - goimports
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+        - G304 # no, opening files is not a security issue

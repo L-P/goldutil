@@ -193,7 +193,7 @@ func readTextures(r io.ReadSeeker, header Header) ([]texture, error) {
 		names = set.NewPresenceSet[string](int(header.EntriesCount))
 	)
 
-	for i := int32(0); i < header.EntriesCount; i++ {
+	for i := range header.EntriesCount {
 		offset := header.EntriesOffset + (EntrySize * i)
 		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
 			return nil, fmt.Errorf("unable to seek to offset %x of dir entry #%d", offset, i)
@@ -233,7 +233,7 @@ func NewFromFile(path string) (WAD, error) {
 	if err != nil {
 		return WAD{}, fmt.Errorf("unable to open file: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	var wad WAD
 	if err := wad.Read(f); err != nil {

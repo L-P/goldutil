@@ -11,16 +11,13 @@ import (
 	"goldutil/set"
 	"goldutil/sprite"
 	"goldutil/wad"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var Version = "unknown version"
@@ -30,221 +27,14 @@ var fgd string
 
 func main() {
 	var app = newApp()
-	if err := app.Run(os.Args); err != nil {
-		// HACK: -h will panic.
-		if err.Error() != "flag: help requested" {
-			panic(err)
-		}
+	if err := app.Run(context.Background(), os.Args); err != nil {
+		fmt.Println(err.Error()) //nolint:forbidigo
+		os.Exit(1)
 	}
 }
 
-//nolint:funlen // descriptions
-func newApp() *cli.App {
-	cli.HelpPrinter = func(w io.Writer, templ string, data interface{}) {
-		_ = doHelp(nil)
-	}
-
-	return &cli.App{
-		Version: Version,
-		Commands: []*cli.Command{
-			{
-				Name:   "help",
-				Action: doHelp,
-			},
-			{
-				Name: "fgd",
-				Action: func(cCtx *cli.Context) error {
-					fmt.Print(fgd)
-					return nil
-				},
-			},
-			{
-				Name: "nod",
-				Subcommands: []*cli.Command{
-					{
-						Name: "export",
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name: "original-positions",
-							},
-							&cli.StringFlag{
-								Name:  "input-format",
-								Value: "valve",
-							},
-						},
-						Action: doNodExport,
-					},
-				},
-			},
-			{
-				Name: "mod",
-				Subcommands: []*cli.Command{
-					{
-						Name: "filter-materials",
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:  "in",
-								Value: "sound/materials.full.txt",
-							},
-						},
-						Action: doModFilterMaterials,
-					},
-					{
-						Name: "filter-wads",
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:  "bspdir",
-								Value: "valve_addon/maps",
-							},
-							&cli.StringFlag{
-								Name:  "out",
-								Value: "valve_addon/filtered.wad",
-							},
-						},
-						Action: doModFilterWADs,
-					},
-				},
-			},
-			{
-				Name: "map",
-				Subcommands: []*cli.Command{
-					{
-						Name: "export",
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:  "cleanup-tb",
-								Value: false,
-							},
-						},
-						Action: doMapExport,
-					},
-
-					{
-						Name:   "graph",
-						Action: doMapGraph,
-					},
-
-					{
-						Name:   "neat",
-						Action: doNeat,
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:  "moddir",
-								Value: ".",
-							},
-						},
-					},
-				},
-			},
-
-			{
-				Name: "spr",
-				Subcommands: []*cli.Command{
-					{
-						Name:   "info",
-						Action: doSpriteInfo,
-					},
-
-					{
-						Name: "extract",
-						Flags: []cli.Flag{
-							&cli.StringFlag{Name: "dir"},
-						},
-						Action: doSpriteExtract,
-					},
-
-					{
-						Name: "create",
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "out",
-								Required: true,
-							},
-							&cli.StringFlag{
-								Name:  "type",
-								Value: "parallel",
-							},
-							&cli.StringFlag{
-								Name:  "format",
-								Value: "normal",
-							},
-						},
-						Action: doSpriteCreate,
-					},
-				},
-			},
-
-			{
-				Name: "wad",
-				Subcommands: []*cli.Command{
-					{
-						Name: "create",
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "out",
-								Required: true,
-							},
-						},
-						Action: doWADCreate,
-					},
-
-					{
-						Name: "extract",
-						Flags: []cli.Flag{
-							&cli.StringFlag{
-								Name:     "dir",
-								Required: true,
-							},
-						},
-						Action: doWADExtract,
-					},
-
-					{
-						Name:   "info",
-						Action: doWADInfo,
-					},
-				},
-			},
-
-			{
-				Name: "bsp",
-				Subcommands: []*cli.Command{
-					{
-						Name: "remap-materials",
-						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name: "verbose",
-							},
-							&cli.StringFlag{
-								Name:     "original-materials",
-								Value:    "valve/sound/materials.txt",
-								Required: true,
-							},
-							&cli.StringFlag{
-								Name:     "replacement-materials",
-								Value:    "valve_addon/sound/materials.txt",
-								Required: true,
-							},
-							&cli.StringFlag{
-								Name:     "out",
-								Required: true,
-							},
-						},
-						Action: doBSPRemapMaterials,
-					},
-
-					{
-						Name:   "info",
-						Action: doBSPInfo,
-					},
-				},
-			},
-		},
-	}
-}
-
-func doSpriteExtract(cCtx *cli.Context) error {
-	path := cCtx.Args().Get(0)
+func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {
+	path := cmd.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .spr to parse and extract")
 	}
@@ -254,17 +44,17 @@ func doSpriteExtract(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to open sprite: %w", err)
 	}
 
-	return extractSprite(spr, cCtx.String("dir"), filepath.Base(path))
+	return extractSprite(spr, cmd.String("dir"), filepath.Base(path))
 }
 
-func doSpriteCreate(cCtx *cli.Context) error {
+func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
 	typ, ok := map[string]sprite.Type{
 		"parallel-upright":  sprite.ParallelUpright,
 		"facing-upright":    sprite.FacingUpright,
 		"parallel":          sprite.Parallel,
 		"oriented":          sprite.Oriented,
 		"parallel-oriented": sprite.ParallelOriented,
-	}[cCtx.String("type")]
+	}[cmd.String("type")]
 	if !ok {
 		return errors.New("unrecognize sprite type")
 	}
@@ -274,17 +64,17 @@ func doSpriteCreate(cCtx *cli.Context) error {
 		"additive":    sprite.Additive,
 		"index-alpha": sprite.IndexAlpha,
 		"alpha-test":  sprite.AlphaTest,
-	}[cCtx.String("format")]
+	}[cmd.String("format")]
 	if !ok {
 		return errors.New("unrecognize texture format")
 	}
 
-	spr, err := createSprite(typ, format, cCtx.Args().Slice())
+	spr, err := createSprite(typ, format, cmd.Args().Slice())
 	if err != nil {
 		return fmt.Errorf("unable to create sprite: %w", err)
 	}
 
-	dest, err := os.OpenFile(cCtx.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	dest, err := os.OpenFile(cmd.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return fmt.Errorf("unable to open dest SPR for writing: %w", err)
 	}
@@ -300,8 +90,8 @@ func doSpriteCreate(cCtx *cli.Context) error {
 	return nil
 }
 
-func doSpriteInfo(cCtx *cli.Context) error {
-	path := cCtx.Args().Get(0)
+func doSpriteInfo(ctx context.Context, cmd *cli.Command) error {
+	path := cmd.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .spr to parse and display")
 	}
@@ -311,18 +101,18 @@ func doSpriteInfo(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to open sprite: %w", err)
 	}
 
-	fmt.Println(spr.String())
+	fmt.Fprintln(cmd.Writer, spr.String())
 
 	return nil
 }
 
-func doMapGraph(cCtx *cli.Context) error {
-	path := cCtx.Args().Get(0)
+func doMapGraph(ctx context.Context, cmd *cli.Command) error {
+	path := cmd.Args().Get(0)
 	if path == "" {
 		return errors.New("expected one argument: the .map to parse and graph")
 	}
 
-	qm, err := loadQMap(cCtx.Args().Get(0))
+	qm, err := loadQMap(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -332,13 +122,13 @@ func doMapGraph(cCtx *cli.Context) error {
 	return nil
 }
 
-func doNeat(cCtx *cli.Context) error {
-	qm, err := loadQMap(cCtx.Args().Get(0))
+func doNeat(ctx context.Context, cmd *cli.Command) error {
+	qm, err := loadQMap(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	mod, err := os.OpenRoot(cCtx.String("moddir"))
+	mod, err := os.OpenRoot(cmd.String("moddir"))
 	if err != nil {
 		return fmt.Errorf("unable to open current working directory: %w", err)
 	}
@@ -347,23 +137,23 @@ func doNeat(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to neatify map: %w", err)
 	}
 
-	fmt.Print(qm.String())
+	fmt.Fprint(cmd.Writer, qm.String())
 
 	return nil
 }
 
-func doMapExport(cCtx *cli.Context) error {
-	qm, err := loadQMap(cCtx.Args().Get(0))
+func doMapExport(ctx context.Context, cmd *cli.Command) error {
+	qm, err := loadQMap(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	clean, err := exportQMap(qm, cCtx.Bool("cleanup-tb"))
+	clean, err := exportQMap(qm, cmd.Bool("cleanup-tb"))
 	if err != nil {
 		return fmt.Errorf("unable to export map: %w", err)
 	}
 
-	fmt.Print(clean.String())
+	fmt.Fprint(cmd.Writer, clean.String())
 
 	return nil
 }
@@ -371,13 +161,13 @@ func doMapExport(cCtx *cli.Context) error {
 func loadQMap(path string) (*qmap.QMap, error) {
 	if path == "" {
 		return qmap.LoadFromReader(os.Stdin)
-	} else {
-		return qmap.LoadFromFile(path)
 	}
+
+	return qmap.LoadFromFile(path)
 }
 
-func doWADExtract(cCtx *cli.Context) error {
-	var dir = cCtx.String("dir")
+func doWADExtract(ctx context.Context, cmd *cli.Command) error {
+	var dir = cmd.String("dir")
 	stat, err := os.Stat(dir)
 	if err != nil {
 		return fmt.Errorf("unable to use destination directory: %w", err)
@@ -386,7 +176,7 @@ func doWADExtract(cCtx *cli.Context) error {
 		return errors.New("output directory paths exists but is not a directory")
 	}
 
-	wad3, err := wad.NewFromFile(cCtx.Args().Get(0))
+	wad3, err := wad.NewFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to open and parse WAD file: %w", err)
 	}
@@ -394,24 +184,24 @@ func doWADExtract(cCtx *cli.Context) error {
 	return extractWAD(wad3, dir)
 }
 
-func doWADInfo(cCtx *cli.Context) error {
-	wad3, err := wad.NewFromFile(cCtx.Args().Get(0))
+func doWADInfo(ctx context.Context, cmd *cli.Command) error {
+	wad3, err := wad.NewFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to open and parse WAD file: %w", err)
 	}
 
-	fmt.Println(wad3.String())
+	fmt.Fprintln(cmd.Writer, wad3.String())
 
 	return nil
 }
 
-func doWADCreate(cCtx *cli.Context) error {
-	input, err := collectPaths(cCtx.Args().Slice(), "*.png")
+func doWADCreate(ctx context.Context, cmd *cli.Command) error {
+	input, err := collectPaths(cmd.Args().Slice(), "*.png")
 	if err != nil {
 		return fmt.Errorf("unable to collect paths: %w", err)
 	}
 
-	return createWAD(cCtx.String("out"), input)
+	return createWAD(cmd.String("out"), input)
 }
 
 // Returns the paths when they're files, and the pattern-matching files inside
@@ -462,13 +252,13 @@ func dedupeStrs(in []string) []string {
 	return ret
 }
 
-func doBSPRemapMaterials(cCtx *cli.Context) error {
-	source, err := goldsrc.LoadMaterialsFromFile(cCtx.String("original-materials"))
+func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
+	source, err := goldsrc.LoadMaterialsFromFile(cmd.String("original-materials"))
 	if err != nil {
 		return fmt.Errorf("unable to load original-materials: %w", err)
 	}
 
-	replacement, err := goldsrc.LoadMaterialsFromFile(cCtx.String("replacement-materials"))
+	replacement, err := goldsrc.LoadMaterialsFromFile(cmd.String("replacement-materials"))
 	if err != nil {
 		return fmt.Errorf("unable to load replacement-materials: %w", err)
 	}
@@ -477,16 +267,16 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		return errors.New("no materials in source or replacement list")
 	}
 
-	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
+	bsp, err := goldsrc.LoadBSPFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
 	var (
-		verbose  = cCtx.Bool("verbose")
+		verbose  = cmd.Bool("verbose")
 		remapper = goldsrc.NewMaterialsRemapper(source)
 	)
-	mapping, err := remapper.ReMap(bsp.Textures.Textures, replacement)
+	mapping, err := remapper.ReMap(cmd.ErrWriter, bsp.Textures.Textures, replacement)
 	if err != nil {
 		return fmt.Errorf("unable to remap materials: %w", err)
 	}
@@ -498,7 +288,8 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		}
 
 		if verbose {
-			fmt.Printf(
+			fmt.Fprintf(
+				cmd.Writer,
 				"Remapping %-15s to %s\n",
 				strings.ToUpper(tex.Name.String()),
 				strings.ToUpper(mapTo.String()),
@@ -508,84 +299,49 @@ func doBSPRemapMaterials(cCtx *cli.Context) error {
 		bsp.Textures.Textures[i].Name = mapTo
 	}
 
-	if err := bsp.WriteToFile(cCtx.String("out")); err != nil {
+	if err := bsp.WriteToFile(cmd.String("out")); err != nil {
 		return fmt.Errorf("unable to write BSP: %w", err)
 	}
 
-	if cCtx.Bool("verbose") {
-		remapper.PrintAvailable()
+	if cmd.Bool("verbose") {
+		remapper.PrintAvailable(cmd.Writer)
 	}
 
 	return nil
 }
 
-func doBSPInfo(cCtx *cli.Context) error {
-	bsp, err := goldsrc.LoadBSPFromFile(cCtx.Args().Get(0))
+func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
+	bsp, err := goldsrc.LoadBSPFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	fmt.Print(bsp.String())
+	fmt.Fprint(cmd.Writer, bsp.String())
 
 	return nil
 }
 
-//go:embed goldutil.1
-var manPage string
-
-func doHelp(cCtx *cli.Context) error {
-	if runtime.GOOS == "windows" {
-		return errors.New("man page is only available on *NIX operating systems, see https://l-p.github.io/goldutil/ instead")
-	}
-
-	ctx := context.Background()
-	if cCtx != nil {
-		ctx = cCtx.Context
-	}
-	var cmd = exec.CommandContext(ctx, "man", "-l", "-")
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return fmt.Errorf("unable to obtain man stdin: %w", err)
-	}
-	go func() {
-		defer stdin.Close()
-		if _, err := io.WriteString(stdin, manPage); err != nil {
-			panic("unable to write to man stdin")
-		}
-	}()
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("unable to run man: %w", err)
-	}
-
-	return nil
-}
-
-func doNodExport(cCtx *cli.Context) error {
+func doNodExport(ctx context.Context, cmd *cli.Command) error {
 	format, ok := map[string]goldsrc.NodeFormat{
 		"valve": goldsrc.NodeFormatValve,
 		"decay": goldsrc.NodeFormatDecay,
-	}[cCtx.String("input-format")]
+	}[cmd.String("input-format")]
 	if !ok {
 		return errors.New("unrecognize .nod format")
 	}
 
-	f, err := os.Open(cCtx.Args().Get(0))
+	f, err := os.Open(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to open file for reading: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	nodes, links, err := goldsrc.ReadNodes(f, format)
 	if err != nil {
 		return fmt.Errorf("unable to read nodes: %w", err)
 	}
 
-	original := cCtx.Bool("original-positions")
+	original := cmd.Bool("original-positions")
 	entities := make([]qmap.AnonymousEntity, 0, len(nodes)+len(links))
 	for i, v := range nodes {
 		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
@@ -595,7 +351,7 @@ func doNodExport(cCtx *cli.Context) error {
 		}})
 	}
 
-	for linkTypeBitID := 0; linkTypeBitID <= goldsrc.LinkTypeBitMax; linkTypeBitID++ {
+	for linkTypeBitID := range goldsrc.LinkTypeBitMax {
 		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":            "func_group",
 			"_tb_type":             "_tb_layer",
@@ -621,7 +377,7 @@ func doNodExport(cCtx *cli.Context) error {
 		return fmt.Errorf("unable to append entities to output map: %w", err)
 	}
 
-	fmt.Println(out.String())
+	fmt.Fprintln(cmd.Writer, out.String())
 
 	return nil
 }

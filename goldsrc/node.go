@@ -52,6 +52,7 @@ type ValveNode struct {
 
 type DecayNode struct {
 	ValveNode
+
 	_ [8]byte
 }
 
@@ -92,9 +93,8 @@ const (
 	LinkTypeLargeHull
 	LinkTypeFlyHull
 	LinkTypeDisabledHull
-
-	LinkTypeBitMax = 4
 )
+const LinkTypeBitMax = LinkTypeDisabledHull
 
 func LinkTypeName(id int) string {
 	switch id {
@@ -136,7 +136,7 @@ func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []Link, error) {
 	}
 
 	var nodes = make([]Node, 0, graph.NumNodes)
-	for i := int32(0); i < graph.NumNodes; i++ {
+	for i := range graph.NumNodes {
 		node, err := readNode(r, format)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to read node #%d: %w", i, err)
@@ -146,7 +146,7 @@ func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []Link, error) {
 	}
 
 	var links = make([]Link, 0, graph.NumLinks)
-	for i := int32(0); i < graph.NumLinks; i++ {
+	for range graph.NumLinks {
 		var link Link
 		if err := binary.Read(r, binary.LittleEndian, &link); err != nil {
 			return nil, nil, fmt.Errorf("unable to read CLink: %w", err)
@@ -158,6 +158,7 @@ func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []Link, error) {
 	return nodes, links, nil
 }
 
+//nolint:ireturn // factory
 func readNode(r io.Reader, format NodeFormat) (Node, error) {
 	switch format {
 	case NodeFormatValve:

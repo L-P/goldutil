@@ -2,6 +2,7 @@ package goldsrc
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -64,7 +65,7 @@ func LoadMaterialsFromFile(path string) (Materials, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open materials file: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	return LoadMaterials(f)
 }
@@ -102,11 +103,11 @@ func LoadMaterials(r io.Reader) (Materials, error) {
 func parseMaterialsLine(line string) (MaterialType, string, error) {
 	var parts = strings.SplitN(line, " ", 3)
 	if len(parts) != 2 {
-		return MaterialTypeInvalid, "", fmt.Errorf("wrong number of fields")
+		return MaterialTypeInvalid, "", errors.New("wrong number of fields")
 	}
 
 	if len(parts[0]) != 1 {
-		return MaterialTypeInvalid, "", fmt.Errorf("material type field is invalid, expected a single uppercase letter")
+		return MaterialTypeInvalid, "", errors.New("material type field is invalid, expected a single uppercase letter")
 	}
 
 	mat := parseMaterialType(parts[0][0])

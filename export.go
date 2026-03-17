@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"goldutil/goldsrc/qmap"
 	"goldutil/set"
@@ -15,7 +16,7 @@ func getUnexportedLayerSet(qm *qmap.QMap) (set.PresenceSet[string], error) {
 		if ok && locked == "1" {
 			id, ok := layer.Entity.KVs["_tb_id"]
 			if !ok {
-				return nil, fmt.Errorf("found a layer with no _tb_id")
+				return nil, errors.New("found a layer with no _tb_id")
 			}
 			skipIDs.Set(id)
 		}
@@ -33,7 +34,7 @@ func getUnexportedGroupSet(qm *qmap.QMap, unexportedLayerIDs set.PresenceSet[str
 		for _, group := range qm.FindByClassNameAndKV("func_group", "_tb_type", "_tb_group") {
 			groupID, ok := group.Entity.KVs["_tb_id"]
 			if !ok {
-				return nil, fmt.Errorf("found a group with no _tb_id")
+				return nil, errors.New("found a group with no _tb_id")
 			}
 
 			parentGroupID, ok := group.Entity.KVs["_tb_group"]
@@ -73,7 +74,7 @@ func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
 		return nil, err
 	}
 
-	var clean []qmap.AnonymousEntity //nolint:prealloc
+	var clean []qmap.AnonymousEntity
 	for v := range qm.Entities() {
 		if shouldSkipEntity(v, skipLayerIDs, skipGroupIDs) {
 			continue
@@ -94,6 +95,7 @@ func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
 	return out, nil
 }
 
+// Skip TB metadata entities and entities belonging to hidden groups/layers.
 func shouldSkipEntity(ent qmap.AnonymousEntity,
 	skipLayerIDs set.PresenceSet[string],
 	skipGroupIDs set.PresenceSet[string],
@@ -102,24 +104,26 @@ func shouldSkipEntity(ent qmap.AnonymousEntity,
 	if ok && skipLayerIDs.Has(layerID) {
 		return true
 	}
-
 	groupID, ok := ent.KVs["_tb_group"]
 	if ok && skipGroupIDs.Has(groupID) {
 		return true
 	}
 
-	id, ok := ent.KVs["_tb_id"]
-	if ok && ent.KVs["classname"] == "func_group" {
-		if typ, ok := ent.KVs["_tb_type"]; ok {
-			if typ == "_tb_group" && skipGroupIDs.Has(id) {
-				return true
-			}
-		}
+	if ent.KVs["classname"] != "func_group" {
+		return false
+	}
 
-		if typ, ok := ent.KVs["_tb_type"]; ok {
-			if typ == "_tb_layer" && skipLayerIDs.Has(id) {
-				return true
-			}
+	id, ok := ent.KVs["_tb_id"]
+	if !ok {
+		return false
+	}
+
+	if typ, ok := ent.KVs["_tb_type"]; ok {
+		if typ == "_tb_group" && skipGroupIDs.Has(id) {
+			return true
+		}
+		if typ == "_tb_layer" && skipLayerIDs.Has(id) {
+			return true
 		}
 	}
 

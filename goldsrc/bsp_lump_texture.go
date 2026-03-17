@@ -42,7 +42,7 @@ func (lump *TextureLump) Load(r io.ReadSeeker, entry LumpIndexEntry) error {
 func (lump *TextureLump) loadHeader(r io.ReadSeeker, entry LumpIndexEntry) error {
 	var minTextureOffset = int32(4 + lump.Count*4) // Count + Offsets
 	lump.Offsets = make([]int32, lump.Count)
-	for i := 0; i < int(lump.Count); i++ {
+	for i := range int(lump.Count) {
 		if err := binary.Read(r, binary.LittleEndian, &lump.Offsets[i]); err != nil {
 			return fmt.Errorf("unable to read texture #%d offset: %w", i, err)
 		}
@@ -165,5 +165,4 @@ func (lump *TextureLump) String() string {
 	}
 
 	return b.String()
-
 }

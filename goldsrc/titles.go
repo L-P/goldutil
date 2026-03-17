@@ -43,7 +43,7 @@ func NewTitlesFromModRoot(mod *os.Root) (map[string]Title, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open titles.txt for reading: %w", err)
 	}
-	defer f.Close()
+    defer f.Close() //nolint:errcheck // readonly
 
 	return NewTitlesFromReader(f)
 }

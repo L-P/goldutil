@@ -24,7 +24,7 @@ func (spr *Sprite) PaletteNRGBA() color.Palette {
 	}
 
 	palette := make([]color.Color, spr.PaletteSize)
-	for i := int16(0); i < spr.PaletteSize; i++ {
+	for i := range spr.PaletteSize {
 		palette[i] = color.NRGBA{
 			spr.Palette[i].R,
 			spr.Palette[i].G,
@@ -43,7 +43,7 @@ func (spr *Sprite) PaletteNRGBA() color.Palette {
 // the last index + the current index as the alpha value.
 func (spr *Sprite) indexAlphaPaletteNRGBA() color.Palette {
 	palette := make([]color.Color, spr.PaletteSize)
-	for i := int16(0); i < spr.PaletteSize; i++ {
+	for i := range spr.PaletteSize {
 		palette[i] = color.NRGBA{
 			spr.Palette[i].R,
 			spr.Palette[i].G,

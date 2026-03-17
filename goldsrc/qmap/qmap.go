@@ -53,6 +53,7 @@ func (ent *BrushEntity) AddBrush(brush Brush) {
 
 type AnonymousEntity struct {
 	BrushEntity
+
 	KVs map[string]string
 }
 
@@ -75,7 +76,7 @@ func LoadFromFile(path string) (*QMap, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	return LoadFromReader(f)
 }

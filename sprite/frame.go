@@ -56,21 +56,21 @@ func NewFrame(
 	}
 }
 
-func (fd *Frame) Read(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &fd.FrameMeta); err != nil {
+func (f *Frame) Read(r io.Reader) error {
+	if err := binary.Read(r, binary.LittleEndian, &f.FrameMeta); err != nil {
 		return fmt.Errorf("unable to parse frame meta-data: %w", err)
 	}
 
-	if fd.Type != Single {
-		return fmt.Errorf("unhandled frame type: %s", fd.Type.String())
+	if f.Type != Single {
+		return fmt.Errorf("unhandled frame type: %s", f.Type.String())
 	}
 
-	if fd.Width <= 0 || fd.Height <= 0 {
-		return fmt.Errorf("invalid dimensions: %d×%d", fd.Width, fd.Height)
+	if f.Width <= 0 || f.Height <= 0 {
+		return fmt.Errorf("invalid dimensions: %d×%d", f.Width, f.Height)
 	}
 
-	fd.Data = make([]byte, fd.Width*fd.Height)
-	if err := binary.Read(r, binary.LittleEndian, &fd.Data); err != nil {
+	f.Data = make([]byte, f.Width*f.Height)
+	if err := binary.Read(r, binary.LittleEndian, &f.Data); err != nil {
 		return fmt.Errorf("unable to frame data: %w", err)
 	}
 

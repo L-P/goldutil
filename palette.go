@@ -25,7 +25,7 @@ func openPalettedImage(path string) (*image.Paletted, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file at '%s': %w", path, err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // readonly
 
 	mysteryImg, _, err := image.Decode(f)
 	if err != nil {
