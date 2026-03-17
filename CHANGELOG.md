@@ -4,6 +4,8 @@
 - Ensure lump names are lowercase
 - Add `path_track` `message` property to targets when graphing entities.
 - Skip `multi_manager` `angle` property when graphing entities.
+- Update urfave/cli to v3.
+- Bring back default CLI help behavior.
 
 # v1.4.0
 - Add command mod filter-wads
