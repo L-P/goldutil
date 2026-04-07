@@ -18,15 +18,16 @@ func TestQMap(t *testing.T) { //nolint:funlen
 	expected := qmap.New()
 	require.NoError(t, expected.AddAnonymousEntities(
 		qmap.AnonymousEntity{KVs: map[string]string{
-			"mapversion":  "220",
-			"wad":         "",
-			"classname":   "worldspawn",
-			"sounds":      "1",
-			"MaxRange":    "4096",
-			"startdark":   "0",
-			"gametitle":   "0",
-			"newunit":     "0",
-			"defaultteam": "0",
+			"mapversion":      "220",
+			"wad":             "",
+			"classname":       "worldspawn",
+			"sounds":          "1",
+			"MaxRange":        "4096",
+			"startdark":       "0",
+			"gametitle":       "0",
+			"newunit":         "0",
+			"defaultteam":     "0",
+			"key with spaces": "value",
 		}},
 		qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":   "multisource",

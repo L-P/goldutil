@@ -2,10 +2,10 @@ package qmap
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
 )
@@ -119,45 +119,45 @@ func (p *parser) parseEntity(line string, lineNumber int) (parserState, error) {
 	return psInEntity, nil
 }
 
+// Splits a raw line containing a property into its key and value.
+// There's no escaping double-quotes and a property cannot span multiple lines.
 func parseProp(line string, lineNumber int) (string, string, error) {
-	parts := strings.SplitN(strings.Trim(line, " \t"), " ", 2)
+	parts := make([]string, 0, 2)
+	var inString bool
+	var cur string
+
+	for _, c := range line {
+		if !inString {
+			if unicode.IsSpace(c) {
+				continue
+			}
+
+			if c != '"' {
+				return "", "", ParseError{fmt.Sprintf("expected \", got: %c", c), lineNumber, line}
+			}
+			inString = true
+			continue
+		}
+
+		if c == '"' {
+			inString = false
+			parts = append(parts, cur)
+			cur = ""
+			continue
+		}
+
+		cur += string(c)
+	}
+
+	if inString {
+		return "", "", ParseError{"missing terminating double-quote", lineNumber, line}
+	}
+
 	if len(parts) != 2 {
-		return "", "", ParseError{"unexpected property format", lineNumber, line}
+		return "", "", ParseError{"too many string tokens", lineNumber, line}
 	}
 
-	key, err := parsePropertyString(parts[0])
-	if err != nil {
-		return "", "", ParseError{
-			fmt.Sprintf("could not parse key: %s", err),
-			lineNumber, line,
-		}
-	}
-
-	value, err := parsePropertyString(parts[1])
-	if err != nil {
-		return "", "", ParseError{
-			fmt.Sprintf("could not parse value: %s", err),
-			lineNumber, line,
-		}
-	}
-
-	return key, value, nil
-}
-
-func parsePropertyString(str string) (string, error) {
-	if len(str) < 2 {
-		return "", errors.New("too short (< 2 chars) to be a valid property string")
-	}
-
-	if !strings.HasPrefix(str, `"`) {
-		return "", errors.New("not starting with double-quotes")
-	}
-
-	if !strings.HasSuffix(str, `"`) {
-		return "", errors.New("not ending with double-quotes")
-	}
-
-	return str[1 : len(str)-1], nil
+	return parts[0], parts[1], nil
 }
 
 func (p *parser) parseBrush(line string, _lineNumber int) parserState {

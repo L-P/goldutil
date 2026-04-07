@@ -11,6 +11,7 @@
 "gametitle" "0"
 "newunit" "0"
 "defaultteam" "0"
+"key with spaces" "value"
 }
 // entity 1
 {

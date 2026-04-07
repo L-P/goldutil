@@ -6,6 +6,7 @@
 - Skip `multi_manager` `angle` property when graphing entities.
 - Update urfave/cli to v3.
 - Bring back default CLI help behavior.
+- Fix not handling property key with spaces in them
 
 # v1.4.0
 - Add command mod filter-wads
