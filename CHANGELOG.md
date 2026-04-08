@@ -7,6 +7,7 @@
 - Update urfave/cli to v3.
 - Bring back default CLI help behavior.
 - Fix not handling property key with spaces in them
+- Fix neat bailing when missing a titles.txt file
 
 # v1.4.0
 - Add command mod filter-wads

@@ -2,8 +2,10 @@ package goldsrc
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strconv"
 	"strings"
@@ -39,11 +41,16 @@ func NewTitlesFromReader(r io.Reader) (map[string]Title, error) {
 }
 
 func NewTitlesFromModRoot(mod *os.Root) (map[string]Title, error) {
+	// That's a normal situation, there's just no titles for the current mod.
+	if _, err := mod.Stat("titles.txt"); errors.Is(err, fs.ErrNotExist) {
+		return make(map[string]Title), nil
+	}
+
 	f, err := mod.Open("titles.txt")
 	if err != nil {
 		return nil, fmt.Errorf("unable to open titles.txt for reading: %w", err)
 	}
-    defer f.Close() //nolint:errcheck // readonly
+	defer f.Close() //nolint:errcheck // readonly
 
 	return NewTitlesFromReader(f)
 }
