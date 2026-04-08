@@ -1,11 +1,11 @@
-# next
-- Add "map neat" entity preprocessor command.
-- Add "fgd" command to use along with "map neat".
+# v1.5.0
+- Add "map neat" entity preprocessor command
+- Add "fgd" command to use along with "map neat"
 - Ensure lump names are lowercase
-- Add `path_track` `message` property to targets when graphing entities.
-- Skip `multi_manager` `angle` property when graphing entities.
-- Update urfave/cli to v3.
-- Bring back default CLI help behavior.
+- Add `path_track` `message` property to targets when graphing entities
+- Skip `multi_manager` `angle` property when graphing entities
+- Update urfave/cli to v3
+- Bring back default CLI help behavior
 - Fix not handling property key with spaces in them
 - Fix neat bailing when missing a titles.txt file
 
