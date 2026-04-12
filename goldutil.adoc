@@ -1,0 +1,254 @@
+goldutil(1)
+===========
+:doctype: manpage
+:!webfonts:
+:toc:
+
+Name
+----
+goldutil - GoldSrc modding utility
+
+Synopsis
+--------
+*goldutil* [global options] <command> [command options] [command arguments] +
+*goldutil* help [command]
+
+*goldutil* bsp [info | remap-materials] +
+*goldutil* fgd +
+*goldutil* map [export | graph | neat] +
+*goldutil* mod [filter-materials | filter-wads] +
+*goldutil* nod export +
+*goldutil* spr [create | extract | info] +
+*goldutil* wad [create | extract | info] +
+
+Description
+-----------
+*goldutil* can read, modify, and write multiple file formats used by the
+GoldSrc (Half-Life) engine.
+
+BSP Manipulation
+----------------
+=== `goldutil bsp info <input>`
+Print parsed data from a BSP.
+
+=== `goldutil bsp remap-materials --out <output> [--original-materials <path>] [--replacement-materials <path>] [--verbose] <input>`
+On a BSP with embedded textures, change the texture names to match what is in
+the original game's _materials.txt_. +
+This allows setting proper material sounds to custom textures without having to
+distribute a _materials.txt_ file. +
+*Warning:* The BSP cannot use any of the textures listed in the original
+_materials.txt_
+
+`--original-materials <path>`::
+    Path to the _materials.txt_ file of the original game, defaults to _valve/sound/materials.txt_.
+`--out <output>`::
+    Where to write the remapped BSP.
+`--replacement-materials <path>`::
+    Path to the replacement _materials.txt_ file, defaults to _valve_addon/sound/materials.txt_.
+`--verbose`::
+    Output to _STDOUT_ what the original texture names were remapped to.
+
+MAP Manipulation
+----------------
+=== `goldutil map export [--cleanup-tb] [<file>]`
+Export a .map file the way TrenchBroom does, removing all layers marked as not
+exported. Output is written to _STDOUT_, if no _<file>_ is provided the map will be
+read from _STDIN_.
+
+`--cleanup-tb`::
+Also remove properties added by TrenchBroom that are not understood by the
+engine and spam the console with errors.
+
+=== `goldutil map neat [--moddir <path>] <file>`
+Process `neat_*` entity macros and outputs the generated .map to standard output. +
+See <<_neat_entities>> and <<_goldutil_fgd>>.
+
+`--moddir <path>`::
+    root of the mod directory (eg. `valve`), defaults to the current working directory.
+
+=== `goldutil map graph <file>`
+Create a graphviz digraph of entity caller/callee relationships from a .map
+file. ripent exports use the same format and can be read too. Output is written
+to _STDOUT_.
+
+NOD Manipulation
+----------------
+=== `goldutil nod export [--input-format <format>] [--original-positions] <file>`
+Extract node positions from a .nod graph into a .map populated with
+corresponding info_node entities. +
+Links between nodes are represented using target/targetname, nodes are
+duplicated to allow showing all links, TrenchBroom layers are used to separate
+links by hull type. The resulting .map file is not for engine consumption, only
+for TrenchBroom-assisted archaeology.
+
+`--input-format <format>`::
+Parse the .nod file using a different node graph format instead of using the PC
+release format. +
+_<format>_ can be any one of:
+
+`valve`::: Standard Half-Life node graph (default).
+`decay`::: PlayStation 2 release of Half-Life: Decay.
+
+`--original-positions`::
+Use the node positions as they were set in the original .map instead of their
+position after being dropped to the ground during graph generation.
+
+SPR Manipulation
+----------------
+=== `goldutil spr create --out <path> [--type <type>] [--format <format>] <frame0> [<frameX>…]`
+Create a sprite from the given ordered list of PNG frames and write it to
+_<path>_.
+
+Input images MUST be 256 colors paletted PNGs, the palette of the first frame
+will be used, the other palettes are discarded and all frames will be
+interpreted using the first frame's palette. +
+If the palette has under 256 colors it will be extended to 256, putting the
+last color of the palette in the 256th spot and remapping the image to match
+this updated palette. This matters for transparent formats.
+If you use *pngquant*(1) to create your palletized input files, you can use its
+`--pngbug` option to ensure the transparent color will always be last.
+
+`<frame0> [<frameX>…]`::
+    Paths to the individual sprite frames in PNG format.
+
+`--format <format>`::
+    Texture format, determines how the palette is interpreted and the texture
+    is rendered by the engine. _<format>_ can be any one of:
+
+    `additive`:::
+        Additive 256 colors sprite, dark values are rendered as transparent,
+        the darker the less opacity.
+    `alpha-test`:::
+        Transparent ("masked") 255 colors sprite. The 256th color on the
+        palette will be rendered as fully transparent.
+    `index-alpha`:::
+        Monochromatic sprite with 255 alpha levels, the base color is
+        determined by the last color on the palette.
+    `normal`:::
+        256 colors sprite (default).
+
+`--out <path>`::
+    Path to the output .spr file.
+
+`--type <type>`::
+    Sprite type, `<type>` can be any one of:
+
+    `facing-upright`::: Like parallel-upright but faces the player origin instead of the camera.
+    `oriented`::: Orientation set by the level.
+    `parallel-oriented`::: Faces camera but can be rotated by the level.
+    `parallel-upright`::: Always face camera except for the locked Z axis.
+    `parallel`::: Always face camera (default).
+
+=== `goldutil spr extract [--dir <dir>] <file>`
+Output all frames of a sprite as PNGs in the current working directory. +
+The output files will be named after the original sprite file name plus a frame
+number suffix and an extension.
+
+`--dir <dir>`::
+    Output frames to _<dir>_ directory instead of the current working directory.
+
+WAD Manipulation
+----------------
+=== `goldutil wad create --out <path> <input0> [<inputx>…]`
+Create a WAD file from a list of PNG files and directories. Directories are not
+scanned recursively and only PNG files are used. +
+File base names (without extensions) are uppercased and used as texture names. +
+*Warning*: Names exceeding 15 chars will trigger an error as this is the
+maximum length supported by the WAD format.
+
+`--out <path>`::
+    Path to the output .wad file.
+
+`<input0> [<inputx>…]`::
+    Paths to the input PNG files.
+
+=== `goldutil wad extract --dir DIR PATH`
+Extract a WAD file in the given DIR as a bunch of PNG files.
+
+`--dir <dir>`:: Path to the directory where to write PNG files.
+
+=== `goldutil wad info <path>`
+Print parsed data from a WAD file.
+
+Misc modding utilities
+----------------------
+=== `goldutil fgd`
+Output to _STDOUT_ the FGD to use with xref:_goldutil_map_neat_moddir_path_file[goldutil map neat].
+
+=== `goldutil mod filter-materials --in <materials> <bsp0> [<bspx>…]`
+Takes a _materials.txt_ file and only keep the texture names that are used in the
+given BSP files. This is useful to keep a final _materials.txt_ under 512
+entries when working with large texture collections. Filtered materials are
+written to _STDOUT_.
+
+`<bsp0> [<bspx…]`:: Paths to the BSP files to scan for used texture names.
+`--in <materials>`:: Path to the input _materials.txt_ file you want to filter.
+
+=== `goldutil mod filter-wads --out <wad_out> -bspdir <dir> <wad_in0> [<wad_inx>…]`
+Read all BSP files at the given directory and create a WAD containing only the
+textures used by the BSPs.
+This allows using large texture collections during development but only
+distribute the smallest possible WAD at release time. +
+Be aware that Half-Life requires the wads from the "wads" property to be
+present and will attempt to load them.
+Before release you should generate the output WAD, remove the WADs that were
+used during filtering from your worldspawn "wads" property, add the output WAD,
+and then rebuild your maps.
+
+`<wad_in0> [<wad_inx>…]`::
+    Input WADs for non-embedded textures.
+`--out <wad_out>`::
+    Path were the output WAD will be written.
+`--bspdir <dir>`::
+    Path of the directory containing the BSPs to use as a used texture list.
+
+Neat entities
+-------------
+=== `neat_master`
+An entity that can be used as a `master` in other entities, avoiding
+`multisource` quirks and limitations. +
+When targeting it:
+
+- `trigger_relay` `targetstate` is respected.
+- All other callers are handled and will toggle by default, including
+  `multi_manager`, `trigger_changetarget`, `path_track`, and monsters using
+  `TriggerTarget`.
+- You can target `<targetname>_on`, `<targetname>_off`, or
+  `<targetname>_toggle` to set the corresponding state on the master without
+  having to set up a trigger_relay.
+
+Internally it works by setting up a `button_target` (`<targetname>_proxy`), a
+`multisource` (`<targetname>`), and three `trigger_relay` (`<targetname>_on`,
+`<targetname>_off`, and `<targetname>_toggle`). +
+`trigger_relay` entities targeting `<targetname>` are redirected to
+`<targetname>_proxy`. All other entities targeting `<targetname>` will be
+rewritten to target `<targetname>_toggle`.
+
+==== Properties
+`targetname(target_source)`::
+    Base name of the `multisource` entity, should be used as the `master`
+    property in other entities, can also be used as a `target` in other
+    entities which will _toggle_ the `multisource`.
+`target(target_destination)`:: Copied verbatim to the underlying `multisource`.
+`globalstate(string)`:: Copied verbatim to the underlying `multisource`.
+
+=== `neat_message`
+Equivalent to env_message with three important differences:
+
+- The message duration is read from _titles.txt_.
+- The `target` isn't fired until the message ends.
+- The `delay` is used as padding in addition to message duration.
+
+==== Properties
+`targetname(target_source)`:: Entity name
+`target(target_destination)`:: Entity to trigger when the message ends.
+`delay(string)`:: Additional delay before triggering `target`.
+
+The following properties are copied verbatim to the generated `env_message`:
+
+- `message(string)`
+- `spawnflags(flags)`
+- `messagesound(sound)`
+- `messagevolume(string)`
+- `messageattenuation(choices)`
+- `triggerstate(choices)`

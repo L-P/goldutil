@@ -7,13 +7,16 @@ all: $(EXEC)
 $(EXEC):
 	go build ${BUILDFLAGS}
 
-docs/index.html: goldutil.1
-	pandoc -f man -o "$@" "$<"
+docs/goldutil.1: goldutil.adoc
+	asciidoctor --backend manpage "$<" -o "$@"
+
+docs/index.html: goldutil.adoc
+	asciidoctor --backend html "$<" -o "$@"
 
 .PHONY: $(EXEC) test lint windows
 
 windows:
-	GOOS=windows GOARCH=amd64 go build ${BUILDFLAGS} 
+	GOOS=windows GOARCH=amd64 go build ${BUILDFLAGS}
 
 test:
 	go test ./...

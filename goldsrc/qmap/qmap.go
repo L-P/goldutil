@@ -15,7 +15,7 @@ import (
 // QMap holds the entities of a .map file. While it essentially is an array
 // of entities, it is stored into a UUID-keyed map to allow CRUD operations
 // without having to deal with moving indexes.
-// Because we have lot of "keys" and "values" floating around, by convention
+// Because we have lots of "keys" and "values" floating around, by convention
 // variables containing keys of this map are called "index" (not "i", not "k").
 // KVs being stored as maps, obtaining an entity and updating its KVs will
 // update the contents of the QMap.
