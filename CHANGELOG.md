@@ -1,5 +1,6 @@
 # next
 - Build releases using Go v1.26
+- Bump dependencies
 
 # v1.5.0
 - Add "map neat" entity preprocessor command
