@@ -1,3 +1,6 @@
+# next
+- Build releases using Go v1.26
+
 # v1.5.0
 - Add "map neat" entity preprocessor command
 - Add "fgd" command to use along with "map neat"

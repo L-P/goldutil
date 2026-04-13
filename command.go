@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-//nolint:funlen,lll // descriptions
+//nolint:funlen,maintidx,lll // descriptions
 func newApp() *cli.Command {
 	bold := color.New(color.Bold).Sprint
 	catnl := func(str ...string) string {
