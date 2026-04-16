@@ -1,4 +1,5 @@
 # next
+- Add command wav loop
 - Build releases using Go v1.26
 - Bump dependencies
 

@@ -17,9 +17,10 @@ Synopsis
 *goldutil* fgd +
 *goldutil* map [export | graph | neat] +
 *goldutil* mod [filter-materials | filter-wads] +
-*goldutil* nod export +
+*goldutil* nod [export] +
 *goldutil* spr [create | extract | info] +
 *goldutil* wad [create | extract | info] +
+*goldutil* wav [loop] +
 
 Description
 -----------
@@ -201,6 +202,16 @@ and then rebuild your maps.
     Path were the output WAD will be written.
 `--bspdir <dir>`::
     Path of the directory containing the BSPs to use as a used texture list.
+
+=== `goldutil wav loop --out=<out> <wav>`
+Make a WAV loop by setting CUE points. +
+In GoldSrc only the presence of these CUE points is checked, not their position. +
+This commands adds a CUE point at the end so ambient_generic can do its work.
+
+`<wav>`::
+    Input WAV file.
+`--out <out>`::
+    Path were the output WAV will be written.
 
 Neat entities
 -------------

@@ -325,6 +325,30 @@ func newApp() *cli.Command {
 					},
 				},
 			},
+
+			{
+				Name:  "wav",
+				Usage: "Audio manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:   "loop",
+						Usage:  "Set CUE points to make a WAV loop.",
+						Action: doWAVLoop,
+						Description: catnl(
+							"Make a WAV loop by setting CUE points.",
+							"In GoldSrc only the presence of these CUE points is checked, not their position.",
+							"This commands adds a CUE point at the end so ambient_generic can do its work.",
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "out",
+								Usage:    "Where to write the looped WAV.",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }

@@ -477,6 +477,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_goldutil_fgd"><code>goldutil fgd</code></a></li>
 <li><a href="#_goldutil_mod_filter_materials_in_materials_bsp0_bspx"><code>goldutil mod filter-materials --in &lt;materials&gt; &lt;bsp0&gt; [&lt;bspx&gt;…]</code></a></li>
 <li><a href="#_goldutil_mod_filter_wads_out_wad_out_bspdir_dir_wad_in0_wad_inx"><code>goldutil mod filter-wads --out &lt;wad_out&gt; -bspdir &lt;dir&gt; &lt;wad_in0&gt; [&lt;wad_inx&gt;…]</code></a></li>
+<li><a href="#_goldutil_wav_loop_outout_wav"><code>goldutil wav loop --out=&lt;out&gt; &lt;wav&gt;</code></a></li>
 </ul>
 </li>
 <li><a href="#_neat_entities">Neat entities</a>
@@ -505,9 +506,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <strong>goldutil</strong> fgd<br>
 <strong>goldutil</strong> map [export | graph | neat]<br>
 <strong>goldutil</strong> mod [filter-materials | filter-wads]<br>
-<strong>goldutil</strong> nod export<br>
+<strong>goldutil</strong> nod [export]<br>
 <strong>goldutil</strong> spr [create | extract | info]<br>
-<strong>goldutil</strong> wad [create | extract | info]<br></p>
+<strong>goldutil</strong> wad [create | extract | info]<br>
+<strong>goldutil</strong> wav [loop]<br></p>
 </div>
 </div>
 </div>
@@ -863,6 +865,26 @@ and then rebuild your maps.</p>
 </dl>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_goldutil_wav_loop_outout_wav"><code>goldutil wav loop --out=&lt;out&gt; &lt;wav&gt;</code></h3>
+<div class="paragraph">
+<p>Make a WAV loop by setting CUE points.<br>
+In GoldSrc only the presence of these CUE points is checked, not their position.<br>
+This commands adds a CUE point at the end so ambient_generic can do its work.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>&lt;wav&gt;</code></dt>
+<dd>
+<p>Input WAV file.</p>
+</dd>
+<dt class="hdlist1"><code>--out &lt;out&gt;</code></dt>
+<dd>
+<p>Path were the output WAV will be written.</p>
+</dd>
+</dl>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -990,7 +1012,7 @@ entities which will <em>toggle</em> the <code>multisource</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-12 12:12:10 +0200
+Last updated 2026-04-16 23:52:35 +0200
 </div>
 </div>
 </body>
