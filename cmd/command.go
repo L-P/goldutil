@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"goldutil/neat"
 	"slices"
 	"strings"
 
@@ -75,7 +76,7 @@ func newApp() *cli.Command {
 				Name:  "fgd",
 				Usage: "Output the FGD to use with goldutil map neat.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Fprint(cmd.Writer, fgd)
+					fmt.Fprint(cmd.Writer, neat.FGD)
 					return nil
 				},
 			},

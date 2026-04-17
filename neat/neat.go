@@ -2,6 +2,7 @@
 package neat
 
 import (
+	_ "embed"
 	"fmt"
 	"goldutil/goldsrc"
 	"goldutil/goldsrc/qmap"
@@ -11,6 +12,9 @@ import (
 
 	"github.com/google/uuid"
 )
+
+//go:embed goldutil.fgd
+var FGD string
 
 func Neatify(qm *qmap.QMap, mod *os.Root) error {
 	if err := handleMasters(qm); err != nil {

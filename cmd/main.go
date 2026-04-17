@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
@@ -23,9 +22,6 @@ import (
 )
 
 var Version = "unknown version"
-
-//go:embed goldutil.fgd
-var fgd string
 
 func main() {
 	var app = newApp()
