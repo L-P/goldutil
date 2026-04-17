@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"goldutil/sprite"
+	"goldutil/goldsrc/wad"
 	"image"
 	"os"
 )
@@ -42,8 +42,8 @@ func openPalettedImage(path string) (*image.Paletted, error) {
 
 // Returns the final palette, the last index in the input palette, and true if
 // this index must be remapped to 0xFF.
-func imagePalette(path string) (sprite.Palette, uint8, bool, error) {
-	var palette sprite.Palette
+func imagePalette(path string) (wad.Palette, uint8, bool, error) {
+	var palette wad.Palette
 
 	img, err := openPalettedImage(path)
 	if err != nil {
@@ -56,7 +56,7 @@ func imagePalette(path string) (sprite.Palette, uint8, bool, error) {
 
 	for i, v := range img.Palette {
 		r, g, b, _ := v.RGBA()
-		palette[i] = sprite.RGB{
+		palette[i] = wad.RGB{
 			R: uint8(r),
 			G: uint8(g),
 			B: uint8(b),

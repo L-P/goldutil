@@ -4,10 +4,15 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"goldutil/sprite"
 	"io"
 	"strings"
 )
+
+type RGB struct {
+	R, G, B uint8
+}
+
+type Palette [256]RGB
 
 // Number of mimmaps per texture, base texture is mipmap 0.
 const NumMIPMaps = 4
@@ -24,24 +29,28 @@ type MIPTextureHeader struct {
 	MIPOffsets [NumMIPMaps]int32
 }
 
+// Returns true if the texture data is present, meaning we're either in a WAD
+// or embedded in a BSP.
 func (h MIPTextureHeader) IsEmbedded() bool {
+	// Only textures listed but not embedded in a BSP have their offsets = 0.
 	return h.MIPOffsets[0] > 0
 }
 
+// Mip-mapped paletted bitmap texture.
 type MIPTexture struct {
 	MIPTextureHeader
 
 	// total len = w*h + (w*h)/2 + (w*h)/4 + (w*h)/8 = (15*(w*h))/8
 	// Paletted data, 1bpp.
 	MIPData     [NumMIPMaps][]byte
-	PaletteSize int16          // always 256
-	Palette     sprite.Palette // TODO move palette out of sprite
+	PaletteSize int16 // always 256
+	Palette     Palette
 	_           [2]byte
 }
 
 func (mip *MIPTexture) Size() int32 {
 	// 2 bytes of padding, 2 bytes of palette size, the palette, the header, and the data
-	var ret = 2 + 2 + PaletteDataSize + MIPTextureHeaderSize
+	var ret = 2 + 2 + MIPPaletteDataSize + MIPTextureHeaderSize
 	for i := range mip.MIPData {
 		ret += int32(len(mip.MIPData[i]))
 	}
@@ -124,7 +133,7 @@ func (mip *MIPTexture) Read(r io.ReadSeeker, offset int32) error {
 		return fmt.Errorf("unable to read PaletteSize: %w", err)
 	}
 
-	paletteOffset := int64(offset + mip.Size() - PaletteDataSize - 2)
+	paletteOffset := int64(offset + mip.Size() - MIPPaletteDataSize - 2)
 	if _, err := r.Seek(paletteOffset, io.SeekStart); err != nil {
 		return fmt.Errorf("unable to seek to palette data offset 0x%x: %w", paletteOffset, err)
 	}

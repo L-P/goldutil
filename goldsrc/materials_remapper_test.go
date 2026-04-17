@@ -2,7 +2,7 @@ package goldsrc_test
 
 import (
 	"goldutil/goldsrc"
-	"goldutil/wad"
+	"goldutil/goldsrc/wad"
 	"io"
 	"testing"
 

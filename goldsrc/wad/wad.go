@@ -1,3 +1,4 @@
+// Package wad implements GoldSrc WAD (texture files) parsing.
 package wad
 
 import (
@@ -6,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/set"
-	"goldutil/sprite"
 	"io"
 	"os"
 	"strings"
@@ -15,16 +15,16 @@ import (
 
 // Texture names are strings of 16 chars with a null terminator.
 const (
-	MaxNameLen = 15
-	NameSize   = MaxNameLen + 1
+	MaxTextureNameLen = 15
+	TextureNameSize   = MaxTextureNameLen + 1
 )
 
 // Fixed-size and \0-terminated string.
-type TextureName [NameSize]byte
+type TextureName [TextureNameSize]byte
 
 func NewTextureName(str string) (TextureName, error) {
-	if len(str) > MaxNameLen {
-		return TextureName{}, fmt.Errorf("name is too long, %d>%d", len(str), MaxNameLen)
+	if len(str) > MaxTextureNameLen {
+		return TextureName{}, fmt.Errorf("name is too long, %d>%d", len(str), MaxTextureNameLen)
 	}
 
 	var ret TextureName
@@ -54,7 +54,7 @@ func New() WAD {
 }
 
 type texture struct {
-	entry Entry
+	entry WADEntry
 	mip   MIPTexture
 }
 
@@ -135,23 +135,23 @@ func (t EntryType) String() string {
 
 const (
 	HeaderSize           = int32(unsafe.Sizeof(Header{}))
-	EntrySize            = int32(unsafe.Sizeof(Entry{}))
-	PaletteDataSize      = int32(unsafe.Sizeof(sprite.Palette{}))
+	WADEntrySize         = int32(unsafe.Sizeof(WADEntry{}))
+	MIPPaletteDataSize   = int32(unsafe.Sizeof(Palette{}))
 	MIPTextureHeaderSize = int32(unsafe.Sizeof(MIPTextureHeader{}))
 )
 
 // Binary-accurate.
-type Entry struct {
+type WADEntry struct {
 	Offset           int32 // offset to corresponding data (MIPTexture) from WAD start
 	Size             int32
-	UncompressedSize int32 // alway == Size (textures are never compressed)
+	UncompressedSize int32 // always == Size (textures are never compressed)
 	Type             EntryType
 	Compressed       byte // always 0
 	_                [2]byte
 	Name             TextureName
 }
 
-func (e Entry) String() string {
+func (e WADEntry) String() string {
 	var w strings.Builder
 	fmt.Fprintf(&w, "  Name: %s\n", e.Name)
 	fmt.Fprintf(&w, "  Offset: 0x%x\n", e.Offset)
@@ -194,12 +194,12 @@ func readTextures(r io.ReadSeeker, header Header) ([]texture, error) {
 	)
 
 	for i := range header.EntriesCount {
-		offset := header.EntriesOffset + (EntrySize * i)
+		offset := header.EntriesOffset + (WADEntrySize * i)
 		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
 			return nil, fmt.Errorf("unable to seek to offset %x of dir entry #%d", offset, i)
 		}
 
-		var entry Entry
+		var entry WADEntry
 		if err := binary.Read(r, binary.LittleEndian, &entry); err != nil {
 			return nil, fmt.Errorf("unable to read entry #%d: %w", i, err)
 		}
@@ -255,7 +255,7 @@ func (wad *WAD) AddTexture(mip MIPTexture) error {
 	}
 
 	size := mip.Size()
-	var entry = Entry{
+	var entry = WADEntry{
 		Size:             size,
 		UncompressedSize: size,
 		Type:             EntryTypeMIPTex,

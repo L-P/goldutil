@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
+	"goldutil/goldsrc/bsp"
+	"goldutil/goldsrc/nod"
 	"goldutil/goldsrc/qmap"
+	"goldutil/goldsrc/sprite"
+	"goldutil/goldsrc/wad"
 	"goldutil/neat"
 	"goldutil/set"
-	"goldutil/sprite"
-	"goldutil/wad"
 	"os"
 	"path/filepath"
 	"sort"
@@ -267,7 +269,7 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 		return errors.New("no materials in source or replacement list")
 	}
 
-	bsp, err := goldsrc.LoadBSPFromFile(cmd.Args().Get(0))
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
@@ -311,7 +313,7 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 }
 
 func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
-	bsp, err := goldsrc.LoadBSPFromFile(cmd.Args().Get(0))
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
@@ -322,9 +324,9 @@ func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
 }
 
 func doNodExport(ctx context.Context, cmd *cli.Command) error {
-	format, ok := map[string]goldsrc.NodeFormat{
-		"valve": goldsrc.NodeFormatValve,
-		"decay": goldsrc.NodeFormatDecay,
+	format, ok := map[string]nod.NodeFormat{
+		"valve": nod.NodeFormatValve,
+		"decay": nod.NodeFormatDecay,
 	}[cmd.String("input-format")]
 	if !ok {
 		return errors.New("unrecognize .nod format")
@@ -336,7 +338,7 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 	}
 	defer f.Close() //nolint:errcheck // readonly
 
-	nodes, links, err := goldsrc.ReadNodes(f, format)
+	nodes, links, err := nod.ReadNodes(f, format)
 	if err != nil {
 		return fmt.Errorf("unable to read nodes: %w", err)
 	}
@@ -351,11 +353,11 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 		}})
 	}
 
-	for linkTypeBitID := range goldsrc.LinkTypeBitMax {
+	for linkTypeBitID := range nod.LinkTypeBitMax {
 		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":            "func_group",
 			"_tb_type":             "_tb_layer",
-			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, goldsrc.LinkTypeName(linkTypeBitID)),
+			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, nod.LinkTypeName(linkTypeBitID)),
 			"_tb_id":               strconv.Itoa(linkTypeBitID + 1),
 			"_tb_layer_sort_index": strconv.Itoa(linkTypeBitID + 1),
 		}})

@@ -1,7 +1,9 @@
+// Package sprite implements GoldSrc SPR files parsing.
 package sprite
 
 import (
 	"fmt"
+	"goldutil/goldsrc/wad"
 	"io"
 	"math"
 	"os"
@@ -11,23 +13,17 @@ import (
 // .spr file, originally from Quake and modified by Valve.
 // See sprgen.c and the Quake engine.
 type Sprite struct {
-	Header
+	SpriteHeader
 
 	Frames []Frame
 }
 
-type RGB struct {
-	R, G, B uint8
-}
-
-type Palette [256]RGB
-
 func New(
 	width, height int, typ Type, format TextureFormat,
-	palette Palette,
+	palette wad.Palette,
 ) (Sprite, error) {
 	var spr Sprite
-	spr.Header = Header{
+	spr.SpriteHeader = SpriteHeader{
 		MagicString:    [4]byte{'I', 'D', 'S', 'P'},
 		Version:        2,
 		Type:           typ,
@@ -51,7 +47,7 @@ func boundingRadius(iWidth, iHeight int) float32 {
 func (spr *Sprite) String() string {
 	var w strings.Builder
 
-	w.WriteString(spr.Header.String())
+	w.WriteString(spr.SpriteHeader.String())
 
 	for i, v := range spr.Frames {
 		fmt.Fprintf(&w, "Frame %d:\n", i)
@@ -62,7 +58,7 @@ func (spr *Sprite) String() string {
 }
 
 func (spr *Sprite) Read(r io.Reader) error {
-	if err := spr.Header.Read(r); err != nil {
+	if err := spr.SpriteHeader.Read(r); err != nil {
 		return fmt.Errorf("could not parse header: %w", err)
 	}
 
@@ -100,7 +96,7 @@ func (spr *Sprite) AddFrame(frame Frame) {
 }
 
 func (spr *Sprite) Write(w io.Writer) error {
-	if err := spr.Header.Write(w); err != nil {
+	if err := spr.SpriteHeader.Write(w); err != nil {
 		return err
 	}
 

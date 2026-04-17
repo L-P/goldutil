@@ -1,3 +1,4 @@
+// Package valve contains vanilla Half-Life entities definitions.
 package valve
 
 type Color string // "255 255 255"
@@ -50,7 +51,6 @@ type TriggerRelay struct {
 	TriggerState TriggerState `qmap:"triggerstate"`
 }
 
-// TODO: see if a button_target can function without a brush.
 type ButtonTarget struct {
 	ClassName *string `qmap:"classname,button_target"`
 	Origin    Position

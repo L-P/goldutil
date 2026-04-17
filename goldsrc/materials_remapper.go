@@ -2,7 +2,7 @@ package goldsrc
 
 import (
 	"fmt"
-	"goldutil/wad"
+	"goldutil/goldsrc/wad"
 	"io"
 	"sort"
 	"strings"
@@ -199,7 +199,7 @@ func maxUses(prefixLen int) int {
  * than actually exists within this file.
  *
  * As a side-benefit, it limits risks of texture name collision which can
- * result in wrong texture reuse across level changes if the texture cached is
+ * result in wrong texture reuse across level changes if the texture cache is
  * full. Cf.:
  *   - https://github.com/ValveSoftware/halflife/issues/102
  *   - https://github.com/ValveSoftware/halflife/issues/3102

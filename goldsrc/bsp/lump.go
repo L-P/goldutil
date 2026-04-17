@@ -1,4 +1,4 @@
-package goldsrc
+package bsp
 
 import (
 	"fmt"

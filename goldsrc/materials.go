@@ -55,6 +55,7 @@ func (t MaterialType) String() string {
 
 const MaterialTypeCount = 9 + 1
 
+// materials.txt parser.
 type Materials map[string]MaterialType // texture name => material type
 func (m Materials) IsEmpty() bool {
 	return len(m) == 0
@@ -115,14 +116,14 @@ func parseMaterialsLine(line string) (MaterialType, string, error) {
 		return MaterialTypeInvalid, "", fmt.Errorf("invalid material type: %s", parts[0])
 	}
 
-	if !isValidTextureName(parts[1]) {
+	if !IsValidTextureName(parts[1]) {
 		return MaterialTypeInvalid, "", fmt.Errorf("invalid texture name: %s", parts[1])
 	}
 
 	return mat, parts[1], nil
 }
 
-func isValidTextureName(str string) bool {
+func IsValidTextureName(str string) bool {
 	if len(str) < 1 || len(str) > 15 {
 		return false
 	}

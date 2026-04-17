@@ -1,4 +1,5 @@
-package goldsrc
+// Package nod implements NPC navigation node graph files parsing.
+package nod
 
 import (
 	"encoding/binary"
@@ -16,7 +17,7 @@ const (
 	NodeFormatDecay
 )
 
-type Graph struct {
+type NodeGraph struct {
 	_ [3]int32  // 3 qbool
 	_ [3]uint32 // 3 pointers
 
@@ -113,7 +114,7 @@ func LinkTypeName(id int) string {
 	}
 }
 
-type Link struct {
+type NodeLink struct {
 	SrcNode  int32
 	DstNode  int32
 	_        [8]byte
@@ -121,7 +122,7 @@ type Link struct {
 	_        [4]byte
 }
 
-func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []Link, error) {
+func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []NodeLink, error) {
 	var version int32
 	if err := binary.Read(r, binary.LittleEndian, &version); err != nil {
 		return nil, nil, fmt.Errorf("unable to parse version: %w", err)
@@ -130,7 +131,7 @@ func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []Link, error) {
 		return nil, nil, fmt.Errorf("unsupported node graph version: %d", version)
 	}
 
-	var graph Graph
+	var graph NodeGraph
 	if err := binary.Read(r, binary.LittleEndian, &graph); err != nil {
 		return nil, nil, fmt.Errorf("unable to read CGraph: %w", err)
 	}
@@ -145,9 +146,9 @@ func ReadNodes(r io.Reader, format NodeFormat) ([]Node, []Link, error) {
 		nodes = append(nodes, node)
 	}
 
-	var links = make([]Link, 0, graph.NumLinks)
+	var links = make([]NodeLink, 0, graph.NumLinks)
 	for range graph.NumLinks {
-		var link Link
+		var link NodeLink
 		if err := binary.Read(r, binary.LittleEndian, &link); err != nil {
 			return nil, nil, fmt.Errorf("unable to read CLink: %w", err)
 		}
@@ -182,8 +183,8 @@ func assertSizeof(typ any, expected int) {
 }
 
 func init() {
-	assertSizeof(Graph{}, 8396)
+	assertSizeof(NodeGraph{}, 8396)
 	assertSizeof(ValveNode{}, 88)
 	assertSizeof(DecayNode{}, 96)
-	assertSizeof(Link{}, 24)
+	assertSizeof(NodeLink{}, 24)
 }

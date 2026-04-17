@@ -1,3 +1,4 @@
+// Package neat implements an map pre-processor for GoldSrc.
 package neat
 
 import (
