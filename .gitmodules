@@ -1,0 +1,3 @@
+[submodule "vendor"]
+	path = vendor
+	url = ssh://git@git.leo-peltier.fr/Hopcide/goldutil-vendor.git
