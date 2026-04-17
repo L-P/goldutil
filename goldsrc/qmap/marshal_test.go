@@ -3,7 +3,6 @@ package qmap_test
 import (
 	"fmt"
 	"goldutil/goldsrc/qmap"
-	"goldutil/nullable"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -87,22 +86,22 @@ func TestUnmarshal(t *testing.T) {
 	expected := Foo{
 		String:                               "string",
 		AliasedString:                        "aliased",
-		NullableString:                       nullable.New("string"),
-		OverriddenNullableStringWithDefault:  nullable.New("string"),
+		NullableString:                       new("string"),
+		OverriddenNullableStringWithDefault:  new("string"),
 		Int:                                  0xCAFE,
-		NullableInt:                          nullable.New[int](0xCAFE),
-		OverriddenNullableIntWithDefault:     nullable.New[int](0xCAFE),
+		NullableInt:                          new(int(0xCAFE)),
+		OverriddenNullableIntWithDefault:     new(int(0xCAFE)),
 		Byte:                                 0xCA,
-		NullableByte:                         nullable.New[uint8](0xCA),
-		OverriddenNullableByteWithDefault:    nullable.New[uint8](0xCA),
+		NullableByte:                         new(uint8(0xCA)),
+		OverriddenNullableByteWithDefault:    new(uint8(0xCA)),
 		Float32:                              -1,
-		NullableFloat32:                      nullable.New[float32](-1),
-		OverriddenNullableFloat32WithDefault: nullable.New[float32](-1),
+		NullableFloat32:                      new(float32(-1)),
+		OverriddenNullableFloat32WithDefault: new(float32(-1)),
 
-		// NullableStringWithDefault:            nullable.New("default"),
-		// NullableIntWithDefault:               nullable.New[int](42),
-		// NullableByteWithDefault:              nullable.New[uint8](42),
-		// NullableFloat32WithDefault:           nullable.New[float32](4.2),
+		// NullableStringWithDefault:            new("default"),
+		// NullableIntWithDefault:               new([int](42),
+		// NullableByteWithDefault:              new([uint8](42),
+		// NullableFloat32WithDefault:           new([float32](4.2),
 	}
 
 	var actual Foo
@@ -113,25 +112,25 @@ func TestUnmarshal(t *testing.T) {
 func TestMarshal(t *testing.T) {
 	actual, err := qmap.Marshal(Foo{
 		AliasedString:                       "aliased",
-		NullableString:                      nullable.New("string"),
-		NullableStringWithDefault:           nullable.New("default"),
-		OverriddenNullableStringWithDefault: nullable.New("string"),
+		NullableString:                      new("string"),
+		NullableStringWithDefault:           new("default"),
+		OverriddenNullableStringWithDefault: new("string"),
 		String:                              "string",
 
 		Int:                              0xCAFE,
-		NullableInt:                      nullable.New[int](0xCAFE),
-		NullableIntWithDefault:           nullable.New[int](42),
-		OverriddenNullableIntWithDefault: nullable.New[int](0xCAFE),
+		NullableInt:                      new(int(0xCAFE)),
+		NullableIntWithDefault:           new(int(42)),
+		OverriddenNullableIntWithDefault: new(int(0xCAFE)),
 
 		Byte:                              0xCA,
-		NullableByte:                      nullable.New[uint8](0xCA),
-		NullableByteWithDefault:           nullable.New[uint8](42),
-		OverriddenNullableByteWithDefault: nullable.New[uint8](0xCA),
+		NullableByte:                      new(uint8(0xCA)),
+		NullableByteWithDefault:           new(uint8(42)),
+		OverriddenNullableByteWithDefault: new(uint8(0xCA)),
 
 		Float32:                              -1,
-		NullableFloat32:                      nullable.New[float32](-1),
-		NullableFloat32WithDefault:           nullable.New[float32](4.2),
-		OverriddenNullableFloat32WithDefault: nullable.New[float32](-1),
+		NullableFloat32:                      new(float32(-1)),
+		NullableFloat32WithDefault:           new(float32(4.2)),
+		OverriddenNullableFloat32WithDefault: new(float32(-1)),
 	})
 	require.NoError(t, err)
 
@@ -161,25 +160,25 @@ func TestMarshal(t *testing.T) {
 
 func TestRoundTrip(t *testing.T) {
 	expected := Foo{
-		NullableString:                      nullable.New("string"),
-		NullableStringWithDefault:           nullable.New("default"),
-		OverriddenNullableStringWithDefault: nullable.New("string"),
+		NullableString:                      new("string"),
+		NullableStringWithDefault:           new("default"),
+		OverriddenNullableStringWithDefault: new("string"),
 		String:                              "string",
 
 		Int:                              0xCAFE,
-		NullableInt:                      nullable.New[int](0xCAFE),
-		NullableIntWithDefault:           nullable.New[int](42),
-		OverriddenNullableIntWithDefault: nullable.New[int](0xCAFE),
+		NullableInt:                      new(int(0xCAFE)),
+		NullableIntWithDefault:           new(int(42)),
+		OverriddenNullableIntWithDefault: new(int(0xCAFE)),
 
 		Byte:                              0xCA,
-		NullableByte:                      nullable.New[uint8](0xCA),
-		NullableByteWithDefault:           nullable.New[uint8](42),
-		OverriddenNullableByteWithDefault: nullable.New[uint8](0xCA),
+		NullableByte:                      new(uint8(0xCA)),
+		NullableByteWithDefault:           new(uint8(42)),
+		OverriddenNullableByteWithDefault: new(uint8(0xCA)),
 
 		Float32:                              -1,
-		NullableFloat32:                      nullable.New[float32](-1),
-		NullableFloat32WithDefault:           nullable.New[float32](4.2),
-		OverriddenNullableFloat32WithDefault: nullable.New[float32](-1),
+		NullableFloat32:                      new(float32(-1)),
+		NullableFloat32WithDefault:           new(float32(4.2)),
+		OverriddenNullableFloat32WithDefault: new(float32(-1)),
 	}
 
 	anonymous, err := qmap.NewAnonymousEntityFromStruct(expected)
