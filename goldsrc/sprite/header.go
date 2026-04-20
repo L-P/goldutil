@@ -82,7 +82,7 @@ func (st SyncType) String() string {
 const expectedPaletteSize = 256
 
 // Binary-accurate.
-type SpriteHeader struct {
+type Header struct {
 	MagicString    [4]byte // "IDSP"
 	Version        int32   // 1 for Quake, 2 for Valve
 	Type           Type
@@ -104,7 +104,7 @@ type SpriteHeader struct {
 	Palette     wad.Palette // always 3 bytes * PaletteSize, keep it fixed to simplify parsing
 }
 
-func (sh *SpriteHeader) Read(r io.Reader) error {
+func (sh *Header) Read(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, sh); err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (sh *SpriteHeader) Read(r io.Reader) error {
 	return nil
 }
 
-func (sh *SpriteHeader) String() string {
+func (sh *Header) String() string {
 	var w strings.Builder
 
 	w.WriteString("Header:\n")
@@ -148,6 +148,6 @@ func (sh *SpriteHeader) String() string {
 	return w.String()
 }
 
-func (sh *SpriteHeader) Write(w io.Writer) error {
+func (sh *Header) Write(w io.Writer) error {
 	return binary.Write(w, binary.LittleEndian, sh)
 }

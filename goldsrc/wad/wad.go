@@ -54,7 +54,7 @@ func New() WAD {
 }
 
 type texture struct {
-	entry WADEntry
+	entry Entry
 	mip   MIPTexture
 }
 
@@ -135,13 +135,13 @@ func (t EntryType) String() string {
 
 const (
 	HeaderSize           = int32(unsafe.Sizeof(Header{}))
-	WADEntrySize         = int32(unsafe.Sizeof(WADEntry{}))
+	EntrySize            = int32(unsafe.Sizeof(Entry{}))
 	MIPPaletteDataSize   = int32(unsafe.Sizeof(Palette{}))
 	MIPTextureHeaderSize = int32(unsafe.Sizeof(MIPTextureHeader{}))
 )
 
 // Binary-accurate.
-type WADEntry struct {
+type Entry struct {
 	Offset           int32 // offset to corresponding data (MIPTexture) from WAD start
 	Size             int32
 	UncompressedSize int32 // always == Size (textures are never compressed)
@@ -151,7 +151,7 @@ type WADEntry struct {
 	Name             TextureName
 }
 
-func (e WADEntry) String() string {
+func (e Entry) String() string {
 	var w strings.Builder
 	fmt.Fprintf(&w, "  Name: %s\n", e.Name)
 	fmt.Fprintf(&w, "  Offset: 0x%x\n", e.Offset)
@@ -194,12 +194,12 @@ func readTextures(r io.ReadSeeker, header Header) ([]texture, error) {
 	)
 
 	for i := range header.EntriesCount {
-		offset := header.EntriesOffset + (WADEntrySize * i)
+		offset := header.EntriesOffset + (EntrySize * i)
 		if _, err := r.Seek(int64(offset), io.SeekStart); err != nil {
 			return nil, fmt.Errorf("unable to seek to offset %x of dir entry #%d", offset, i)
 		}
 
-		var entry WADEntry
+		var entry Entry
 		if err := binary.Read(r, binary.LittleEndian, &entry); err != nil {
 			return nil, fmt.Errorf("unable to read entry #%d: %w", i, err)
 		}
@@ -255,7 +255,7 @@ func (wad *WAD) AddTexture(mip MIPTexture) error {
 	}
 
 	size := mip.Size()
-	var entry = WADEntry{
+	var entry = Entry{
 		Size:             size,
 		UncompressedSize: size,
 		Type:             EntryTypeMIPTex,

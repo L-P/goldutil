@@ -13,7 +13,7 @@ import (
 // .spr file, originally from Quake and modified by Valve.
 // See sprgen.c and the Quake engine.
 type Sprite struct {
-	SpriteHeader
+	Header
 
 	Frames []Frame
 }
@@ -23,7 +23,7 @@ func New(
 	palette wad.Palette,
 ) (Sprite, error) {
 	var spr Sprite
-	spr.SpriteHeader = SpriteHeader{
+	spr.Header = Header{
 		MagicString:    [4]byte{'I', 'D', 'S', 'P'},
 		Version:        2,
 		Type:           typ,
@@ -47,7 +47,7 @@ func boundingRadius(iWidth, iHeight int) float32 {
 func (spr *Sprite) String() string {
 	var w strings.Builder
 
-	w.WriteString(spr.SpriteHeader.String())
+	w.WriteString(spr.Header.String())
 
 	for i, v := range spr.Frames {
 		fmt.Fprintf(&w, "Frame %d:\n", i)
@@ -58,7 +58,7 @@ func (spr *Sprite) String() string {
 }
 
 func (spr *Sprite) Read(r io.Reader) error {
-	if err := spr.SpriteHeader.Read(r); err != nil {
+	if err := spr.Header.Read(r); err != nil {
 		return fmt.Errorf("could not parse header: %w", err)
 	}
 
@@ -96,7 +96,7 @@ func (spr *Sprite) AddFrame(frame Frame) {
 }
 
 func (spr *Sprite) Write(w io.Writer) error {
-	if err := spr.SpriteHeader.Write(w); err != nil {
+	if err := spr.Header.Write(w); err != nil {
 		return err
 	}
 
