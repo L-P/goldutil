@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"goldutil/goldsrc"
+	"goldutil/goldsrc/bsp"
+	"goldutil/goldsrc/wad"
 	"goldutil/set"
-	"goldutil/wad"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,12 +65,12 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		fmt.Fprintf(cmd.Writer, "Parsing WAD %d/%d at '%s'\n", i+1, cmd.Args().Len(), path)
-		wad3, err := wad.NewFromFile(path)
+		wad, err := wad.NewFromFile(path)
 		if err != nil {
 			return fmt.Errorf("unable to open WAD at '%s': %w", path, err)
 		}
 
-		for _, name := range wad3.Names() {
+		for _, name := range wad.Names() {
 			if !seen.Has(name) {
 				continue
 			}
@@ -79,7 +80,7 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 			}
 
 			stored.Set(name)
-			tex, ok := wad3.GetTexture(name)
+			tex, ok := wad.GetTexture(name)
 			if !ok {
 				return fmt.Errorf("unable to read texture '%s' from WAD at '%s'", name, path)
 			}
@@ -111,7 +112,7 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 func getUsedTextureNames(paths []string) (set.PresenceSet[string], error) {
 	seen := set.NewPresenceSet[string](0)
 	for _, path := range paths {
-		bsp, err := goldsrc.LoadBSPFromFile(path)
+		bsp, err := bsp.LoadFromFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load BSP at '%s': %w", path, err)
 		}

@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"goldutil/wad"
+	"goldutil/goldsrc/wad"
 	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func extractWAD(wad3 wad.WAD, dir string) error {
-	for _, name := range wad3.Names() {
-		tex, ok := wad3.GetTexture(name)
+func extractWAD(wad wad.WAD, dir string) error {
+	for _, name := range wad.Names() {
+		tex, ok := wad.GetTexture(name)
 		if !ok {
 			panic("has name but no texture, programming error")
 		}
@@ -30,7 +30,7 @@ func extractWAD(wad3 wad.WAD, dir string) error {
 }
 
 func writeTexture(tex wad.MIPTexture, destPath string) error {
-	img, err := tex.Render(0)
+	img, err := tex.Render()
 	if err != nil {
 		return fmt.Errorf("unable to render texture: %w", err)
 	}
@@ -53,7 +53,7 @@ func writeTexture(tex wad.MIPTexture, destPath string) error {
 }
 
 func createWAD(destPath string, inputFiles []string) error {
-	wad3 := wad.New()
+	wad := wad.New()
 
 	for _, path := range inputFiles {
 		tex, err := createTexture(path)
@@ -61,7 +61,7 @@ func createWAD(destPath string, inputFiles []string) error {
 			return fmt.Errorf("unable to create texture: %w", err)
 		}
 
-		if err := wad3.AddTexture(tex); err != nil {
+		if err := wad.AddTexture(tex); err != nil {
 			return fmt.Errorf("unable to add texture: %w", err)
 		}
 	}
@@ -71,7 +71,7 @@ func createWAD(destPath string, inputFiles []string) error {
 		return fmt.Errorf("unable to open '%s' for writing: %w", destPath, err)
 	}
 
-	if err := wad3.Write(dest); err != nil {
+	if err := wad.Write(dest); err != nil {
 		return fmt.Errorf("unable to write to WAD file: %w", err)
 	}
 

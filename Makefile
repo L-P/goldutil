@@ -5,7 +5,7 @@ EXEC=$(shell basename "$(shell pwd)")
 all: $(EXEC)
 
 $(EXEC):
-	go build ${BUILDFLAGS}
+	go build ${BUILDFLAGS} -o goldutil ./cmd
 
 docs/goldutil.1: goldutil.adoc
 	asciidoctor --backend manpage "$<" -o "$@"

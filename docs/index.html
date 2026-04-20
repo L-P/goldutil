@@ -444,6 +444,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_bsp_manipulation">BSP Manipulation</a>
 <ul class="sectlevel2">
 <li><a href="#_goldutil_bsp_info_input"><code>goldutil bsp info &lt;input&gt;</code></a></li>
+<li><a href="#_goldutil_bsp_limits_input"><code>goldutil bsp limits &lt;input&gt;</code></a></li>
 <li><a href="#_goldutil_bsp_remap_materials_out_output_original_materials_path_replacement_materials_path_verbose_input"><code>goldutil bsp remap-materials --out &lt;output&gt; [--original-materials &lt;path&gt;] [--replacement-materials &lt;path&gt;] [--verbose] &lt;input&gt;</code></a></li>
 </ul>
 </li>
@@ -502,7 +503,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <strong>goldutil</strong> help [command]</p>
 </div>
 <div class="paragraph">
-<p><strong>goldutil</strong> bsp [info | remap-materials]<br>
+<p><strong>goldutil</strong> bsp [info | limits | remap-materials]<br>
 <strong>goldutil</strong> fgd<br>
 <strong>goldutil</strong> map [export | graph | neat]<br>
 <strong>goldutil</strong> mod [filter-materials | filter-wads]<br>
@@ -529,6 +530,16 @@ GoldSrc (Half-Life) engine.</p>
 <h3 id="_goldutil_bsp_info_input"><code>goldutil bsp info &lt;input&gt;</code></h3>
 <div class="paragraph">
 <p>Print parsed data from a BSP.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_goldutil_bsp_limits_input"><code>goldutil bsp limits &lt;input&gt;</code></h3>
+<div class="paragraph">
+<p>Show how much more details you can cram into your map. These limits are
+sometimes hard limits of the BSP format, sometimes the engine, sometimes strong
+suggestions.<br>
+They were taken from VHLT which is the de-facto standard.<br>
+Exit with status code <code>1</code> if the BSP goes over a limit.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1012,7 +1023,7 @@ entities which will <em>toggle</em> the <code>multisource</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-16 23:52:35 +0200
+Last updated 2026-04-20 16:36:53 +0200
 </div>
 </div>
 </body>

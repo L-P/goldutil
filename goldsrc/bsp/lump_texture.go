@@ -1,12 +1,13 @@
-package goldsrc
+package bsp
 
 import (
 	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"goldutil/goldsrc"
+	"goldutil/goldsrc/wad"
 	"goldutil/set"
-	"goldutil/wad"
 	"io"
 	"strings"
 )
@@ -83,7 +84,7 @@ func (lump *TextureLump) Validate() error {
 			errs = append(errs, fmt.Errorf("texture %d: no NUL", i))
 		}
 		var name = v.Name.String()
-		if !isValidTextureName(strings.ToUpper(name)) {
+		if !goldsrc.IsValidTextureName(strings.ToUpper(name)) {
 			errs = append(errs, fmt.Errorf("texture %d: invalid chars in name", i))
 		}
 

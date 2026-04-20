@@ -2,28 +2,28 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
 	"goldutil/goldsrc"
+	"goldutil/goldsrc/bsp"
+	"goldutil/goldsrc/nod"
 	"goldutil/goldsrc/qmap"
+	"goldutil/goldsrc/sprite"
+	"goldutil/goldsrc/wad"
 	"goldutil/neat"
 	"goldutil/set"
-	"goldutil/sprite"
-	"goldutil/wad"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v3"
 )
 
 var Version = "unknown version"
-
-//go:embed goldutil.fgd
-var fgd string
 
 func main() {
 	var app = newApp()
@@ -267,7 +267,7 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 		return errors.New("no materials in source or replacement list")
 	}
 
-	bsp, err := goldsrc.LoadBSPFromFile(cmd.Args().Get(0))
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
@@ -311,7 +311,7 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 }
 
 func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
-	bsp, err := goldsrc.LoadBSPFromFile(cmd.Args().Get(0))
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
@@ -321,10 +321,55 @@ func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+func doBSPLimits(ctx context.Context, cmd *cli.Command) error {
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	fmt.Fprintf(
+		cmd.Writer,
+		"%-18s % 9s % 9s % 4s\n",
+		"Type", "Current", "Max", "Pct",
+	)
+
+	yellow := color.New(color.FgYellow).Fprintf
+	red := color.New(color.FgRed).Fprintf
+	var errs []error
+
+	for _, v := range bsp.Limits() {
+		if v.Max <= 0 {
+			return fmt.Errorf("developer error, invalid limit for: %s", v.Desc)
+		}
+
+		pct := math.Ceil(float64(v.Current) / float64(v.Max) * 100)
+		var printer = fmt.Fprintf
+		if pct > 60 {
+			printer = yellow
+		}
+		if pct > 80 {
+			printer = red
+		}
+
+		//nolint:errcheck
+		printer(
+			cmd.Writer,
+			"%-18s % 9d % 9d % 3.0f%%\n",
+			v.Desc, v.Current, v.Max, pct,
+		)
+
+		if pct > 100 {
+			errs = append(errs, fmt.Errorf("exceeded limit on %s", v.Desc))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func doNodExport(ctx context.Context, cmd *cli.Command) error {
-	format, ok := map[string]goldsrc.NodeFormat{
-		"valve": goldsrc.NodeFormatValve,
-		"decay": goldsrc.NodeFormatDecay,
+	format, ok := map[string]nod.NodeFormat{
+		"valve": nod.NodeFormatValve,
+		"decay": nod.NodeFormatDecay,
 	}[cmd.String("input-format")]
 	if !ok {
 		return errors.New("unrecognize .nod format")
@@ -336,7 +381,7 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 	}
 	defer f.Close() //nolint:errcheck // readonly
 
-	nodes, links, err := goldsrc.ReadNodes(f, format)
+	nodes, links, err := nod.ReadNodes(f, format)
 	if err != nil {
 		return fmt.Errorf("unable to read nodes: %w", err)
 	}
@@ -351,11 +396,11 @@ func doNodExport(ctx context.Context, cmd *cli.Command) error {
 		}})
 	}
 
-	for linkTypeBitID := range goldsrc.LinkTypeBitMax {
+	for linkTypeBitID := range nod.LinkTypeBitMax {
 		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
 			"classname":            "func_group",
 			"_tb_type":             "_tb_layer",
-			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, goldsrc.LinkTypeName(linkTypeBitID)),
+			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, nod.LinkTypeName(linkTypeBitID)),
 			"_tb_id":               strconv.Itoa(linkTypeBitID + 1),
 			"_tb_layer_sort_index": strconv.Itoa(linkTypeBitID + 1),
 		}})

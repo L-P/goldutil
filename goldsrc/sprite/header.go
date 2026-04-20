@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"goldutil/goldsrc/wad"
 	"io"
 	"strings"
 	"unsafe" // informational sizeof
@@ -81,7 +82,7 @@ func (st SyncType) String() string {
 const expectedPaletteSize = 256
 
 // Binary-accurate.
-type Header struct {
+type SpriteHeader struct {
 	MagicString    [4]byte // "IDSP"
 	Version        int32   // 1 for Quake, 2 for Valve
 	Type           Type
@@ -99,11 +100,11 @@ type Header struct {
 	SyncType SyncType
 
 	// The palette is a Valve addition in sprite format version 2.
-	PaletteSize int16   // always 256
-	Palette     Palette // always 3 bytes * PaletteSize, keep it fixed to simplify parsing
+	PaletteSize int16       // always 256
+	Palette     wad.Palette // always 3 bytes * PaletteSize, keep it fixed to simplify parsing
 }
 
-func (sh *Header) Read(r io.Reader) error {
+func (sh *SpriteHeader) Read(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, sh); err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func (sh *Header) Read(r io.Reader) error {
 	return nil
 }
 
-func (sh *Header) String() string {
+func (sh *SpriteHeader) String() string {
 	var w strings.Builder
 
 	w.WriteString("Header:\n")
@@ -142,11 +143,11 @@ func (sh *Header) String() string {
 	fmt.Fprintf(&w, "  BeamLength: %d\n", sh.BeamLength)
 	fmt.Fprintf(&w, "  SyncType: %s\n", sh.SyncType.String())
 	fmt.Fprintf(&w, "  PaletteSize: %d\n", sh.PaletteSize)
-	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette)*int(unsafe.Sizeof(RGB{})))
+	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette)*int(unsafe.Sizeof(wad.RGB{})))
 
 	return w.String()
 }
 
-func (sh *Header) Write(w io.Writer) error {
+func (sh *SpriteHeader) Write(w io.Writer) error {
 	return binary.Write(w, binary.LittleEndian, sh)
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"goldutil/sprite"
+	"goldutil/goldsrc/sprite"
 	"image"
 	"image/png"
 	"os"
@@ -42,31 +42,37 @@ func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
 	return nil
 }
 
-func createSprite(typ sprite.Type, format sprite.TextureFormat, framePaths []string) (sprite.Sprite, error) {
+func createSprite(
+	typ sprite.Type,
+	format sprite.TextureFormat,
+	framePaths []string,
+) (sprite.Sprite, error) {
+	var zero sprite.Sprite
+
 	if len(framePaths) < 1 {
-		return sprite.Sprite{}, errors.New("at least one frame is required")
+		return zero, errors.New("at least one frame is required")
 	}
 	width, height, err := imageSize(framePaths[0])
 	if err != nil {
-		return sprite.Sprite{}, fmt.Errorf("unable to read first frame dimensions: %w", err)
+		return zero, fmt.Errorf("unable to read first frame dimensions: %w", err)
 	}
 	if (width%16 != 0) || (height%16 != 0) {
-		return sprite.Sprite{}, fmt.Errorf("dimensions not divisible by 16: %w", err)
+		return zero, fmt.Errorf("dimensions not divisible by 16: %w", err)
 	}
 
 	palette, remapIndex, shouldRemap, err := imagePalette(framePaths[0])
 	if err != nil {
-		return sprite.Sprite{}, fmt.Errorf("unable to process first frame palette: %w", err)
+		return zero, fmt.Errorf("unable to process first frame palette: %w", err)
 	}
 
 	spr, err := sprite.New(width, height, typ, format, palette)
 	if err != nil {
-		return sprite.Sprite{}, fmt.Errorf("unable to create empty sprite: %w", err)
+		return zero, fmt.Errorf("unable to create empty sprite: %w", err)
 	}
 
 	for i, inPath := range framePaths {
 		if err := addFrameToSprite(&spr, inPath, remapIndex, shouldRemap); err != nil {
-			return spr, fmt.Errorf("unable to add frame #%d: %w", i, err)
+			return zero, fmt.Errorf("unable to add frame #%d: %w", i, err)
 		}
 	}
 

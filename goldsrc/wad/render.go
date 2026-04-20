@@ -5,14 +5,17 @@ import (
 	"image/color"
 )
 
-func (mip *MIPTexture) Render(mipIndex int) (image.Image, error) {
+func (mip *MIPTexture) Render() (image.Image, error) {
+	return mip.RenderMipmap(0)
+}
+
+func (mip *MIPTexture) RenderMipmap(mipIndex int) (image.Image, error) {
 	image := image.NewPaletted(mip.Rect(mipIndex), mip.PaletteNRGBA())
 	image.Pix = mip.MIPData[mipIndex]
 
 	return image, nil
 }
 
-// TODO merge with Sprite render code.
 func (mip *MIPTexture) PaletteNRGBA() color.Palette {
 	palette := make([]color.Color, len(mip.Palette))
 	for i := range len(mip.Palette) {

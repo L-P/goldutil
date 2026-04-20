@@ -13,7 +13,7 @@ Synopsis
 *goldutil* [global options] <command> [command options] [command arguments] +
 *goldutil* help [command]
 
-*goldutil* bsp [info | remap-materials] +
+*goldutil* bsp [info | limits | remap-materials] +
 *goldutil* fgd +
 *goldutil* map [export | graph | neat] +
 *goldutil* mod [filter-materials | filter-wads] +
@@ -31,6 +31,13 @@ BSP Manipulation
 ----------------
 === `goldutil bsp info <input>`
 Print parsed data from a BSP.
+
+=== `goldutil bsp limits <input>`
+Show how much more details you can cram into your map. These limits are
+sometimes hard limits of the BSP format, sometimes the engine, sometimes strong
+suggestions. +
+They were taken from VHLT which is the de-facto standard. +
+Exit with status code `1` if the BSP goes over a limit.
 
 === `goldutil bsp remap-materials --out <output> [--original-materials <path>] [--replacement-materials <path>] [--verbose] <input>`
 On a BSP with embedded textures, change the texture names to match what is in

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"goldutil/neat"
 	"slices"
 	"strings"
 
@@ -34,6 +35,16 @@ func newApp() *cli.Command {
 						Name:   "info",
 						Action: doBSPInfo,
 						Usage:  "Print parsed data from a BSP.",
+					},
+					{
+						Name:   "limits",
+						Action: doBSPLimits,
+						Usage:  "Show how much more details you can cram into your map.",
+						Description: catnl(
+							"Show how much more details you can cram into your map. These limits are sometimes hard limits of the BSP format, sometimes the engine, sometimes strong suggestions.",
+							"They were taken from VHLT which is the de-facto standard.",
+							"Exit with status code `1` if the BSP goes over a limit.",
+						),
 					},
 					{
 						Name: "remap-materials",
@@ -75,7 +86,7 @@ func newApp() *cli.Command {
 				Name:  "fgd",
 				Usage: "Output the FGD to use with goldutil map neat.",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Fprint(cmd.Writer, fgd)
+					fmt.Fprint(cmd.Writer, neat.FGD)
 					return nil
 				},
 			},

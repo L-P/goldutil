@@ -1,5 +1,6 @@
 # next
 - Add command wav loop
+- Add command bsp limits
 - Build releases using Go v1.26
 - Bump dependencies
 

@@ -1,10 +1,12 @@
-package goldsrc
+// Package bsp implements an incomplete GoldSrc BSP parser.
+package bsp
 
 import (
 	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -12,7 +14,7 @@ const BSPVersionGoldSrc = 30
 
 // BSP holds a full BSP in memory.
 type BSP struct {
-	BSPHeader
+	Header
 
 	Entities     RawLump
 	Planes       RawLump
@@ -31,12 +33,12 @@ type BSP struct {
 	Models       RawLump
 }
 
-type BSPHeader struct {
+type Header struct {
 	Version   int32
 	LumpIndex [LumpIndexSize]LumpIndexEntry
 }
 
-func (h BSPHeader) Validate() error {
+func (h Header) Validate() error {
 	if h.Version != BSPVersionGoldSrc {
 		return fmt.Errorf("unable to read BSP version other than %d, got: %d", BSPVersionGoldSrc, h.Version)
 	}
@@ -60,9 +62,9 @@ func (h BSPHeader) Validate() error {
 	return nil
 }
 
-func (h BSPHeader) String() string {
+func (h Header) String() string {
 	var b strings.Builder
-	fmt.Fprintln(&b, "BSPHeader:")
+	fmt.Fprintln(&b, "Header:")
 	for i, v := range h.LumpIndex {
 		typ := LumpType(i)
 		fmt.Fprintf(
@@ -81,7 +83,7 @@ func (h BSPHeader) String() string {
 
 func (bsp *BSP) String() string {
 	var b strings.Builder
-	b.WriteString(bsp.BSPHeader.String())
+	b.WriteString(bsp.Header.String())
 
 	for i, v := range bsp.Lumps() {
 		typ := LumpType(i)
@@ -112,13 +114,13 @@ func (bsp *BSP) Lumps() []Lump { // MUST match LumpIndex order.
 	}
 }
 
-func LoadBSP(r io.ReadSeeker) (*BSP, error) {
+func Load(r io.ReadSeeker) (*BSP, error) {
 	var bsp BSP
 
-	if err := binary.Read(r, binary.LittleEndian, &bsp.BSPHeader); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &bsp.Header); err != nil {
 		return nil, fmt.Errorf("unable to read header: %w", err)
 	}
-	if err := bsp.BSPHeader.Validate(); err != nil { //nolint:staticcheck
+	if err := bsp.Header.Validate(); err != nil { //nolint:staticcheck
 		return nil, fmt.Errorf("unable to validate header: %w", err)
 	}
 
@@ -136,14 +138,14 @@ func LoadBSP(r io.ReadSeeker) (*BSP, error) {
 	return &bsp, nil
 }
 
-func LoadBSPFromFile(path string) (*BSP, error) {
+func LoadFromFile(path string) (*BSP, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open BSP for reading: %w", err)
 	}
 	defer f.Close() //nolint:errcheck // read-only
 
-	return LoadBSP(f)
+	return Load(f)
 }
 
 func humanize(bytes int) string {
@@ -181,17 +183,17 @@ func (bsp *BSP) Write(w io.WriteSeeker) error {
 		return fmt.Errorf("unable to seek to start of file: %w", err)
 	}
 
-	bsp.BSPHeader = BSPHeader{Version: BSPVersionGoldSrc}
-	if err := binary.Write(w, binary.LittleEndian, bsp.BSPHeader); err != nil {
+	bsp.Header = Header{Version: BSPVersionGoldSrc}
+	if err := binary.Write(w, binary.LittleEndian, bsp.Header); err != nil {
 		return fmt.Errorf("unable to write provisional BSP header: %w", err)
 	}
-	offset := binary.Size(bsp.BSPHeader)
+	offset := binary.Size(bsp.Header)
 
 	//nolint:dupword // I really want you to know this is a HACK HACK HACK
 	// HACK HACK HACK HACK HACK
-	// Keep order as found in map compiled by ericw, right now we can only
-	// want to patch textures and not touch or move any other data to avoid
-	// breaking offsets.
+	// Keep order as found in map compiled by ericw, right now only want to
+	// patch textures and not touch or move any other data to avoid breaking
+	// offsets.
 	order := []LumpType{
 		LumpTypePlanes, LumpTypeLeaves, LumpTypeVertices,
 		LumpTypeNodes, LumpTypeTexInfo, LumpTypeFaces, LumpTypeClipNodes,
@@ -225,9 +227,34 @@ func (bsp *BSP) Write(w io.WriteSeeker) error {
 	if _, err := w.Seek(0, io.SeekStart); err != nil {
 		return fmt.Errorf("unable to seek to start of file to finalize header: %w", err)
 	}
-	if err := binary.Write(w, binary.LittleEndian, bsp.BSPHeader); err != nil {
+	if err := binary.Write(w, binary.LittleEndian, bsp.Header); err != nil {
 		return fmt.Errorf("unable to write final BSP header: %w", err)
 	}
 
 	return nil
+}
+
+type Limit struct {
+	Desc    string
+	Current int
+	Max     int
+}
+
+func (bsp *BSP) Limits() []Limit {
+	ret := make([]Limit, len(bsp.LumpIndex))
+	for i, v := range bsp.LumpIndex {
+		lump := LumpType(i)
+
+		ret[i] = Limit{
+			Desc:    lump.String()[8:],
+			Current: int(v.Length) / lump.EntrySize(),
+			Max:     lump.Limit(),
+		}
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Desc[0] < ret[j].Desc[0]
+	})
+
+	return ret
 }
