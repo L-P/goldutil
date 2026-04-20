@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -231,4 +232,29 @@ func (bsp *BSP) Write(w io.WriteSeeker) error {
 	}
 
 	return nil
+}
+
+type Limit struct {
+	Desc    string
+	Current int
+	Max     int
+}
+
+func (bsp *BSP) Limits() []Limit {
+	ret := make([]Limit, len(bsp.LumpIndex))
+	for i, v := range bsp.LumpIndex {
+		lump := LumpType(i)
+
+		ret[i] = Limit{
+			Desc:    lump.String()[8:],
+			Current: int(v.Length) / lump.EntrySize(),
+			Max:     lump.Limit(),
+		}
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Desc[0] < ret[j].Desc[0]
+	})
+
+	return ret
 }

@@ -37,6 +37,16 @@ func newApp() *cli.Command {
 						Usage:  "Print parsed data from a BSP.",
 					},
 					{
+						Name:   "limits",
+						Action: doBSPLimits,
+						Usage:  "Show how much more details you can cram into your map.",
+						Description: catnl(
+							"Show how much more details you can cram into your map. These limits are sometimes hard limits of the BSP format, sometimes the engine, sometimes strong suggestions.",
+							"They were taken from VHLT which is the de-facto standard.",
+							"Exit with status code `1` if the BSP goes over a limit.",
+						),
+					},
+					{
 						Name: "remap-materials",
 						Description: catnl(
 							"On a BSP with embedded textures, change their names so they can match what is in the original game materials.txt.",

@@ -12,12 +12,14 @@ import (
 	"goldutil/goldsrc/wad"
 	"goldutil/neat"
 	"goldutil/set"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v3"
 )
 
@@ -317,6 +319,51 @@ func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
 	fmt.Fprint(cmd.Writer, bsp.String())
 
 	return nil
+}
+
+func doBSPLimits(ctx context.Context, cmd *cli.Command) error {
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	fmt.Fprintf(
+		cmd.Writer,
+		"%-18s % 9s % 9s % 4s\n",
+		"Type", "Current", "Max", "Pct",
+	)
+
+	yellow := color.New(color.FgYellow).Fprintf
+	red := color.New(color.FgRed).Fprintf
+	var errs []error
+
+	for _, v := range bsp.Limits() {
+		if v.Max <= 0 {
+			return fmt.Errorf("developer error, invalid limit for: %s", v.Desc)
+		}
+
+		pct := math.Ceil(float64(v.Current) / float64(v.Max) * 100)
+		var printer = fmt.Fprintf
+		if pct > 60 {
+			printer = yellow
+		}
+		if pct > 80 {
+			printer = red
+		}
+
+		//nolint:errcheck
+		printer(
+			cmd.Writer,
+			"%-18s % 9d % 9d % 3.0f%%\n",
+			v.Desc, v.Current, v.Max, pct,
+		)
+
+		if pct > 100 {
+			errs = append(errs, fmt.Errorf("exceeded limit on %s", v.Desc))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 func doNodExport(ctx context.Context, cmd *cli.Command) error {

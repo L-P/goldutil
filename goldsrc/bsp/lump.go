@@ -27,6 +27,102 @@ const ( // DO NOT SORT
 	LumpIndexSize
 )
 
+// hard limits courtesy of SDHLT bspfile.h.
+const (
+	MaxMapClipNodes    = 0x7FFF
+	MaxMapEdges        = 256000
+	MaxMapEntities     = 16384
+	MaxMapEntString    = 2048 * 1024 // raw string data, not parsed entities count
+	MaxMapFaces        = 0xFFFF
+	MaxMapLeaves       = 32760
+	MaxMapLighting     = 0x3000000
+	MaxMapMarkSurfaces = 0xFFFF
+	MaxMapModels       = 512
+	MaxMapNodes        = 0x7FFF
+	MaxMapPlanes       = 0x7FFF
+	MaxMapSurfEdges    = 512000
+	MaxMapTexInfo      = 0x7FFF
+	MaxMapTextures     = 4096
+	MaxMapVertices     = 0xFFFF
+	MaxMapVisibility   = 0x800000
+)
+
+func (t LumpType) EntrySize() int {
+	switch t {
+	case LumpTypeClipNodes:
+		return 8
+	case LumpTypeEdges:
+		return 2
+	case LumpTypeEntities:
+		return 1
+	case LumpTypeFaces:
+		return 20
+	case LumpTypeLeaves:
+		return 28
+	case LumpTypeLighting:
+		return 1
+	case LumpTypeMarkSurfaces:
+		return 2
+	case LumpTypeModels:
+		return 64
+	case LumpTypeNodes:
+		return 24
+	case LumpTypePlanes:
+		return 20
+	case LumpTypeSurfEdges:
+		return 4
+	case LumpTypeTexInfo:
+		return 40
+	case LumpTypeTextures:
+		return 40
+	case LumpTypeVertices:
+		return 12
+	case LumpTypeVisibility:
+		return 1
+	case LumpIndexSize: // fail below
+	}
+
+	panic("invalid LumpType")
+}
+
+func (t LumpType) Limit() int {
+	switch t {
+	case LumpTypeEntities:
+		return MaxMapEntString
+	case LumpTypePlanes:
+		return MaxMapPlanes
+	case LumpTypeTextures:
+		return MaxMapTextures
+	case LumpTypeVertices:
+		return MaxMapVertices
+	case LumpTypeVisibility:
+		return MaxMapVisibility
+	case LumpTypeNodes:
+		return MaxMapNodes
+	case LumpTypeTexInfo:
+		return MaxMapTexInfo
+	case LumpTypeFaces:
+		return MaxMapFaces
+	case LumpTypeLighting:
+		return MaxMapLighting
+	case LumpTypeClipNodes:
+		return MaxMapClipNodes
+	case LumpTypeLeaves:
+		return MaxMapLeaves
+	case LumpTypeMarkSurfaces:
+		return MaxMapMarkSurfaces
+	case LumpTypeEdges:
+		return MaxMapEdges
+	case LumpTypeSurfEdges:
+		return MaxMapSurfEdges
+	case LumpTypeModels:
+		return MaxMapModels
+	case LumpIndexSize: // fail below
+	}
+
+	panic("invalid LumpType")
+}
+
 func (t LumpType) String() string {
 	switch t {
 	case LumpTypeEntities:
