@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v3"
 
 	"github.com/L-P/goldutil/goldsrc/sprite"
@@ -87,6 +88,24 @@ func doSpriteInfo(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	fmt.Fprintln(cmd.Writer, spr.String())
+
+	fmt.Fprintf(cmd.Writer, "Palette: \n")
+
+	for i, rgb := range spr.Palette {
+		luma := 0.299*float32(rgb.R) + 0.587*float32(rgb.G) + 0.114*float32(rgb.B)
+		c := color.New(color.FgBlack)
+		if luma <= 186 {
+			c = color.New(color.FgWhite)
+		}
+		c.AddBgRGB(int(rgb.R), int(rgb.G), int(rgb.B))
+		c.Fprintf(cmd.Writer, "%02X%02X%02X ", rgb.R, rgb.G, rgb.B)
+
+		if (i+1)%16 == 0 && i != 255 {
+			fmt.Fprintln(cmd.Writer)
+		}
+	}
+
+	fmt.Fprintln(cmd.Writer)
 
 	return nil
 }
