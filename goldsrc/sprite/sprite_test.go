@@ -33,8 +33,8 @@ func TestSprite(t *testing.T) {
 }
 
 func createTestPalette() color.Palette {
-	palette := make([]color.Color, 256)
-	for i := range 256 {
+	palette := make(color.Palette, 256)
+	for i := range palette {
 		palette[i] = color.NRGBA{
 			byte(i%13) * 16,
 			byte(i%7) * 16,
