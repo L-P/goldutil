@@ -147,13 +147,19 @@ If you use *pngquant*(1) to create your palletized input files, you can use its
     `parallel-upright`::: Always face camera except for the locked Z axis.
     `parallel`::: Always face camera (default).
 
-=== `goldutil spr extract [--dir <dir>] <file>`
+=== `goldutil spr extract [--no-alpha] [--dir <dir>] <file>`
 Output all frames of a sprite as PNGs in the current working directory. +
 The output files will be named after the original sprite file name plus a frame
 number suffix and an extension.
 
 `--dir <dir>`::
     Output frames to _<dir>_ directory instead of the current working directory.
+
+`--no-alpha`::
+    Don't add an alpha channel and keep the original sprite palette verbatim. +
+    By default goldutil rewrites the palette to include both color and alpha on
+    index-alpha and alpha-test sprites to make them appear as they do in the
+    engine, if you want to leave the original palette untouched use this flag.
 
 WAD Manipulation
 ----------------

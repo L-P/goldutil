@@ -24,7 +24,12 @@ func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to open sprite: %w", err)
 	}
 
-	return extractSprite(spr, cmd.String("dir"), filepath.Base(path))
+	return extractSprite(
+		spr,
+		cmd.String("dir"),
+		filepath.Base(path),
+		!cmd.Bool("no-alpha"),
+	)
 }
 
 func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
@@ -75,7 +80,7 @@ func doSpriteInfo(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
+func extractSprite(spr sprite.Sprite, destDir, originalBaseName string, withAlpha bool) error {
 	for i := range spr.Frames {
 		var (
 			destPath = filepath.Join(destDir, fmt.Sprintf(
@@ -88,7 +93,7 @@ func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
 			return fmt.Errorf("unable to open '%s' for writing: %w", destPath, err)
 		}
 
-		img, err := spr.RenderFrame(i)
+		img, err := spr.RenderFrame(i, withAlpha)
 		if err != nil {
 			dest.Close() //nolint:errcheck // in another error path already
 			return fmt.Errorf("unable to encode frame %d: %w", i, err)

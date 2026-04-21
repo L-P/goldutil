@@ -292,6 +292,13 @@ func newApp() *cli.Command {
 								Name:  "dir",
 								Usage: "Output frames to the specified directory instead of the current one.",
 							},
+							&cli.BoolFlag{
+								Name: "no-alpha",
+								Usage: catnl(
+									"Don't add an alpha channel and keep the original sprite palette verbatim.",
+									"By default goldutil rewrites the palette to include both color and alpha on index-alpha and alpha-test sprites to make them appear as they do in the engine, if you want to leave the original palette untouched use this flag.",
+								),
+							},
 						},
 						Action: doSpriteExtract,
 					},
