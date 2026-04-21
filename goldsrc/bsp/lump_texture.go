@@ -5,11 +5,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/wad"
-	"goldutil/set"
 	"io"
 	"strings"
+
+	"github.com/L-P/goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc/wad"
+	"github.com/L-P/goldutil/internal/set"
 )
 
 type TextureLump struct {

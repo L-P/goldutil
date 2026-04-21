@@ -2,7 +2,7 @@ package qmap_test
 
 import (
 	"fmt"
-	"goldutil/goldsrc/qmap"
+	"github.com/L-P/goldutil/goldsrc/qmap"
 	"testing"
 
 	"github.com/stretchr/testify/require"

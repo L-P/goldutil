@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/qmap"
-	"goldutil/neat"
 	"os"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc/qmap"
+	"github.com/L-P/goldutil/neat"
 )
 
 func doMapGraph(ctx context.Context, cmd *cli.Command) error {

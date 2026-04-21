@@ -3,7 +3,7 @@ package sprite
 
 import (
 	"fmt"
-	"goldutil/palette"
+	"github.com/L-P/goldutil/palette"
 	"io"
 	"math"
 	"os"

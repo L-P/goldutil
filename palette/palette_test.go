@@ -1,12 +1,13 @@
 package palette_test
 
 import (
-	"goldutil/palette"
 	"image"
 	"image/color"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/L-P/goldutil/palette"
 )
 
 func TestPaletteSize(t *testing.T) {

@@ -2,7 +2,7 @@ package wad
 
 import (
 	"fmt"
-	"goldutil/palette"
+	"github.com/L-P/goldutil/palette"
 	"image"
 	"path/filepath"
 	"strings"

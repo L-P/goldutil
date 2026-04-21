@@ -3,7 +3,7 @@ package sprite
 import (
 	"errors"
 	"fmt"
-	"goldutil/palette"
+	"github.com/L-P/goldutil/palette"
 	"image"
 )
 

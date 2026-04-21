@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/wad"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc/wad"
 )
 
 func doWADInfo(ctx context.Context, cmd *cli.Command) error {

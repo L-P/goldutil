@@ -1,4 +1,4 @@
-module goldutil
+module github.com/L-P/goldutil
 
 go 1.26.0
 

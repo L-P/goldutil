@@ -2,7 +2,7 @@ package goldsrc
 
 import (
 	"fmt"
-	"goldutil/goldsrc/wad"
+	"github.com/L-P/goldutil/goldsrc/wad"
 	"io"
 	"sort"
 	"strings"

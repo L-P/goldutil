@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/sprite"
-	"goldutil/palette"
 	"image"
 	"image/png"
 	"os"
 	"path/filepath"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc/sprite"
+	"github.com/L-P/goldutil/palette"
 )
 
 func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {

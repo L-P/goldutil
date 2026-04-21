@@ -2,7 +2,7 @@
 package qmap_test
 
 import (
-	"goldutil/goldsrc/qmap"
+	"github.com/L-P/goldutil/goldsrc/qmap"
 	"slices"
 	"testing"
 

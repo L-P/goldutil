@@ -1,7 +1,7 @@
 package goldsrc_test
 
 import (
-	"goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc"
 	"strings"
 	"testing"
 

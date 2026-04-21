@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"goldutil/palette"
+	"github.com/L-P/goldutil/palette"
 	"io"
 	"strings"
 	"unsafe" // informational sizeof

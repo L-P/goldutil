@@ -4,13 +4,14 @@ package neat
 import (
 	_ "embed"
 	"fmt"
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/qmap"
-	"goldutil/goldsrc/qmap/valve"
 	"os"
 	"strings"
 
 	"github.com/google/uuid"
+
+	"github.com/L-P/goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc/qmap"
+	"github.com/L-P/goldutil/goldsrc/qmap/valve"
 )
 
 //go:embed goldutil.fgd

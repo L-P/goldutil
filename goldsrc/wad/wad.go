@@ -6,12 +6,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"goldutil/palette"
-	"goldutil/set"
 	"io"
 	"os"
 	"strings"
 	"unsafe"
+
+	"github.com/L-P/goldutil/internal/set"
+	"github.com/L-P/goldutil/palette"
 )
 
 // Texture names are strings of 16 chars with a null terminator.

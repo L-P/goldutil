@@ -1,8 +1,8 @@
 package sprite_test
 
 import (
-	"goldutil/goldsrc/sprite"
-	"goldutil/palette"
+	"github.com/L-P/goldutil/goldsrc/sprite"
+	"github.com/L-P/goldutil/palette"
 	"image"
 	"image/color"
 	"testing"
