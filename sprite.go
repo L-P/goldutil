@@ -50,8 +50,8 @@ func createSprite(typ sprite.Type, format sprite.TextureFormat, framePaths []str
 	if err != nil {
 		return sprite.Sprite{}, fmt.Errorf("unable to read first frame dimensions: %w", err)
 	}
-	if (width%16 != 0) || (height%16 != 0) {
-		return sprite.Sprite{}, fmt.Errorf("dimensions not divisible by 16: %w", err)
+	if (width%4 != 0) || (height%4 != 0) {
+		return sprite.Sprite{}, fmt.Errorf("dimensions not divisible by 4")
 	}
 
 	palette, remapIndex, shouldRemap, err := imagePalette(framePaths[0])
