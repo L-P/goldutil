@@ -4,12 +4,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/wad"
+	"goldutil/palette"
 	"io"
 	"strings"
 	"unsafe" // informational sizeof
 )
 
+// Binary-accurate.
 type Type int32
 
 const TypeInvalid Type = -1
@@ -21,6 +22,7 @@ const (
 	TypeParallelOriented
 )
 
+// Parse a type from our own human-readable representation.
 func ParseType(str string) (Type, error) {
 	switch str {
 	case "parallel-upright":
@@ -57,8 +59,10 @@ func (typ Type) String() string {
 	}
 }
 
+// Binary-accurate.
 type TextureFormat int32
 
+// Parse a texture format from our own human-readable representation.
 func ParseTextureFormat(str string) (TextureFormat, error) {
 	switch str {
 	case "normal":
@@ -117,8 +121,6 @@ func (st SyncType) String() string {
 	}
 }
 
-const expectedPaletteSize = 256
-
 // Binary-accurate.
 type Header struct {
 	MagicString    [4]byte // "IDSP"
@@ -138,11 +140,11 @@ type Header struct {
 	SyncType SyncType
 
 	// The palette is a Valve addition in sprite format version 2.
-	PaletteSize int16       // always 256
-	Palette     wad.Palette // always 3 bytes * PaletteSize, keep it fixed to simplify parsing
+	PaletteSize int16           // always 256
+	Palette     palette.Palette // always 3 bytes * PaletteSize, keep it fixed to simplify parsing
 }
 
-func (sh *Header) Read(r io.Reader) error {
+func (sh *Header) read(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, sh); err != nil {
 		return err
 	}
@@ -156,10 +158,10 @@ func (sh *Header) Read(r io.Reader) error {
 		return fmt.Errorf("unhandled sprite version %d, expected version 2", sh.Version)
 	}
 
-	if sh.PaletteSize != expectedPaletteSize {
+	if sh.PaletteSize != palette.Size {
 		return fmt.Errorf(
 			"unhandled palette size: %d, expected %d",
-			sh.PaletteSize, expectedPaletteSize,
+			sh.PaletteSize, palette.Size,
 		)
 	}
 
@@ -181,7 +183,7 @@ func (sh *Header) String() string {
 	fmt.Fprintf(&w, "  BeamLength: %d\n", sh.BeamLength)
 	fmt.Fprintf(&w, "  SyncType: %s\n", sh.SyncType.String())
 	fmt.Fprintf(&w, "  PaletteSize: %d\n", sh.PaletteSize)
-	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette)*int(unsafe.Sizeof(wad.RGB{})))
+	fmt.Fprintf(&w, "  Palette: %d bytes\n", len(sh.Palette)*int(unsafe.Sizeof(palette.RGB{})))
 
 	return w.String()
 }

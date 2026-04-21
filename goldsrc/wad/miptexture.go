@@ -4,30 +4,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"image/color"
+	"goldutil/palette"
 	"io"
 	"strings"
 )
-
-type RGB struct {
-	R, G, B uint8
-}
-
-type Palette [256]RGB
-
-func (p Palette) AsColorPalette() color.Palette {
-	ret := make([]color.Color, len(p))
-	for i := range p {
-		ret[i] = color.NRGBA{
-			p[i].R,
-			p[i].G,
-			p[i].B,
-			0xFF,
-		}
-	}
-
-	return ret
-}
 
 // Number of mimmaps per texture, base texture is mipmap 0.
 const NumMIPMaps = 4
@@ -59,7 +39,7 @@ type MIPTexture struct {
 	// Paletted data, 1bpp.
 	MIPData     [NumMIPMaps][]byte
 	PaletteSize int16 // always 256
-	Palette     Palette
+	Palette     palette.Palette
 	_           [2]byte
 }
 
@@ -86,7 +66,7 @@ func NewMIPTexture(nameStr string, width, height int) (MIPTexture, error) {
 	}
 
 	return MIPTexture{
-		PaletteSize: 256,
+		PaletteSize: palette.Size,
 		MIPTextureHeader: MIPTextureHeader{
 			Name:   name,
 			Width:  int32(width),

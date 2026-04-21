@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"goldutil/palette"
 	"goldutil/set"
 	"io"
 	"os"
@@ -136,7 +137,7 @@ func (t EntryType) String() string {
 const (
 	HeaderSize           = int32(unsafe.Sizeof(Header{}))
 	EntrySize            = int32(unsafe.Sizeof(Entry{}))
-	MIPPaletteDataSize   = int32(unsafe.Sizeof(Palette{}))
+	MIPPaletteDataSize   = int32(unsafe.Sizeof(palette.Palette{}))
 	MIPTextureHeaderSize = int32(unsafe.Sizeof(MIPTextureHeader{}))
 )
 

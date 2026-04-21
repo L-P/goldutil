@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc/wad"
+	"goldutil/palette"
+	"image"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -141,20 +143,20 @@ func createTexture(path string) (wad.MIPTexture, error) {
 		return empty, fmt.Errorf("unable to create MIPTexture: %w", err)
 	}
 
-	palette, remapIndex, shouldRemap, err := imagePalette(path)
-	if err != nil {
-		return empty, fmt.Errorf("unable to process image palette: %w", err)
-	}
-
-	img, err := openPalettedImage(path)
+	img, err := palette.OpenPalettedImage(path)
 	if err != nil {
 		return empty, fmt.Errorf("unable to open image: %w", err)
 	}
+
+	pal, remapIndex, shouldRemap, err := palette.FromImage(img)
+	if err != nil {
+		return empty, fmt.Errorf("unable to process image palette: %w", err)
+	}
 	if shouldRemap {
-		remapLastColor(img, remapIndex)
+		palette.RemapLastColor(img, remapIndex)
 	}
 
-	copy(ret.Palette[:], palette[:])
+	copy(ret.Palette[:], pal[:])
 
 	if err := ret.SetData(img.Pix); err != nil {
 		return empty, fmt.Errorf("unable to write pix data to texture: %w", err)
@@ -191,4 +193,19 @@ func collectPaths(input []string, pattern string) ([]string, error) {
 	ret = slices.Compact(ret)
 
 	return ret, nil
+}
+
+func imageSize(path string) (int, int, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, 0, fmt.Errorf("unable to open image for reading: %w", err)
+	}
+	defer f.Close() //nolint:errcheck // readonly
+
+	cfg, _, err := image.DecodeConfig(f)
+	if err != nil {
+		return 0, 0, fmt.Errorf("unable to decode image config: %w", err)
+	}
+
+	return cfg.Width, cfg.Height, nil
 }
