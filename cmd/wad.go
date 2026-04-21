@@ -1,13 +1,57 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"goldutil/goldsrc/wad"
+	"goldutil/set"
 	"image/png"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+
+	"github.com/urfave/cli/v3"
 )
+
+func doWADInfo(ctx context.Context, cmd *cli.Command) error {
+	wad3, err := wad.NewFromFile(cmd.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to open and parse WAD file: %w", err)
+	}
+
+	fmt.Fprintln(cmd.Writer, wad3.String())
+
+	return nil
+}
+
+func doWADCreate(ctx context.Context, cmd *cli.Command) error {
+	input, err := collectPaths(cmd.Args().Slice(), "*.png")
+	if err != nil {
+		return fmt.Errorf("unable to collect paths: %w", err)
+	}
+
+	return createWAD(cmd.String("out"), input)
+}
+
+func doWADExtract(ctx context.Context, cmd *cli.Command) error {
+	var dir = cmd.String("dir")
+	stat, err := os.Stat(dir)
+	if err != nil {
+		return fmt.Errorf("unable to use destination directory: %w", err)
+	}
+	if err == nil && !stat.IsDir() {
+		return errors.New("output directory paths exists but is not a directory")
+	}
+
+	wad3, err := wad.NewFromFile(cmd.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to open and parse WAD file: %w", err)
+	}
+
+	return extractWAD(wad3, dir)
+}
 
 func extractWAD(wad wad.WAD, dir string) error {
 	for _, name := range wad.Names() {
@@ -117,4 +161,52 @@ func createTexture(path string) (wad.MIPTexture, error) {
 	}
 
 	return ret, nil
+}
+
+// Returns the paths when they're files, and the pattern-matching files inside
+// them if they're directories.
+func collectPaths(input []string, pattern string) ([]string, error) {
+	ret := make([]string, 0, len(input))
+
+	for _, path := range input {
+		stat, err := os.Stat(path)
+		if err != nil {
+			return nil, fmt.Errorf("could not stat '%s': %w", path, err)
+		}
+
+		if !stat.IsDir() {
+			ret = append(ret, path)
+			continue
+		}
+
+		matches, err := filepath.Glob(filepath.Join(path, pattern))
+		if err != nil {
+			return nil, fmt.Errorf("unable to glob dir '%s': %w", path, err)
+		}
+
+		ret = append(ret, matches...)
+	}
+
+	ret = dedupeStrs(ret)
+	sort.Strings(ret)
+
+	return ret, nil
+}
+
+func dedupeStrs(in []string) []string {
+	var (
+		ret  = make([]string, 0, len(in))
+		seen = set.NewPresenceSet[string](len(in))
+	)
+
+	for _, v := range in {
+		if seen.Has(v) {
+			continue
+		}
+
+		ret = append(ret, v)
+		seen.Set(v)
+	}
+
+	return ret
 }

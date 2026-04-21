@@ -2,21 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/bsp"
-	"goldutil/goldsrc/nod"
-	"goldutil/goldsrc/qmap"
-	"goldutil/goldsrc/sprite"
-	"goldutil/goldsrc/wad"
 	"goldutil/neat"
-	"goldutil/set"
-	"math"
 	"os"
-	"path/filepath"
-	"sort"
-	"strconv"
+	"slices"
 	"strings"
 
 	"github.com/fatih/color"
@@ -33,396 +22,355 @@ func main() {
 	}
 }
 
-func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {
-	path := cmd.Args().Get(0)
-	if path == "" {
-		return errors.New("expected one argument: the .spr to parse and extract")
+//nolint:funlen,maintidx,lll // descriptions
+func newApp() *cli.Command {
+	bold := color.New(color.Bold).Sprint
+	catnl := func(str ...string) string {
+		return strings.Join(str, "\n")
 	}
 
-	spr, err := sprite.NewFromFile(path)
-	if err != nil {
-		return fmt.Errorf("unable to open sprite: %w", err)
+	return &cli.Command{
+		Version: Version,
+		Usage:   "GoldSrc modding utilities.",
+		Description: catnl(
+			"goldutil can read, modify, and write multiple file formats used by the GoldSrc (Half-Life) engine.",
+			"See more detailed help with `goldutil CMD -h` or `goldutil CMD SUBCMD -h`.",
+		),
+
+		Commands: []*cli.Command{
+			{
+				Name:  "bsp",
+				Usage: "BSP (compiled maps) manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:   "info",
+						Action: doBSPInfo,
+						Usage:  "Print parsed data from a BSP.",
+					},
+					{
+						Name:   "limits",
+						Action: doBSPLimits,
+						Usage:  "Show how much more details you can cram into your map.",
+						Description: catnl(
+							"Show how much more details you can cram into your map. These limits are sometimes hard limits of the BSP format, sometimes the engine, sometimes strong suggestions.",
+							"They were taken from VHLT which is the de-facto standard.",
+							"Exit with status code `1` if the BSP goes over a limit.",
+						),
+					},
+					{
+						Name: "remap-materials",
+						Description: catnl(
+							"On a BSP with embedded textures, change their names so they can match what is in the original game materials.txt.",
+							"This allows setting proper material sounds to custom textures without having to distribute a materials.txt file.",
+							bold("Warning")+": The BSP cannot use any of the textures listed in the original materials.txt",
+						),
+
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "original-materials",
+								Value:    "valve/sound/materials.txt",
+								Usage:    "Path to the materials.txt file of the original game, defaults to valve/sound/materials.txt.",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "out",
+								Usage:    "Where to write the remapped BSP.",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:     "replacement-materials",
+								Value:    "valve_addon/sound/materials.txt",
+								Usage:    "Path to the replacement materials.txt file, defaults to valve_addon/sound/materials.txt.",
+								Required: true,
+							},
+							&cli.BoolFlag{
+								Name:  "verbose",
+								Usage: "Output to STDOUT the details of what materials were remapped to.",
+							},
+						},
+						Action: doBSPRemapMaterials,
+					},
+				},
+			},
+
+			{
+				Name:  "fgd",
+				Usage: "Output the FGD to use with goldutil map neat.",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					fmt.Fprint(cmd.Writer, neat.FGD)
+					return nil
+				},
+			},
+
+			{
+				Name:  "nod",
+				Usage: "NPC pathfinding nodes manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:  "export",
+						Usage: "Extract nodes from a .nod file.",
+						Description: catnl(
+							"Extract node positions from a .nod graph into a .map populated with corresponding info_node entities.",
+							"Links between nodes are represented using target/targetname, nodes are duplicated to allow showing all links, TrenchBroom layers are used to separate links by hull type. The resulting .map file is not for engine consumption, only for TrenchBroom-assisted archaeology.",
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:        "input-format",
+								Value:       "valve",
+								HideDefault: true,
+								Usage: catnl(
+									"Parse the .nod file using a different node graph format instead of using the PC release format.\n`FORMAT` can be any one of:",
+									"  - valve: Standard Half-Life node graph (default)",
+									"  - decay: PlayStation 2 release of Half-Life: Decay",
+								),
+								Validator: func(str string) error {
+									values := []string{"valve", "decay"}
+									if slices.Index(values, str) < 0 {
+										return fmt.Errorf("must be one of: %s", strings.Join(values, ", "))
+									}
+
+									return nil
+								},
+							},
+							&cli.BoolFlag{
+								Name:  "original-positions",
+								Usage: "Use the node positions as they were set in the original .map instead of their position after being dropped to the ground during graph generation.",
+							},
+						},
+						Action: doNodExport,
+					},
+				},
+			},
+
+			{
+				Name:  "map",
+				Usage: "Map pre-processing.",
+				Commands: []*cli.Command{
+					{
+						Name:  "export",
+						Usage: "Export a .map file the way TrenchBroom does.",
+						Description: catnl(
+							"Export a .map file the way TrenchBroom does, removing all layers marked as not exported.",
+							"Output is written to STDOUT, if no FILE is provided the map will be read from standard input.",
+						),
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:  "cleanup-tb",
+								Usage: "Also remove properties added by TrenchBroom that are not understood by the engine and spam the console with errors.",
+								Value: false,
+							},
+						},
+						Action: doMapExport,
+					},
+
+					{
+						Name:   "graph",
+						Action: doMapGraph,
+						Usage:  "Create a graphviz digraph of entity caller/callee relationships.",
+						Description: catnl(
+							"Create a graphviz digraph of entity caller/callee relationships from a .map file.",
+							"ripent exports use the same format and can be read too. Output is written to STDOUT.",
+						),
+					},
+
+					{
+						Name:   "neat",
+						Action: doNeat,
+						Usage:  "Process neat_ entity macros and outputs the generated .map to standard output.",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "moddir",
+								Value: ".",
+								Usage: "root of the mod directory (eg. 'valve'), defaults to the current working directory.",
+							},
+						},
+					},
+				},
+			},
+
+			{
+				Name:  "mod",
+				Usage: "Misc modding utilities",
+				Commands: []*cli.Command{
+					{
+						Name:  "filter-materials",
+						Usage: "Filter unused materials out of materials.txt.",
+						Description: catnl(
+							"Takes a materials.txt file and only keep the texture names that are used in the given BSP files.",
+							"This is useful to keep a final materials.txt under 512 entries when working with large texture collections.",
+							"Filtered materials are written to STDOUT.",
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "in",
+								Value: "sound/materials.full.txt",
+								Usage: "Path to the materials.txt file you want to filter.",
+							},
+						},
+						Action: doModFilterMaterials,
+					},
+					{
+						Name:  "filter-wads",
+						Usage: "Filter unused textures out of WADs.",
+						Description: catnl(
+							"Reads all BSP files at the given directory and creates a WAD containing only the textures used by the BSPs.",
+							"This allows using large texture collections during development but only distribute the smallest possible WAD at release time.",
+							`Be aware that Half-Life requires the wads from the "wads" property to be present and will attempt to load them.`,
+							`Before release you should generate the output WAD, remove the WADs that were used during filtering from your worldspawn "wads" property, add the output WAD, and then rebuild your maps.`,
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "bspdir",
+								Value: "valve_addon/maps",
+								Usage: "Path of the directory containing the BSPs to use as a used texture list.",
+							},
+							&cli.StringFlag{
+								Name:  "out",
+								Value: "valve_addon/filtered.wad",
+								Usage: "Path were the output WAD will be written.",
+							},
+						},
+						Action: doModFilterWADs,
+					},
+				},
+			},
+
+			{
+				Name:  "spr",
+				Usage: "Sprite manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:  "create",
+						Usage: "Create a sprite.",
+						Description: catnl(
+							"Create a sprite from the given ordered list of PNG frames and write it to the given output path.\n",
+							"Input images must be 256 colors paletted PNGs, the palette of the first frame will be used, the other palettes are discarded and all frames will be interpreted using the first frame's palette.",
+							"If the palette has under 256 colors it will be extended to 256, putting the last color of the palette in the 256th spot and remapping the image to match this updated palette. This matters for transparent formats.",
+							"If you use pngquant(1) to create your palletized input files, you can use its --pngbug option to ensure the transparent color will always be last.",
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "format",
+								Value: "normal",
+								Usage: catnl(
+									"Texture format, determines how the palette is interpreted and the texture is rendered by the engine. `FORMAT` can be any one of:",
+									"  - normal: 256 colors sprite (default).",
+									"  - additive: Additive 256 colors sprite, dark values are rendered as transparent, the darker the less opacity.",
+									"  - index-alpha: Monochromatic sprite with 255 alpha levels, the base color is determined by the last color on the palette.",
+									"  - alpha-test: Transparent 255 colors sprite. The last color on the palette will be rendered as fully transparent.",
+								),
+								HideDefault: true,
+							},
+							&cli.StringFlag{
+								Name:     "out",
+								Required: true,
+								Usage:    "Path to the output .spr file.",
+							},
+							&cli.StringFlag{
+								Name:  "type",
+								Value: "parallel",
+								Usage: catnl(
+									"Sprite type, TYPE can be any one of:",
+									"  - parallel: Always face camera (default).",
+									"  - parallel-upright: Always face camera except for the locked Z axis.",
+									"  - oriented: Orientation set by the level.",
+									"  - parallel-oriented: Faces camera but can be rotated by the level.",
+									"  - facing-upright: Like parallel-upright but faces the player origin instead of the camera.",
+								),
+								HideDefault: true,
+							},
+						},
+						Action: doSpriteCreate,
+					},
+
+					{
+						Name:        "extract",
+						Usage:       "Output all frames of a sprite to the current directory.",
+						Description: "The output files will be named after the original sprite file name plus a frame number suffix and an extension.",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "dir",
+								Usage: "Output frames to the specified directory instead of the current one.",
+							},
+						},
+						Action: doSpriteExtract,
+					},
+
+					{
+						Name:   "info",
+						Action: doSpriteInfo,
+						Usage:  "Print parsed frame data from the given FILE.",
+					},
+				},
+			},
+
+			{
+				Name:  "wad",
+				Usage: "Texture files manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:  "create",
+						Usage: "Create a WAD file.",
+						Description: catnl(
+							"Create a WAD file from a list of PNG files and directories. Directories are not scanned recursively and only PNG files are used.",
+							"File base names (without extensions) are uppercased and used as texture names.",
+							bold("Warning")+": Names exceeding 15 chars will trigger an error as this is the maximum length supported by the WAD format.",
+							"decals.wad use a different texture format and are not handled by goldutil.",
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "out",
+								Required: true,
+								Usage:    "Path to the output .wad file.",
+							},
+						},
+						Action: doWADCreate,
+					},
+
+					{
+						Name:  "extract",
+						Usage: "Extract a WAD file in the given DIR as a bunch of PNG files.",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "dir",
+								Required: true,
+								Usage:    "Path to the directory where to write PNG files.",
+							},
+						},
+						Action: doWADExtract,
+					},
+
+					{
+						Name:   "info",
+						Action: doWADInfo,
+						Usage:  "Print parsed data from a WAD file.",
+					},
+				},
+			},
+
+			{
+				Name:  "wav",
+				Usage: "Audio manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:   "loop",
+						Usage:  "Set CUE points to make a WAV loop.",
+						Action: doWAVLoop,
+						Description: catnl(
+							"Make a WAV loop by setting CUE points.",
+							"In GoldSrc only the presence of these CUE points is checked, not their position.",
+							"This commands adds a CUE point at the end so ambient_generic can do its work.",
+						),
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "out",
+								Usage:    "Where to write the looped WAV.",
+								Required: true,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
-
-	return extractSprite(spr, cmd.String("dir"), filepath.Base(path))
-}
-
-func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
-	typ, ok := map[string]sprite.Type{
-		"parallel-upright":  sprite.ParallelUpright,
-		"facing-upright":    sprite.FacingUpright,
-		"parallel":          sprite.Parallel,
-		"oriented":          sprite.Oriented,
-		"parallel-oriented": sprite.ParallelOriented,
-	}[cmd.String("type")]
-	if !ok {
-		return errors.New("unrecognize sprite type")
-	}
-
-	format, ok := map[string]sprite.TextureFormat{
-		"normal":      sprite.Normal,
-		"additive":    sprite.Additive,
-		"index-alpha": sprite.IndexAlpha,
-		"alpha-test":  sprite.AlphaTest,
-	}[cmd.String("format")]
-	if !ok {
-		return errors.New("unrecognize texture format")
-	}
-
-	spr, err := createSprite(typ, format, cmd.Args().Slice())
-	if err != nil {
-		return fmt.Errorf("unable to create sprite: %w", err)
-	}
-
-	dest, err := os.OpenFile(cmd.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
-	if err != nil {
-		return fmt.Errorf("unable to open dest SPR for writing: %w", err)
-	}
-
-	if err := spr.Write(dest); err != nil {
-		return fmt.Errorf("unable to write to destination SPR: %w", err)
-	}
-
-	if err := dest.Close(); err != nil {
-		return fmt.Errorf("unable to finalize writing to destination SPR: %w", err)
-	}
-
-	return nil
-}
-
-func doSpriteInfo(ctx context.Context, cmd *cli.Command) error {
-	path := cmd.Args().Get(0)
-	if path == "" {
-		return errors.New("expected one argument: the .spr to parse and display")
-	}
-
-	spr, err := sprite.NewFromFile(path)
-	if err != nil {
-		return fmt.Errorf("unable to open sprite: %w", err)
-	}
-
-	fmt.Fprintln(cmd.Writer, spr.String())
-
-	return nil
-}
-
-func doMapGraph(ctx context.Context, cmd *cli.Command) error {
-	path := cmd.Args().Get(0)
-	if path == "" {
-		return errors.New("expected one argument: the .map to parse and graph")
-	}
-
-	qm, err := loadQMap(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to read from map: %w", err)
-	}
-
-	GraphQMap(qm, os.Stdout)
-
-	return nil
-}
-
-func doNeat(ctx context.Context, cmd *cli.Command) error {
-	qm, err := loadQMap(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to read from map: %w", err)
-	}
-
-	mod, err := os.OpenRoot(cmd.String("moddir"))
-	if err != nil {
-		return fmt.Errorf("unable to open current working directory: %w", err)
-	}
-
-	if err := neat.Neatify(qm, mod); err != nil {
-		return fmt.Errorf("unable to neatify map: %w", err)
-	}
-
-	fmt.Fprint(cmd.Writer, qm.String())
-
-	return nil
-}
-
-func doMapExport(ctx context.Context, cmd *cli.Command) error {
-	qm, err := loadQMap(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to read from map: %w", err)
-	}
-
-	clean, err := exportQMap(qm, cmd.Bool("cleanup-tb"))
-	if err != nil {
-		return fmt.Errorf("unable to export map: %w", err)
-	}
-
-	fmt.Fprint(cmd.Writer, clean.String())
-
-	return nil
-}
-
-func loadQMap(path string) (*qmap.QMap, error) {
-	if path == "" {
-		return qmap.LoadFromReader(os.Stdin)
-	}
-
-	return qmap.LoadFromFile(path)
-}
-
-func doWADExtract(ctx context.Context, cmd *cli.Command) error {
-	var dir = cmd.String("dir")
-	stat, err := os.Stat(dir)
-	if err != nil {
-		return fmt.Errorf("unable to use destination directory: %w", err)
-	}
-	if err == nil && !stat.IsDir() {
-		return errors.New("output directory paths exists but is not a directory")
-	}
-
-	wad3, err := wad.NewFromFile(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to open and parse WAD file: %w", err)
-	}
-
-	return extractWAD(wad3, dir)
-}
-
-func doWADInfo(ctx context.Context, cmd *cli.Command) error {
-	wad3, err := wad.NewFromFile(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to open and parse WAD file: %w", err)
-	}
-
-	fmt.Fprintln(cmd.Writer, wad3.String())
-
-	return nil
-}
-
-func doWADCreate(ctx context.Context, cmd *cli.Command) error {
-	input, err := collectPaths(cmd.Args().Slice(), "*.png")
-	if err != nil {
-		return fmt.Errorf("unable to collect paths: %w", err)
-	}
-
-	return createWAD(cmd.String("out"), input)
-}
-
-// Returns the paths when they're files, and the pattern-matching files inside
-// them if they're directories.
-func collectPaths(input []string, pattern string) ([]string, error) {
-	ret := make([]string, 0, len(input))
-
-	for _, path := range input {
-		stat, err := os.Stat(path)
-		if err != nil {
-			return nil, fmt.Errorf("could not stat '%s': %w", path, err)
-		}
-
-		if !stat.IsDir() {
-			ret = append(ret, path)
-			continue
-		}
-
-		matches, err := filepath.Glob(filepath.Join(path, pattern))
-		if err != nil {
-			return nil, fmt.Errorf("unable to glob dir '%s': %w", path, err)
-		}
-
-		ret = append(ret, matches...)
-	}
-
-	ret = dedupeStrs(ret)
-	sort.Strings(ret)
-
-	return ret, nil
-}
-
-func dedupeStrs(in []string) []string {
-	var (
-		ret  = make([]string, 0, len(in))
-		seen = set.NewPresenceSet[string](len(in))
-	)
-
-	for _, v := range in {
-		if seen.Has(v) {
-			continue
-		}
-
-		ret = append(ret, v)
-		seen.Set(v)
-	}
-
-	return ret
-}
-
-func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
-	source, err := goldsrc.LoadMaterialsFromFile(cmd.String("original-materials"))
-	if err != nil {
-		return fmt.Errorf("unable to load original-materials: %w", err)
-	}
-
-	replacement, err := goldsrc.LoadMaterialsFromFile(cmd.String("replacement-materials"))
-	if err != nil {
-		return fmt.Errorf("unable to load replacement-materials: %w", err)
-	}
-
-	if source.IsEmpty() || replacement.IsEmpty() {
-		return errors.New("no materials in source or replacement list")
-	}
-
-	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to load BSP: %w", err)
-	}
-
-	var (
-		verbose  = cmd.Bool("verbose")
-		remapper = goldsrc.NewMaterialsRemapper(source)
-	)
-	mapping, err := remapper.ReMap(cmd.ErrWriter, bsp.Textures.Textures, replacement)
-	if err != nil {
-		return fmt.Errorf("unable to remap materials: %w", err)
-	}
-
-	for i, tex := range bsp.Textures.Textures {
-		mapTo, ok := mapping[tex.Name]
-		if !ok {
-			continue
-		}
-
-		if verbose {
-			fmt.Fprintf(
-				cmd.Writer,
-				"Remapping %-15s to %s\n",
-				strings.ToUpper(tex.Name.String()),
-				strings.ToUpper(mapTo.String()),
-			)
-		}
-
-		bsp.Textures.Textures[i].Name = mapTo
-	}
-
-	if err := bsp.WriteToFile(cmd.String("out")); err != nil {
-		return fmt.Errorf("unable to write BSP: %w", err)
-	}
-
-	if cmd.Bool("verbose") {
-		remapper.PrintAvailable(cmd.Writer)
-	}
-
-	return nil
-}
-
-func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
-	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to load BSP: %w", err)
-	}
-
-	fmt.Fprint(cmd.Writer, bsp.String())
-
-	return nil
-}
-
-func doBSPLimits(ctx context.Context, cmd *cli.Command) error {
-	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to load BSP: %w", err)
-	}
-
-	fmt.Fprintf(
-		cmd.Writer,
-		"%-18s % 9s % 9s % 4s\n",
-		"Type", "Current", "Max", "Pct",
-	)
-
-	yellow := color.New(color.FgYellow).Fprintf
-	red := color.New(color.FgRed).Fprintf
-	var errs []error
-
-	for _, v := range bsp.Limits() {
-		if v.Max <= 0 {
-			return fmt.Errorf("developer error, invalid limit for: %s", v.Desc)
-		}
-
-		pct := math.Ceil(float64(v.Current) / float64(v.Max) * 100)
-		var printer = fmt.Fprintf
-		if pct > 60 {
-			printer = yellow
-		}
-		if pct > 80 {
-			printer = red
-		}
-
-		//nolint:errcheck
-		printer(
-			cmd.Writer,
-			"%-18s % 9d % 9d % 3.0f%%\n",
-			v.Desc, v.Current, v.Max, pct,
-		)
-
-		if pct > 100 {
-			errs = append(errs, fmt.Errorf("exceeded limit on %s", v.Desc))
-		}
-	}
-
-	return errors.Join(errs...)
-}
-
-func doNodExport(ctx context.Context, cmd *cli.Command) error {
-	format, ok := map[string]nod.NodeFormat{
-		"valve": nod.NodeFormatValve,
-		"decay": nod.NodeFormatDecay,
-	}[cmd.String("input-format")]
-	if !ok {
-		return errors.New("unrecognize .nod format")
-	}
-
-	f, err := os.Open(cmd.Args().Get(0))
-	if err != nil {
-		return fmt.Errorf("unable to open file for reading: %w", err)
-	}
-	defer f.Close() //nolint:errcheck // readonly
-
-	nodes, links, err := nod.ReadNodes(f, format)
-	if err != nil {
-		return fmt.Errorf("unable to read nodes: %w", err)
-	}
-
-	original := cmd.Bool("original-positions")
-	entities := make([]qmap.AnonymousEntity, 0, len(nodes)+len(links))
-	for i, v := range nodes {
-		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
-			"classname":  v.ClassName(),
-			"origin":     v.Position(original).String(),
-			"targetname": fmt.Sprintf("node#%d", i),
-		}})
-	}
-
-	for linkTypeBitID := range nod.LinkTypeBitMax {
-		entities = append(entities, qmap.AnonymousEntity{KVs: map[string]string{
-			"classname":            "func_group",
-			"_tb_type":             "_tb_layer",
-			"_tb_name":             fmt.Sprintf("hull#%d links (%s)", linkTypeBitID, nod.LinkTypeName(linkTypeBitID)),
-			"_tb_id":               strconv.Itoa(linkTypeBitID + 1),
-			"_tb_layer_sort_index": strconv.Itoa(linkTypeBitID + 1),
-		}})
-
-		for _, v := range links {
-			if (v.LinkInfo & (1 << linkTypeBitID)) == 0 {
-				continue
-			}
-
-			src := entities[v.SrcNode]
-			src.KVs["target"] = fmt.Sprintf("node#%d", v.DstNode)
-			src.KVs["_tb_layer"] = strconv.Itoa(linkTypeBitID + 1)
-			entities = append(entities, src)
-		}
-	}
-
-	out := qmap.New()
-	if err := out.AddAnonymousEntities(entities...); err != nil {
-		return fmt.Errorf("unable to append entities to output map: %w", err)
-	}
-
-	fmt.Fprintln(cmd.Writer, out.String())
-
-	return nil
 }

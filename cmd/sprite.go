@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"goldutil/goldsrc/sprite"
@@ -8,7 +9,82 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+
+	"github.com/urfave/cli/v3"
 )
+
+func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {
+	path := cmd.Args().Get(0)
+	if path == "" {
+		return errors.New("expected one argument: the .spr to parse and extract")
+	}
+
+	spr, err := sprite.NewFromFile(path)
+	if err != nil {
+		return fmt.Errorf("unable to open sprite: %w", err)
+	}
+
+	return extractSprite(spr, cmd.String("dir"), filepath.Base(path))
+}
+
+func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
+	typ, ok := map[string]sprite.Type{
+		"parallel-upright":  sprite.ParallelUpright,
+		"facing-upright":    sprite.FacingUpright,
+		"parallel":          sprite.Parallel,
+		"oriented":          sprite.Oriented,
+		"parallel-oriented": sprite.ParallelOriented,
+	}[cmd.String("type")]
+	if !ok {
+		return errors.New("unrecognize sprite type")
+	}
+
+	format, ok := map[string]sprite.TextureFormat{
+		"normal":      sprite.Normal,
+		"additive":    sprite.Additive,
+		"index-alpha": sprite.IndexAlpha,
+		"alpha-test":  sprite.AlphaTest,
+	}[cmd.String("format")]
+	if !ok {
+		return errors.New("unrecognize texture format")
+	}
+
+	spr, err := createSprite(typ, format, cmd.Args().Slice())
+	if err != nil {
+		return fmt.Errorf("unable to create sprite: %w", err)
+	}
+
+	dest, err := os.OpenFile(cmd.String("out"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to open dest SPR for writing: %w", err)
+	}
+
+	if err := spr.Write(dest); err != nil {
+		return fmt.Errorf("unable to write to destination SPR: %w", err)
+	}
+
+	if err := dest.Close(); err != nil {
+		return fmt.Errorf("unable to finalize writing to destination SPR: %w", err)
+	}
+
+	return nil
+}
+
+func doSpriteInfo(ctx context.Context, cmd *cli.Command) error {
+	path := cmd.Args().Get(0)
+	if path == "" {
+		return errors.New("expected one argument: the .spr to parse and display")
+	}
+
+	spr, err := sprite.NewFromFile(path)
+	if err != nil {
+		return fmt.Errorf("unable to open sprite: %w", err)
+	}
+
+	fmt.Fprintln(cmd.Writer, spr.String())
+
+	return nil
+}
 
 func extractSprite(spr sprite.Sprite, destDir, originalBaseName string) error {
 	for i := range spr.Frames {
