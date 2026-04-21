@@ -12,26 +12,46 @@ import (
 
 type Type int32
 
+const TypeInvalid Type = -1
 const (
-	ParallelUpright Type = iota
-	FacingUpright
-	Parallel
-	Oriented
-	ParallelOriented
+	TypeParallelUpright Type = iota
+	TypeFacingUpright
+	TypeParallel
+	TypeOriented
+	TypeParallelOriented
 )
+
+func ParseType(str string) (Type, error) {
+	switch str {
+	case "parallel-upright":
+		return TypeParallelUpright, nil
+	case "facing-upright":
+		return TypeFacingUpright, nil
+	case "parallel":
+		return TypeParallel, nil
+	case "oriented":
+		return TypeOriented, nil
+	case "parallel-oriented":
+		return TypeParallelOriented, nil
+	}
+
+	return TypeInvalid, fmt.Errorf("unrecognize sprite type: %s", str)
+}
 
 func (typ Type) String() string {
 	switch typ {
-	case ParallelUpright:
+	case TypeParallelUpright:
 		return "ParallelUpright"
-	case FacingUpright:
+	case TypeFacingUpright:
 		return "FacingUpright"
-	case Parallel:
+	case TypeParallel:
 		return "Parallel"
-	case Oriented:
+	case TypeOriented:
 		return "Oriented"
-	case ParallelOriented:
+	case TypeParallelOriented:
 		return "ParallelOriented"
+	case TypeInvalid:
+		fallthrough
 	default:
 		return fmt.Sprintf("invalid (%d)", typ)
 	}
@@ -39,23 +59,41 @@ func (typ Type) String() string {
 
 type TextureFormat int32
 
+func ParseTextureFormat(str string) (TextureFormat, error) {
+	switch str {
+	case "normal":
+		return TextureFormatNormal, nil
+	case "additive":
+		return TextureFormatAdditive, nil
+	case "index-alpha":
+		return TextureFormatIndexAlpha, nil
+	case "alpha-test":
+		return TextureFormatAlphaTest, nil
+	}
+
+	return TextureFormatInvalid, fmt.Errorf("unrecognize texture format: %s", str)
+}
+
+const TextureFormatInvalid TextureFormat = -1
 const (
-	Normal TextureFormat = iota
-	Additive
-	IndexAlpha
-	AlphaTest
+	TextureFormatNormal TextureFormat = iota
+	TextureFormatAdditive
+	TextureFormatIndexAlpha
+	TextureFormatAlphaTest
 )
 
 func (tf TextureFormat) String() string {
 	switch tf {
-	case Normal:
+	case TextureFormatNormal:
 		return "Normal"
-	case Additive:
+	case TextureFormatAdditive:
 		return "Additive"
-	case IndexAlpha:
+	case TextureFormatIndexAlpha:
 		return "IndexAlpha"
-	case AlphaTest:
+	case TextureFormatAlphaTest:
 		return "AlphaTest"
+	case TextureFormatInvalid:
+		fallthrough
 	default:
 		return fmt.Sprintf("invalid (%d)", tf)
 	}
@@ -64,15 +102,15 @@ func (tf TextureFormat) String() string {
 type SyncType int32
 
 const (
-	Sync SyncType = iota
-	Random
+	SyncTypeSynced SyncType = iota
+	SyncTypeRandom
 )
 
 func (st SyncType) String() string {
 	switch st {
-	case Sync:
-		return "Sync"
-	case Random:
+	case SyncTypeSynced:
+		return "Synced"
+	case SyncTypeRandom:
 		return "Random"
 	default:
 		return fmt.Sprintf("invalid (%d)", st)

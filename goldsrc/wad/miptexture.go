@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"image/color"
 	"io"
 	"strings"
 )
@@ -13,6 +14,20 @@ type RGB struct {
 }
 
 type Palette [256]RGB
+
+func (p Palette) AsColorPalette() color.Palette {
+	ret := make([]color.Color, len(p))
+	for i := range p {
+		ret[i] = color.NRGBA{
+			p[i].R,
+			p[i].G,
+			p[i].B,
+			0xFF,
+		}
+	}
+
+	return ret
+}
 
 // Number of mimmaps per texture, base texture is mipmap 0.
 const NumMIPMaps = 4

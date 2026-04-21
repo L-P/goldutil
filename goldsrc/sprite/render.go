@@ -6,20 +6,27 @@ import (
 	"image/color"
 )
 
-func (spr *Sprite) RenderFrame(i int) (image.Image, error) {
+func (spr *Sprite) RenderFrame(i int, withAlpha bool) (image.Image, error) {
 	if i < 0 || i > len(spr.Frames) {
 		return nil, fmt.Errorf("frame index %d is out of bounds [0-%d]", i, len(spr.Frames))
 	}
 
 	frame := spr.Frames[i]
-	image := image.NewPaletted(frame.Rect(), spr.PaletteNRGBA())
+	var palette color.Palette
+	if withAlpha {
+		palette = spr.PaletteNRGBA()
+	} else {
+		palette = spr.Palette.AsColorPalette()
+	}
+
+	image := image.NewPaletted(frame.Rect(), palette)
 	image.Pix = frame.Data
 
 	return image, nil
 }
 
 func (spr *Sprite) PaletteNRGBA() color.Palette {
-	if spr.TextureFormat == IndexAlpha {
+	if spr.TextureFormat == TextureFormatIndexAlpha {
 		return spr.indexAlphaPaletteNRGBA()
 	}
 
@@ -32,7 +39,7 @@ func (spr *Sprite) PaletteNRGBA() color.Palette {
 			0xFF,
 		}
 	}
-	if spr.TextureFormat == AlphaTest {
+	if spr.TextureFormat == TextureFormatAlphaTest {
 		palette[len(palette)-1] = color.NRGBA{0, 0, 0, 0}
 	}
 
