@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"goldutil/goldsrc/wad"
-	"goldutil/set"
 	"image/png"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -187,26 +187,8 @@ func collectPaths(input []string, pattern string) ([]string, error) {
 		ret = append(ret, matches...)
 	}
 
-	ret = dedupeStrs(ret)
 	sort.Strings(ret)
+	ret = slices.Compact(ret)
 
 	return ret, nil
-}
-
-func dedupeStrs(in []string) []string {
-	var (
-		ret  = make([]string, 0, len(in))
-		seen = set.NewPresenceSet[string](len(in))
-	)
-
-	for _, v := range in {
-		if seen.Has(v) {
-			continue
-		}
-
-		ret = append(ret, v)
-		seen.Set(v)
-	}
-
-	return ret
 }
