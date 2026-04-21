@@ -28,25 +28,14 @@ func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {
 }
 
 func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
-	typ, ok := map[string]sprite.Type{
-		"parallel-upright":  sprite.ParallelUpright,
-		"facing-upright":    sprite.FacingUpright,
-		"parallel":          sprite.Parallel,
-		"oriented":          sprite.Oriented,
-		"parallel-oriented": sprite.ParallelOriented,
-	}[cmd.String("type")]
-	if !ok {
-		return errors.New("unrecognize sprite type")
+	typ, err := sprite.ParseType(cmd.String("type"))
+	if err != nil {
+		return fmt.Errorf("unable to parse sprite type: %w", err)
 	}
 
-	format, ok := map[string]sprite.TextureFormat{
-		"normal":      sprite.Normal,
-		"additive":    sprite.Additive,
-		"index-alpha": sprite.IndexAlpha,
-		"alpha-test":  sprite.AlphaTest,
-	}[cmd.String("format")]
-	if !ok {
-		return errors.New("unrecognize texture format")
+	format, err := sprite.ParseTextureFormat(cmd.String("format"))
+	if err != nil {
+		return fmt.Errorf("unable to parse texture format: %w", err)
 	}
 
 	spr, err := createSprite(typ, format, cmd.Args().Slice())

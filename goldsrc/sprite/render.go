@@ -19,7 +19,7 @@ func (spr *Sprite) RenderFrame(i int) (image.Image, error) {
 }
 
 func (spr *Sprite) PaletteNRGBA() color.Palette {
-	if spr.TextureFormat == IndexAlpha {
+	if spr.TextureFormat == TextureFormatIndexAlpha {
 		return spr.indexAlphaPaletteNRGBA()
 	}
 
@@ -32,7 +32,7 @@ func (spr *Sprite) PaletteNRGBA() color.Palette {
 			0xFF,
 		}
 	}
-	if spr.TextureFormat == AlphaTest {
+	if spr.TextureFormat == TextureFormatAlphaTest {
 		palette[len(palette)-1] = color.NRGBA{0, 0, 0, 0}
 	}
 
