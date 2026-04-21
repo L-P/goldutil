@@ -56,8 +56,8 @@ func createSprite(
 	if err != nil {
 		return zero, fmt.Errorf("unable to read first frame dimensions: %w", err)
 	}
-	if (width%16 != 0) || (height%16 != 0) {
-		return zero, fmt.Errorf("dimensions not divisible by 16: %w", err)
+	if (width%4 != 0) || (height%4 != 0) {
+		return zero, errors.New("dimensions not divisible by 4")
 	}
 
 	palette, remapIndex, shouldRemap, err := imagePalette(framePaths[0])
