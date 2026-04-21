@@ -85,15 +85,11 @@ func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldR
 		return fmt.Errorf("unable to open image: %w", err)
 	}
 
-	rect := img.Bounds()
-	if rect.Dx() != int(spr.Width) || rect.Dy() != int(spr.Height) {
-		return errors.New("image size does not match sprite size")
-	}
-
 	if shouldRemap {
 		remapLastColor(img, remapIndex)
 	}
 
+	rect := img.Bounds()
 	spr.AddFrame(sprite.NewFrame(
 		int32(rect.Dx()), int32(rect.Dy()),
 		int32(rect.Dx()/2), int32(rect.Dy()/2),

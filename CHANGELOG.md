@@ -3,6 +3,7 @@
 - Add command bsp limits
 - Build releases using Go v1.26
 - Bump dependencies
+- Allow sprite frames to have different sizes
 
 # v1.5.0
 - Add "map neat" entity preprocessor command
