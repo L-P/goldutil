@@ -3,8 +3,9 @@ package neat
 import (
 	"errors"
 	"fmt"
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/qmap/valve"
+
+	"github.com/L-P/goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc/qmap/valve"
 )
 
 type Master struct {

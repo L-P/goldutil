@@ -1,18 +1,18 @@
 # goldutil
-GoldSrc CLI utilities, released under the MIT license, see
-[LICENSE.md](./LICENSE.md).
+GoldSrc CLI utilities and Go library, released under the MIT license, see
+[LICENSE.md](./LICENSE.md).  
 
-The documentation is available online at https://l-p.github.io/goldutil/ or by
-running `$ goldutil help`.
+The CLI documentation is available online at https://l-p.github.io/goldutil/ or
+by running `$ goldutil help`.
 
 Features:
 
-- WAD and SPR to PNG.
-- PNG to WAD and SPR.
-- Entity call graph via Graphviz.
+- WAD reader and writer (not including decals.wad and gfx.wad).
+- Sprite reader and writer.
+- .map entity call graph via Graphviz.
 - .map file cleanup to automate TrenchBroom workflows.
 - `materials.txt` remapping for BSPs with embedded textures.
-- Entity pre-processor (see `map neat`).
+- .map entity pre-processor (see `map neat`).
 - WAV looping.
 - NOD extraction.
 - Human-readable dumps of various formats.

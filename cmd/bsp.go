@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/bsp"
 	"math"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc/bsp"
 )
 
 func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {

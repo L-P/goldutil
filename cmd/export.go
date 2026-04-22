@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/qmap"
-	"goldutil/set"
 	"strings"
+
+	"github.com/L-P/goldutil/goldsrc/qmap"
+	"github.com/L-P/goldutil/internal/set"
 )
 
 func getUnexportedLayerSet(qm *qmap.QMap) (set.PresenceSet[string], error) {

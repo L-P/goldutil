@@ -3,7 +3,7 @@ package qmap
 import (
 	"bytes"
 	"fmt"
-	"goldutil/goldsrc/qmap/valve"
+	"github.com/L-P/goldutil/goldsrc/qmap/valve"
 	"maps"
 	"reflect"
 	"slices"

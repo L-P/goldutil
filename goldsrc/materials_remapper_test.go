@@ -1,8 +1,8 @@
 package goldsrc_test
 
 import (
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/wad"
+	"github.com/L-P/goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc/wad"
 	"io"
 	"testing"
 

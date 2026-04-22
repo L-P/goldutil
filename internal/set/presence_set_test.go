@@ -3,9 +3,9 @@ package set_test
 import (
 	"testing"
 
-	"goldutil/set"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/L-P/goldutil/internal/set"
 )
 
 func TestPresenceSetString(t *testing.T) {

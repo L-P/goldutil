@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"goldutil/goldsrc"
-	"goldutil/goldsrc/bsp"
-	"goldutil/goldsrc/wad"
-	"goldutil/set"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc"
+	"github.com/L-P/goldutil/goldsrc/bsp"
+	"github.com/L-P/goldutil/goldsrc/wad"
+	"github.com/L-P/goldutil/internal/set"
 )
 
 func doModFilterMaterials(ctx context.Context, cmd *cli.Command) error {

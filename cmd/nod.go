@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/nod"
-	"goldutil/goldsrc/qmap"
 	"os"
 	"strconv"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc/nod"
+	"github.com/L-P/goldutil/goldsrc/qmap"
 )
 
 func doNodExport(ctx context.Context, cmd *cli.Command) error {

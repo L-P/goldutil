@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/sprite"
 	"image"
 	"image/png"
 	"os"
 	"path/filepath"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc/sprite"
+	"github.com/L-P/goldutil/palette"
 )
 
 func doSpriteExtract(ctx context.Context, cmd *cli.Command) error {
@@ -43,7 +45,16 @@ func doSpriteCreate(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to parse texture format: %w", err)
 	}
 
-	spr, err := createSprite(typ, format, cmd.Args().Slice())
+	images := make([]*image.Paletted, cmd.Args().Len())
+	for i, path := range cmd.Args().Slice() {
+		img, err := palette.OpenPalettedImage(path)
+		if err != nil {
+			return fmt.Errorf("unable to open image at '%s': %w", path, err)
+		}
+		images[i] = img
+	}
+
+	spr, err := sprite.NewFromImage(typ, format, images...)
 	if err != nil {
 		return fmt.Errorf("unable to create sprite: %w", err)
 	}
@@ -110,76 +121,4 @@ func extractSprite(spr sprite.Sprite, destDir, originalBaseName string, withAlph
 	}
 
 	return nil
-}
-
-func createSprite(
-	typ sprite.Type,
-	format sprite.TextureFormat,
-	framePaths []string,
-) (sprite.Sprite, error) {
-	var zero sprite.Sprite
-
-	if len(framePaths) < 1 {
-		return zero, errors.New("at least one frame is required")
-	}
-	width, height, err := imageSize(framePaths[0])
-	if err != nil {
-		return zero, fmt.Errorf("unable to read first frame dimensions: %w", err)
-	}
-	if (width%4 != 0) || (height%4 != 0) {
-		return zero, errors.New("dimensions not divisible by 4")
-	}
-
-	palette, remapIndex, shouldRemap, err := imagePalette(framePaths[0])
-	if err != nil {
-		return zero, fmt.Errorf("unable to process first frame palette: %w", err)
-	}
-
-	spr, err := sprite.New(width, height, typ, format, palette)
-	if err != nil {
-		return zero, fmt.Errorf("unable to create empty sprite: %w", err)
-	}
-
-	for i, inPath := range framePaths {
-		if err := addFrameToSprite(&spr, inPath, remapIndex, shouldRemap); err != nil {
-			return zero, fmt.Errorf("unable to add frame #%d: %w", i, err)
-		}
-	}
-
-	return spr, nil
-}
-
-func addFrameToSprite(spr *sprite.Sprite, path string, remapIndex uint8, shouldRemap bool) error {
-	img, err := openPalettedImage(path)
-	if err != nil {
-		return fmt.Errorf("unable to open image: %w", err)
-	}
-
-	if shouldRemap {
-		remapLastColor(img, remapIndex)
-	}
-
-	rect := img.Bounds()
-	spr.AddFrame(sprite.NewFrame(
-		int32(rect.Dx()), int32(rect.Dy()),
-		int32(rect.Dx()/2), int32(rect.Dy()/2),
-		img.Pix,
-	))
-
-	return nil
-}
-
-func imageSize(path string) (int, int, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return 0, 0, fmt.Errorf("unable to open image for reading: %w", err)
-	}
-	defer f.Close() //nolint:errcheck // readonly
-
-	cfg, _, err := image.DecodeConfig(f)
-	if err != nil {
-		return 0, 0, fmt.Errorf("unable to decode image config: %w", err)
-	}
-
-	return cfg.Width, cfg.Height, nil
 }

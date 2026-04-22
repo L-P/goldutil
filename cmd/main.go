@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"goldutil/neat"
 	"os"
 	"slices"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/neat"
 )
 
 var Version = "unknown version"

@@ -3,7 +3,7 @@ package sprite
 
 import (
 	"fmt"
-	"goldutil/goldsrc/wad"
+	"github.com/L-P/goldutil/palette"
 	"io"
 	"math"
 	"os"
@@ -20,7 +20,7 @@ type Sprite struct {
 
 func New(
 	width, height int, typ Type, format TextureFormat,
-	palette wad.Palette,
+	pal palette.Palette,
 ) (Sprite, error) {
 	var spr Sprite
 	spr.Header = Header{
@@ -31,8 +31,8 @@ func New(
 		BoundingRadius: boundingRadius(width, height),
 		Width:          int32(width),
 		Height:         int32(height),
-		PaletteSize:    expectedPaletteSize,
-		Palette:        palette,
+		PaletteSize:    palette.Size,
+		Palette:        pal,
 	}
 
 	return spr, nil
@@ -57,8 +57,8 @@ func (spr *Sprite) String() string {
 	return w.String()
 }
 
-func (spr *Sprite) Read(r io.Reader) error {
-	if err := spr.Header.Read(r); err != nil {
+func (spr *Sprite) read(r io.Reader) error {
+	if err := spr.Header.read(r); err != nil {
 		return fmt.Errorf("could not parse header: %w", err)
 	}
 
@@ -75,6 +75,15 @@ func (spr *Sprite) Read(r io.Reader) error {
 	return nil
 }
 
+func NewFromReader(r io.Reader) (Sprite, error) {
+	var sprite Sprite
+	if err := sprite.read(r); err != nil {
+		return Sprite{}, err
+	}
+
+	return sprite, nil
+}
+
 func NewFromFile(path string) (Sprite, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -82,12 +91,7 @@ func NewFromFile(path string) (Sprite, error) {
 	}
 	defer f.Close() //nolint:errcheck // readonly
 
-	var sprite Sprite
-	if err := sprite.Read(f); err != nil {
-		return Sprite{}, err
-	}
-
-	return sprite, nil
+	return NewFromReader(f)
 }
 
 func (spr *Sprite) AddFrame(frame Frame) {

@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"goldutil/goldsrc/qmap"
 	"io"
 	"strings"
+
+	"github.com/L-P/goldutil/goldsrc/qmap"
 )
 
 func GraphQMap(qm *qmap.QMap, w io.Writer) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"goldutil/goldsrc/wad"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v3"
+
+	"github.com/L-P/goldutil/goldsrc/wad"
 )
 
 func doWADInfo(ctx context.Context, cmd *cli.Command) error {
@@ -97,17 +98,18 @@ func writeTexture(tex wad.MIPTexture, destPath string) error {
 }
 
 func createWAD(destPath string, inputFiles []string) error {
-	wad := wad.New()
-
-	for _, path := range inputFiles {
-		tex, err := createTexture(path)
+	var err error
+	images := make([]wad.NamedImage, len(inputFiles))
+	for i, path := range inputFiles {
+		images[i], err = wad.OpenNamedImage(path)
 		if err != nil {
-			return fmt.Errorf("unable to create texture: %w", err)
+			return fmt.Errorf("unable to open image at path %s: %w", path, err)
 		}
+	}
 
-		if err := wad.AddTexture(tex); err != nil {
-			return fmt.Errorf("unable to add texture: %w", err)
-		}
+	wad, err := wad.NewFromImages(images...)
+	if err != nil {
+		return fmt.Errorf("unable to create wad from images: %w", err)
 	}
 
 	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
@@ -124,43 +126,6 @@ func createWAD(destPath string, inputFiles []string) error {
 	}
 
 	return nil
-}
-
-func createTexture(path string) (wad.MIPTexture, error) {
-	var (
-		empty              = wad.MIPTexture{}
-		name               = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-		width, height, err = imageSize(path)
-	)
-	if err != nil {
-		return empty, fmt.Errorf("unable to read image dimensions: %w", err)
-	}
-
-	ret, err := wad.NewMIPTexture(name, width, height)
-	if err != nil {
-		return empty, fmt.Errorf("unable to create MIPTexture: %w", err)
-	}
-
-	palette, remapIndex, shouldRemap, err := imagePalette(path)
-	if err != nil {
-		return empty, fmt.Errorf("unable to process image palette: %w", err)
-	}
-
-	img, err := openPalettedImage(path)
-	if err != nil {
-		return empty, fmt.Errorf("unable to open image: %w", err)
-	}
-	if shouldRemap {
-		remapLastColor(img, remapIndex)
-	}
-
-	copy(ret.Palette[:], palette[:])
-
-	if err := ret.SetData(img.Pix); err != nil {
-		return empty, fmt.Errorf("unable to write pix data to texture: %w", err)
-	}
-
-	return ret, nil
 }
 
 // Returns the paths when they're files, and the pattern-matching files inside

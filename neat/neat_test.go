@@ -2,8 +2,6 @@ package neat_test
 
 import (
 	"embed"
-	"goldutil/goldsrc/qmap"
-	"goldutil/neat"
 	"io/fs"
 	"os"
 	"slices"
@@ -11,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/L-P/goldutil/goldsrc/qmap"
+	"github.com/L-P/goldutil/neat"
 )
 
 //go:embed test_cases/*.map

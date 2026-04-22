@@ -6,11 +6,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"goldutil/set"
 	"io"
 	"os"
 	"strings"
 	"unsafe"
+
+	"github.com/L-P/goldutil/internal/set"
+	"github.com/L-P/goldutil/palette"
 )
 
 // Texture names are strings of 16 chars with a null terminator.
@@ -136,7 +138,7 @@ func (t EntryType) String() string {
 const (
 	HeaderSize           = int32(unsafe.Sizeof(Header{}))
 	EntrySize            = int32(unsafe.Sizeof(Entry{}))
-	MIPPaletteDataSize   = int32(unsafe.Sizeof(Palette{}))
+	MIPPaletteDataSize   = int32(unsafe.Sizeof(palette.Palette{}))
 	MIPTextureHeaderSize = int32(unsafe.Sizeof(MIPTextureHeader{}))
 )
 
