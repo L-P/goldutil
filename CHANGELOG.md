@@ -7,6 +7,7 @@
 - Fix missing color in index-alpha sprite extract
 - Add --no-alpha flag to sprite extract
 - Add --no-alpha flag to wad extract and make '{'-prefixed textures transparent by default
+- Add palette color output to spr info
 
 # v1.5.0
 - Add "map neat" entity preprocessor command
