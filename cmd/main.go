@@ -344,6 +344,13 @@ func newApp() *cli.Command {
 								Required: true,
 								Usage:    "Path to the directory where to write PNG files.",
 							},
+							&cli.BoolFlag{
+								Name: "no-alpha",
+								Usage: catnl(
+									"Don't add an alpha channel and keep the original textures palette verbatim.",
+									"By default goldutil rewrites the palette to add an alpha channel on transparent texture (those that start with a '{').",
+								),
+							},
 						},
 						Action: doWADExtract,
 					},

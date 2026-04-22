@@ -176,10 +176,15 @@ maximum length supported by the WAD format.
 `<input0> [<inputx>…]`::
     Paths to the input PNG files.
 
-=== `goldutil wad extract --dir DIR PATH`
+=== `goldutil wad extract [--no-alpha] --dir DIR PATH`
 Extract a WAD file in the given DIR as a bunch of PNG files.
 
-`--dir <dir>`:: Path to the directory where to write PNG files.
+`--dir <dir>`::
+    Path to the directory where to write PNG files.
+
+`--no-alpha`::
+    Don't add an alpha channel and keep the original textures palette verbatim. +
+    By default goldutil rewrites the palette to add an alpha channel on transparent texture (those that start with a '{').
 
 === `goldutil wad info <path>`
 Print parsed data from a WAD file.

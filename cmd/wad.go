@@ -51,10 +51,10 @@ func doWADExtract(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to open and parse WAD file: %w", err)
 	}
 
-	return extractWAD(wad3, dir)
+	return extractWAD(wad3, dir, !cmd.Bool("no-alpha"))
 }
 
-func extractWAD(wad wad.WAD, dir string) error {
+func extractWAD(wad wad.WAD, dir string, withAlpha bool) error {
 	for _, name := range wad.Names() {
 		tex, ok := wad.GetTexture(name)
 		if !ok {
@@ -66,7 +66,7 @@ func extractWAD(wad wad.WAD, dir string) error {
 		}
 		destPath := filepath.Join(dir, name+".png")
 
-		if err := writeTexture(tex, destPath); err != nil {
+		if err := writeTexture(tex, destPath, withAlpha); err != nil {
 			return fmt.Errorf("unable to write texture: %w", err)
 		}
 	}
@@ -74,8 +74,8 @@ func extractWAD(wad wad.WAD, dir string) error {
 	return nil
 }
 
-func writeTexture(tex wad.MIPTexture, destPath string) error {
-	img, err := tex.Render()
+func writeTexture(tex wad.MIPTexture, destPath string, withAlpha bool) error {
+	img, err := tex.Render(withAlpha)
 	if err != nil {
 		return fmt.Errorf("unable to render texture: %w", err)
 	}
