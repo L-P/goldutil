@@ -11,15 +11,15 @@ import (
 type FrameType int32
 
 const (
-	Single FrameType = iota
-	Group            // not implemented in GoldSrc.
+	FrameTypeSingle FrameType = iota
+	FrameTypeGroup            // not implemented in GoldSrc.
 )
 
 func (ft FrameType) String() string {
 	switch ft {
-	case Single:
+	case FrameTypeSingle:
 		return "Single"
-	case Group:
+	case FrameTypeGroup:
 		return "Group"
 	default:
 		return fmt.Sprintf("invalid (%d)", ft)
@@ -46,7 +46,7 @@ func NewFrame(
 ) Frame {
 	return Frame{
 		FrameMeta: FrameMeta{
-			Type:    Single,
+			Type:    FrameTypeSingle,
 			Width:   width,
 			Height:  height,
 			OriginX: originX,
@@ -61,7 +61,7 @@ func (f *Frame) Read(r io.Reader) error {
 		return fmt.Errorf("unable to parse frame meta-data: %w", err)
 	}
 
-	if f.Type != Single {
+	if f.Type != FrameTypeSingle {
 		return fmt.Errorf("unhandled frame type: %s", f.Type.String())
 	}
 
