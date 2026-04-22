@@ -463,13 +463,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_spr_manipulation">SPR Manipulation</a>
 <ul class="sectlevel2">
 <li><a href="#_goldutil_spr_create_out_path_type_type_format_format_frame0_framex"><code>goldutil spr create --out &lt;path&gt; [--type &lt;type&gt;] [--format &lt;format&gt;] &lt;frame0&gt; [&lt;frameX&gt;…]</code></a></li>
-<li><a href="#_goldutil_spr_extract_dir_dir_file"><code>goldutil spr extract [--dir &lt;dir&gt;] &lt;file&gt;</code></a></li>
+<li><a href="#_goldutil_spr_extract_no_alpha_dir_dir_file"><code>goldutil spr extract [--no-alpha] [--dir &lt;dir&gt;] &lt;file&gt;</code></a></li>
 </ul>
 </li>
 <li><a href="#_wad_manipulation">WAD Manipulation</a>
 <ul class="sectlevel2">
 <li><a href="#_goldutil_wad_create_out_path_input0_inputx"><code>goldutil wad create --out &lt;path&gt; &lt;input0&gt; [&lt;inputx&gt;…]</code></a></li>
-<li><a href="#_goldutil_wad_extract_dir_dir_path"><code>goldutil wad extract --dir DIR PATH</code></a></li>
+<li><a href="#_goldutil_wad_extract_no_alpha_dir_dir_path"><code>goldutil wad extract [--no-alpha] --dir DIR PATH</code></a></li>
 <li><a href="#_goldutil_wad_info_path"><code>goldutil wad info &lt;path&gt;</code></a></li>
 </ul>
 </li>
@@ -752,7 +752,7 @@ determined by the last color on the palette.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_goldutil_spr_extract_dir_dir_file"><code>goldutil spr extract [--dir &lt;dir&gt;] &lt;file&gt;</code></h3>
+<h3 id="_goldutil_spr_extract_no_alpha_dir_dir_file"><code>goldutil spr extract [--no-alpha] [--dir &lt;dir&gt;] &lt;file&gt;</code></h3>
 <div class="paragraph">
 <p>Output all frames of a sprite as PNGs in the current working directory.<br>
 The output files will be named after the original sprite file name plus a frame
@@ -763,6 +763,13 @@ number suffix and an extension.</p>
 <dt class="hdlist1"><code>--dir &lt;dir&gt;</code></dt>
 <dd>
 <p>Output frames to <em>&lt;dir&gt;</em> directory instead of the current working directory.</p>
+</dd>
+<dt class="hdlist1"><code>--no-alpha</code></dt>
+<dd>
+<p>Don&#8217;t add an alpha channel and keep the original sprite palette verbatim.<br>
+By default goldutil rewrites the palette to include both color and alpha on
+index-alpha and alpha-test sprites to make them appear as they do in the
+engine, if you want to leave the original palette untouched use this flag.</p>
 </dd>
 </dl>
 </div>
@@ -795,7 +802,7 @@ maximum length supported by the WAD format.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_goldutil_wad_extract_dir_dir_path"><code>goldutil wad extract --dir DIR PATH</code></h3>
+<h3 id="_goldutil_wad_extract_no_alpha_dir_dir_path"><code>goldutil wad extract [--no-alpha] --dir DIR PATH</code></h3>
 <div class="paragraph">
 <p>Extract a WAD file in the given DIR as a bunch of PNG files.</p>
 </div>
@@ -804,6 +811,11 @@ maximum length supported by the WAD format.</p>
 <dt class="hdlist1"><code>--dir &lt;dir&gt;</code></dt>
 <dd>
 <p>Path to the directory where to write PNG files.</p>
+</dd>
+<dt class="hdlist1"><code>--no-alpha</code></dt>
+<dd>
+<p>Don&#8217;t add an alpha channel and keep the original textures palette verbatim.<br>
+By default goldutil rewrites the palette to add an alpha channel on transparent texture (those that start with a <em>{</em>).</p>
 </dd>
 </dl>
 </div>
@@ -1023,7 +1035,7 @@ entities which will <em>toggle</em> the <code>multisource</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-20 16:36:53 +0200
+Last updated 2026-04-22 18:30:26 +0200
 </div>
 </div>
 </body>
