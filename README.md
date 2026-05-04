@@ -26,7 +26,7 @@ USAGE:
    goldutil [global options] [command [command options]]
 
 VERSION:
-   v1.5.0
+   v1.6.0
 
 DESCRIPTION:
    goldutil can read, modify, and write multiple file formats used by the GoldSrc (Half-Life) engine.

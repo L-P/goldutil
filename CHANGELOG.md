@@ -1,12 +1,12 @@
-# next
+# v1.6.0
 - Add command wav loop
 - Add command bsp limits
 - Build releases using Go v1.26
 - Bump dependencies
 - Allow sprite frames to have different sizes
 - Fix missing color in index-alpha sprite extract
-- Add --no-alpha flag to sprite extract
-- Add --no-alpha flag to wad extract and make '{'-prefixed textures transparent by default
+- Add `--no-alpha` flag to sprite extract
+- Add `--no-alpha` flag to wad extract and make `{`-prefixed textures transparent by default
 - Add palette color output to spr info
 
 # v1.5.0
