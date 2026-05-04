@@ -1,3 +1,6 @@
+# next
+- Remove erroneous textures lump size limit
+
 # v1.6.1
 - Fix CI
 

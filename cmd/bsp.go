@@ -101,7 +101,12 @@ func doBSPLimits(ctx context.Context, cmd *cli.Command) error {
 
 	for _, v := range bsp.Limits() {
 		if v.Max <= 0 {
-			return fmt.Errorf("developer error, invalid limit for: %s", v.Desc)
+			fmt.Fprintf(
+				cmd.Writer,
+				"%-18s % 9d % 9s\n",
+				v.Desc, v.Current, "∞",
+			)
+			continue
 		}
 
 		pct := math.Ceil(float64(v.Current) / float64(v.Max) * 100)
