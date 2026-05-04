@@ -1,3 +1,6 @@
+# v1.6.1
+- Fix CI
+
 # v1.6.0
 - Add command wav loop
 - Add command bsp limits

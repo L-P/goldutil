@@ -20,10 +20,10 @@ jobs:
           go-version: '1.26'
 
       - name: test
-        run: make test
+        run: make ci-test
 
       - name: build linux-amd64
-        run: make
+        run: make ci-linux
 
       - name: upload-artifact linux-amd64
         uses: actions/upload-artifact@v7
@@ -32,7 +32,7 @@ jobs:
           path: goldutil
 
       - name: build windows-amd64
-        run: make windows
+        run: make ci-windows
 
       - name: upload-artifact windows-amd64
         uses: actions/upload-artifact@v7
