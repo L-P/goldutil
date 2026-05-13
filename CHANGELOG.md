@@ -1,5 +1,6 @@
 # next
 - Remove erroneous textures lump size limit
+- Add 'bsp entities' command
 
 # v1.6.1
 - Fix CI

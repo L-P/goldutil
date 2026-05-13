@@ -72,6 +72,17 @@ func doBSPRemapMaterials(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+func doBSPEntities(ctx context.Context, cmd *cli.Command) error {
+	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
+	if err != nil {
+		return fmt.Errorf("unable to load BSP: %w", err)
+	}
+
+	fmt.Fprint(cmd.Writer, string(bsp.Entities))
+
+	return nil
+}
+
 func doBSPInfo(ctx context.Context, cmd *cli.Command) error {
 	bsp, err := bsp.LoadFromFile(cmd.Args().Get(0))
 	if err != nil {

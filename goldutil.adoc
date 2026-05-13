@@ -13,7 +13,7 @@ Synopsis
 *goldutil* [global options] <command> [command options] [command arguments] +
 *goldutil* help [command]
 
-*goldutil* bsp [info | limits | remap-materials] +
+*goldutil* bsp [entities | info | limits | remap-materials] +
 *goldutil* fgd +
 *goldutil* map [export | graph | neat] +
 *goldutil* mod [filter-materials | filter-wads] +
@@ -29,6 +29,9 @@ GoldSrc (Half-Life) engine.
 
 BSP Manipulation
 ----------------
+=== `goldutil bsp entities <input>`
+Print raw entity data from a BSP.
+
 === `goldutil bsp info <input>`
 Print parsed data from a BSP.
 

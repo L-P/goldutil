@@ -44,6 +44,11 @@ func newApp() *cli.Command {
 				Usage: "BSP (compiled maps) manipulation.",
 				Commands: []*cli.Command{
 					{
+						Name:   "entities",
+						Action: doBSPEntities,
+						Usage:  "Print raw entity data from a BSP.",
+					},
+					{
 						Name:   "info",
 						Action: doBSPInfo,
 						Usage:  "Print parsed data from a BSP.",
