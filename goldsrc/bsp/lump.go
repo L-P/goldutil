@@ -42,7 +42,8 @@ const (
 	MaxMapPlanes       = 0x7FFF
 	MaxMapSurfEdges    = 512000
 	MaxMapTexInfo      = 0x7FFF
-	// VHLT says 4096 but it must be the _number_ of textures, not the lump size. I went over 100 MB and everything was fine.
+	// VHLT says 4096 but it must be the _number_ of textures, not the lump
+	// size. I went over 100 MB and everything was fine.
 	MaxMapTextures   = -1
 	MaxMapVertices   = 0xFFFF
 	MaxMapVisibility = 0x800000
