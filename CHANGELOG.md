@@ -1,4 +1,4 @@
-# next
+# v1.7.0
 - Remove erroneous textures lump size limit
 - Add 'bsp entities' command
 - Allow map graph to read fro STDIN
