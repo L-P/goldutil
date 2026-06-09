@@ -1,7 +1,7 @@
 # v1.7.0
 - Remove erroneous textures lump size limit
 - Add 'bsp entities' command
-- Allow map graph to read fro STDIN
+- Allow map graph to read from STDIN
 - Fix bsp entities displaying NUL byte
 - Fix map graph not deduplicating targets (MMs with #suffixes)
 - Fix map graph not cleaning up names graphviz cannot parse
