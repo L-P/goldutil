@@ -12,7 +12,9 @@ func GraphQMap(qm *qmap.QMap, w io.Writer) {
 	fmt.Fprintln(w, "digraph TB {")
 	fmt.Fprintln(w, "  overlap = false;")
 
+	aliases := make(map[string]string)
 	var entNumber int
+
 	for v := range qm.Entities() {
 		entNumber++
 		class := v.KVs["classname"]
@@ -22,22 +24,22 @@ func GraphQMap(qm *qmap.QMap, w io.Writer) {
 		}
 
 		if class == "multi_manager" {
-			graphMultiManager(v, w)
+			graphMultiManager(v, w, aliases)
 			continue
 		}
 
 		target, ok := v.KVs["target"]
 		if ok && target != "" {
 			if class == "trigger_relay" {
-				graphTriggerRelayTarget(v, target, w)
+				graphTriggerRelayTarget(v, target, w, aliases)
 			} else {
-				fmt.Fprintf(w, "  %s -> %s;\n", name, target)
+				printRelation(w, aliases, name, target, "")
 			}
 		}
 
 		message, ok := v.KVs["message"]
 		if ok && (class == "path_track" || class == "path_corner") {
-			fmt.Fprintf(w, "  %s -> %s;\n", name, message)
+			printRelation(w, aliases, name, message, "")
 		}
 
 		triggerTarget, ok := v.KVs["TriggerTarget"]
@@ -47,17 +49,17 @@ func GraphQMap(qm *qmap.QMap, w io.Writer) {
 				condition = "0"
 			}
 
-			fmt.Fprintf(w, "  %s -> %s [label=\"cond:%s\"];\n", name, triggerTarget, condition)
+			printRelation(w, aliases, name, triggerTarget, "cond:"+condition)
 		}
 
 		killTarget, ok := v.KVs["killtarget"]
 		if ok && killTarget != "" {
-			fmt.Fprintf(w, "  %s -> %s [label=\"kill\"];\n", name, killTarget)
+			printRelation(w, aliases, name, killTarget, "kill")
 		}
 
 		master, ok := v.KVs["master"]
 		if ok && master != "" {
-			fmt.Fprintf(w, "  %s -> %s [label=\"master\"];\n", name, master)
+			printRelation(w, aliases, name, master, "master")
 		}
 	}
 
@@ -72,7 +74,7 @@ var mmIgnored = map[string]struct{}{
 	"spawnflags": {},
 }
 
-func graphMultiManager(mm qmap.AnonymousEntity, w io.Writer) {
+func graphMultiManager(mm qmap.AnonymousEntity, w io.Writer, aliases map[string]string) {
 	for target := range mm.KVs {
 		if _, ok := mmIgnored[target]; ok {
 			continue
@@ -87,11 +89,16 @@ func graphMultiManager(mm qmap.AnonymousEntity, w io.Writer) {
 			continue
 		}
 
-		fmt.Fprintf(w, "  %s -> %s;\n", mm.KVs["targetname"], target)
+		printRelation(w, aliases, mm.KVs["targetname"], target, "")
 	}
 }
 
-func graphTriggerRelayTarget(relay qmap.AnonymousEntity, target string, w io.Writer) {
+func graphTriggerRelayTarget(
+	relay qmap.AnonymousEntity,
+	target string,
+	w io.Writer,
+	aliases map[string]string,
+) {
 	name := relay.KVs["targetname"]
 	state, ok := relay.KVs["triggerstate"]
 	if !ok {
@@ -100,10 +107,43 @@ func graphTriggerRelayTarget(relay qmap.AnonymousEntity, target string, w io.Wri
 
 	switch state {
 	case "1":
-		fmt.Fprintf(w, "  %s -> %s [label=\"on\"];\n", name, target)
+		printRelation(w, aliases, name, target, "on")
 	case "2":
-		fmt.Fprintf(w, "  %s -> %s [label=\"toggle\"];\n", name, target)
+		printRelation(w, aliases, name, target, "toggle")
 	default:
-		fmt.Fprintf(w, "  %s -> %s [label=\"off\"];\n", name, target)
+		printRelation(w, aliases, name, target, "off")
 	}
+}
+
+func printRelation(
+	w io.Writer,
+	aliases map[string]string,
+	from, to, label string,
+) {
+	from = aliasTargetname(w, aliases, canonicalTargetName(from))
+	to = aliasTargetname(w, aliases, canonicalTargetName(to))
+
+	if label != "" {
+		fmt.Fprintf(w, "  %s -> %s [label=\"%s\"];\n", from, to, label)
+	} else {
+		fmt.Fprintf(w, "  %s -> %s;\n", from, to)
+	}
+}
+
+func aliasTargetname(w io.Writer, aliases map[string]string, name string) string {
+	alias, ok := aliases[name]
+	if !ok {
+		alias = fmt.Sprintf("_goldutil_%d", len(aliases))
+		aliases[name] = alias
+		fmt.Fprintf(w, "  %s [label=\"%s\"];\n", alias, name)
+	}
+
+	return alias
+}
+
+func canonicalTargetName(str string) string {
+	// The pound is used to repeat names in multi_manager, it's ignored
+	// somewhere in the engine (not the dlls).
+	ret, _, _ := strings.Cut(str, "#")
+	return ret
 }

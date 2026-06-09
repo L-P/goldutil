@@ -3,6 +3,8 @@
 - Add 'bsp entities' command
 - Allow map graph to read fro STDIN
 - Fix bsp entities displaying NUL byte
+- Fix map graph not deduplicating targets (MMs with #suffixes)
+- Fix map graph not cleaning up names graphviz cannot parse
 
 # v1.6.1
 - Fix CI
