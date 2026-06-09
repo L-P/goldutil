@@ -78,7 +78,13 @@ func doBSPEntities(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to load BSP: %w", err)
 	}
 
-	fmt.Fprint(cmd.Writer, string(bsp.Entities))
+	for _, c := range bsp.Entities {
+		if c == 0x00 {
+			break
+		}
+
+		fmt.Fprint(cmd.Writer, string(c))
+	}
 
 	return nil
 }
