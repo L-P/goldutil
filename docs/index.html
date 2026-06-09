@@ -443,6 +443,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_description">Description</a></li>
 <li><a href="#_bsp_manipulation">BSP Manipulation</a>
 <ul class="sectlevel2">
+<li><a href="#_goldutil_bsp_entities_input"><code>goldutil bsp entities &lt;input&gt;</code></a></li>
 <li><a href="#_goldutil_bsp_info_input"><code>goldutil bsp info &lt;input&gt;</code></a></li>
 <li><a href="#_goldutil_bsp_limits_input"><code>goldutil bsp limits &lt;input&gt;</code></a></li>
 <li><a href="#_goldutil_bsp_remap_materials_out_output_original_materials_path_replacement_materials_path_verbose_input"><code>goldutil bsp remap-materials --out &lt;output&gt; [--original-materials &lt;path&gt;] [--replacement-materials &lt;path&gt;] [--verbose] &lt;input&gt;</code></a></li>
@@ -452,7 +453,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel2">
 <li><a href="#_goldutil_map_export_cleanup_tb_file"><code>goldutil map export [--cleanup-tb] [&lt;file&gt;]</code></a></li>
 <li><a href="#_goldutil_map_neat_moddir_path_file"><code>goldutil map neat [--moddir &lt;path&gt;] &lt;file&gt;</code></a></li>
-<li><a href="#_goldutil_map_graph_file"><code>goldutil map graph &lt;file&gt;</code></a></li>
+<li><a href="#_goldutil_map_graph_file"><code>goldutil map graph [file]</code></a></li>
 </ul>
 </li>
 <li><a href="#_nod_manipulation">NOD Manipulation</a>
@@ -503,7 +504,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <strong>goldutil</strong> help [command]</p>
 </div>
 <div class="paragraph">
-<p><strong>goldutil</strong> bsp [info | limits | remap-materials]<br>
+<p><strong>goldutil</strong> bsp [entities | info | limits | remap-materials]<br>
 <strong>goldutil</strong> fgd<br>
 <strong>goldutil</strong> map [export | graph | neat]<br>
 <strong>goldutil</strong> mod [filter-materials | filter-wads]<br>
@@ -526,6 +527,12 @@ GoldSrc (Half-Life) engine.</p>
 <div class="sect1">
 <h2 id="_bsp_manipulation">BSP Manipulation</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_goldutil_bsp_entities_input"><code>goldutil bsp entities &lt;input&gt;</code></h3>
+<div class="paragraph">
+<p>Print raw entity data from a BSP.</p>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_goldutil_bsp_info_input"><code>goldutil bsp info &lt;input&gt;</code></h3>
 <div class="paragraph">
@@ -611,11 +618,12 @@ See <a href="#_neat_entities">Neat entities</a> and <a href="#_goldutil_fgd"><co
 </div>
 </div>
 <div class="sect2">
-<h3 id="_goldutil_map_graph_file"><code>goldutil map graph &lt;file&gt;</code></h3>
+<h3 id="_goldutil_map_graph_file"><code>goldutil map graph [file]</code></h3>
 <div class="paragraph">
 <p>Create a graphviz digraph of entity caller/callee relationships from a .map
 file. ripent exports use the same format and can be read too. Output is written
-to <em>STDOUT</em>.</p>
+to <em>STDOUT</em>.
+If no path is specified input is read from <em>STDIN</em>.</p>
 </div>
 </div>
 </div>
@@ -1035,7 +1043,7 @@ entities which will <em>toggle</em> the <code>multisource</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-22 18:30:26 +0200
+Last updated 2026-06-09 20:10:05 +0200
 </div>
 </div>
 </body>

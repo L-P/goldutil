@@ -1,6 +1,7 @@
 # next
 - Remove erroneous textures lump size limit
 - Add 'bsp entities' command
+- Allow map graph to read fro STDIN
 
 # v1.6.1
 - Fix CI

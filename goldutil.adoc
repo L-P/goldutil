@@ -77,10 +77,11 @@ See <<_neat_entities>> and <<_goldutil_fgd>>.
 `--moddir <path>`::
     root of the mod directory (eg. `valve`), defaults to the current working directory.
 
-=== `goldutil map graph <file>`
+=== `goldutil map graph [file]`
 Create a graphviz digraph of entity caller/callee relationships from a .map
 file. ripent exports use the same format and can be read too. Output is written
 to _STDOUT_.
+If no path is specified input is read from _STDIN_.
 
 NOD Manipulation
 ----------------

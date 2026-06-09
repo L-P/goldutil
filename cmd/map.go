@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
@@ -13,11 +12,6 @@ import (
 )
 
 func doMapGraph(ctx context.Context, cmd *cli.Command) error {
-	path := cmd.Args().Get(0)
-	if path == "" {
-		return errors.New("expected one argument: the .map to parse and graph")
-	}
-
 	qm, err := loadQMap(cmd.Args().Get(0))
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
