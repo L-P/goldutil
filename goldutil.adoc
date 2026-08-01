@@ -266,7 +266,7 @@ rewritten to target `<targetname>_toggle`.
 `globalstate(string)`:: Copied verbatim to the underlying `multisource`.
 
 === `neat_message`
-Equivalent to env_message with three important differences:
+Equivalent to `env_message` with three important differences:
 
 - The message duration is read from _titles.txt_.
 - The `target` isn't fired until the message ends.

@@ -157,6 +157,7 @@ func handleMessage(
 			TargetName:   msg.TargetName,
 			Delay:        titles[msg.Message].HoldTime + msg.Delay,
 			Target:       msg.Target,
+			KillTarget:   msg.KillTarget,
 			TriggerState: msg.TriggerState,
 		},
 	})

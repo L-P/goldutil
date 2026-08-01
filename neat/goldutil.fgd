@@ -9,7 +9,8 @@
 [
     targetname(target_source) : "Name"
     target(target_destination) : "Target"
-    delay(string) : "Delay before trigger" : "0"
+    killtarget(target_destination) : "Kill Target"
+    delay(float) : "Delay before trigger" : "0"
 
     message(string) : "Message Name"
     spawnflags(flags) =
@@ -18,8 +19,8 @@
         2: "All Clients" : 0
     ]
     messagesound(sound) : "Sound Effect"
-    messagevolume(string) : "Volume 0-10" : "10"
-    messageattenuation(choices) : "Sound Radius" : 0 =
+    messagevolume(float) : "Volume 0-10" : "10"
+    messageattenuation(choices) : "Sound Radius" : 1 =
     [
         0 : "Small Radius"
         1 : "Medium Radius"

@@ -34,6 +34,7 @@ type Message struct {
 
 	TargetName   string `qmap:"targetname"`
 	Target       string
+	KillTarget   string `qmap:"killtarget"`
 	Message      string
 	Delay        float32
 	Flags        int                `qmap:"spawnflags"`
