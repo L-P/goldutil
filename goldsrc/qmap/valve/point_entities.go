@@ -76,3 +76,36 @@ type EnvMessage struct {
 	Volume      string      `qmap:"messagevolume"`
 	Attenuation Attenuation `qmap:"messageattenuation"`
 }
+
+type ScriptedSentence struct {
+	ClassName *string `qmap:"classname,scripted_sentence"`
+	Origin    Position
+
+	TargetName string `qmap:"targetname"`
+	Flags      int    `qmap:"spawnflags"`
+
+	Entity   string
+	Listener string
+	Sentence string
+	Duration float32
+	Radius   float32
+	Refire   float32
+
+	Volume      float32
+	Attenuation Attenuation
+}
+
+/*
+
+[
+	spawnflags(Flags) =
+	sentence(string) : "Sentence Name" : ""
+	entity(string) : "Speaker Type"
+	duration(string) : "Sentence Time" : "3"
+	radius(integer) : "Search Radius" : 512
+	refire(string) : "Delay Before Refire" : "3"
+	listener(string) : "Listener Type"
+	volume(string) : "Volume 0-10" : "10"
+	attenuation(Choices) : "Sound Radius" : 0 =
+]
+*/

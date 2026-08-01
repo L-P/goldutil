@@ -1,4 +1,4 @@
-// This file is part of the test suite, 
+// This file is part of the test suite,
 
 $position 0.05 0.85
 $effect 0

@@ -26,6 +26,10 @@ func Neatify(qm *qmap.QMap, mod *os.Root) error {
 		return fmt.Errorf("unable to handle neat_message: %w", err)
 	}
 
+	if err := handleSentences(qm, mod); err != nil {
+		return fmt.Errorf("unable to handle neat_sentence: %w", err)
+	}
+
 	return nil
 }
 
@@ -159,6 +163,68 @@ func handleMessage(
 			Target:       msg.Target,
 			KillTarget:   msg.KillTarget,
 			TriggerState: msg.TriggerState,
+		},
+	})
+}
+
+func handleSentences(qm *qmap.QMap, mod *os.Root) error {
+	sentences, err := qmap.FindByKV[Sentence](qm, "classname", "neat_sentence")
+	if err != nil {
+		return fmt.Errorf("unable to obtain neat_sentence entitites: %w", err)
+	}
+
+	titles, err := goldsrc.NewTitlesFromModRoot(mod)
+	if err != nil {
+		return fmt.Errorf("unable to parse titles.txt: %w", err)
+	}
+	for _, v := range sentences {
+		if err := handleSentence(qm, v.Index, v.Entity, titles); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func handleSentence(
+	qm *qmap.QMap,
+	index uuid.UUID,
+	sentence Sentence,
+	titles map[string]goldsrc.Title,
+) error {
+	if err := sentence.Validate(titles); err != nil {
+		return err
+	}
+	qm.Delete(index)
+
+	return qm.AddEntities([]any{
+		valve.EnvMessage{
+			Origin:     sentence.Origin,
+			TargetName: sentence.TargetName,
+			Message:    sentence.Sentence,
+			Flags:      sentence.MessageFlags,
+		},
+		valve.ScriptedSentence{
+			Origin:     sentence.Origin,
+			TargetName: sentence.TargetName,
+
+			Flags:       sentence.SentenceFlags,
+			Sentence:    sentence.Sentence,
+			Entity:      sentence.Entity,
+			Listener:    sentence.Listener,
+			Duration:    titles[sentence.Sentence].HoldTime + sentence.Duration,
+			Radius:      sentence.Radius,
+			Refire:      sentence.Refire,
+			Volume:      sentence.Volume,
+			Attenuation: sentence.Attenuation,
+		},
+		valve.TriggerRelay{
+			Origin:       sentence.Origin,
+			TargetName:   sentence.TargetName,
+			Delay:        titles[sentence.Sentence].HoldTime + sentence.Delay,
+			Target:       sentence.Target,
+			KillTarget:   sentence.KillTarget,
+			TriggerState: sentence.TriggerState,
 		},
 	})
 }

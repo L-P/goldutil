@@ -59,3 +59,41 @@ func (ent Message) Validate(titles map[string]goldsrc.Title) error {
 
 	return nil
 }
+
+type Sentence struct {
+	Classname  *string `qmap:"classname,neat_sentence"`
+	Origin     valve.Position
+	TargetName string `qmap:"targetname"`
+
+	MessageFlags int `qmap:"messageflags"`
+	Target       string
+	KillTarget   string `qmap:"killtarget"`
+	Delay        float32
+
+	Sentence      string
+	Entity        string
+	Listener      string
+	Radius        float32
+	Refire        float32
+	Duration      float32
+	Volume        float32            `qmap:"messagevolume"`
+	SentenceFlags int                `qmap:"sentenceflags"`
+	Attenuation   valve.Attenuation  `qmap:"messageattenuation"`
+	TriggerState  valve.TriggerState `qmap:"triggerstate"`
+}
+
+func (ent Sentence) Validate(titles map[string]goldsrc.Title) error {
+	if ent.TargetName == "" {
+		return errors.New("empty targetname")
+	}
+
+	if ent.Sentence == "" {
+		return errors.New("empty sentence")
+	}
+
+	if _, ok := titles[ent.Sentence]; !ok {
+		return fmt.Errorf("message name '%s' not found in titles.txt", ent.Sentence)
+	}
+
+	return nil
+}

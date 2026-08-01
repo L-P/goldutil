@@ -486,6 +486,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel2">
 <li><a href="#_neat_master"><code>neat_master</code></a></li>
 <li><a href="#_neat_message"><code>neat_message</code></a></li>
+<li><a href="#_neat_sentence"><code>neat_sentence</code></a></li>
 </ul>
 </li>
 </ul>
@@ -978,7 +979,7 @@ entities which will <em>toggle</em> the <code>multisource</code>.</p>
 <div class="sect2">
 <h3 id="_neat_message"><code>neat_message</code></h3>
 <div class="paragraph">
-<p>Equivalent to env_message with three important differences:</p>
+<p>Equivalent to <code>env_message</code> with three important differences:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1038,12 +1039,111 @@ entities which will <em>toggle</em> the <code>multisource</code>.</p>
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_neat_sentence"><code>neat_sentence</code></h3>
+<div class="paragraph">
+<p>Equivalent to <code>scripted_sentence</code> with an added <code>env_message</code>.</p>
+</div>
+<div class="paragraph">
+<p>The <code>env_message</code> part has the same behaviour as <code>neat_message</code> except:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>sentence</code> property is also used as the message name, ie. it must exist
+verbatim in <em>titles.txt</em>, leading exclamation point included. This allows
+having a generic message for multiple sentences when a sentence prefix is
+used (ie. when no leading exclamation point is used).</p>
+</li>
+<li>
+<p>There is no sound nor sound-related properties.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The <code>scripted_sentence</code> part has two notable differences:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The message duration read from <em>titles.txt</em> is also used as the sentence
+duration.</p>
+</li>
+<li>
+<p>The <code>duration</code> property is added to the duration read from <em>titles.txt</em>.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="_properties_3">Properties</h4>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>targetname(target_source)</code></dt>
+<dd>
+<p>Entity name</p>
+</dd>
+<dt class="hdlist1"><code>target(target_destination)</code></dt>
+<dd>
+<p>Entity to trigger when the message ends.</p>
+</dd>
+<dt class="hdlist1"><code>delay(string)</code></dt>
+<dd>
+<p>Additional delay before triggering <code>target</code>.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>The following properties are copied verbatim to the generated <code>env_message</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>messageflags(flags)</code> to <code>spawnflags</code></p>
+</li>
+<li>
+<p><code>triggerstate(choices)</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following properties are copied verbatim to the generated <code>scripted_sentence</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>sentence(string)</code></p>
+</li>
+<li>
+<p><code>entity(target_destination)</code></p>
+</li>
+<li>
+<p><code>listener(target_destination)</code></p>
+</li>
+<li>
+<p><code>radius(float)</code></p>
+</li>
+<li>
+<p><code>refire(float)</code></p>
+</li>
+<li>
+<p><code>volume(float)</code></p>
+</li>
+<li>
+<p><code>messageattenuation(choices)</code></p>
+</li>
+<li>
+<p><code>sentenceflags(flags)</code> to <code>spawnflags</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-06-09 20:10:05 +0200
+Last updated 2026-08-01 16:13:50 +0200
 </div>
 </div>
 </body>

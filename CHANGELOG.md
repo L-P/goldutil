@@ -1,5 +1,6 @@
 # next
 - Add missing killtarget to `neat_message`
+- Add `neat_sentence`
 
 # v1.7.0
 - Remove erroneous textures lump size limit

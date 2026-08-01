@@ -285,3 +285,41 @@ The following properties are copied verbatim to the generated `env_message`:
 - `messagevolume(string)`
 - `messageattenuation(choices)`
 - `triggerstate(choices)`
+
+=== `neat_sentence`
+Equivalent to `scripted_sentence` with an added `env_message`.
+
+The `env_message` part has the same behaviour as `neat_message` except:
+
+- The `sentence` property is also used as the message name, ie. it must exist
+  verbatim in _titles.txt_, leading exclamation point included. This allows
+  having a generic message for multiple sentences when a sentence prefix is
+  used (ie. when no leading exclamation point is used).
+- There is no sound nor sound-related properties.
+
+The `scripted_sentence` part has two notable differences:
+
+- The message duration read from _titles.txt_ is also used as the sentence
+  duration.
+- The `duration` property is added to the duration read from _titles.txt_.
+
+==== Properties
+`targetname(target_source)`:: Entity name
+`target(target_destination)`:: Entity to trigger when the message ends.
+`delay(string)`:: Additional delay before triggering `target`.
+
+The following properties are copied verbatim to the generated `env_message`:
+
+- `messageflags(flags)` to `spawnflags`
+- `triggerstate(choices)`
+
+The following properties are copied verbatim to the generated `scripted_sentence`:
+
+- `sentence(string)`
+- `entity(target_destination)`
+- `listener(target_destination)`
+- `radius(float)`
+- `refire(float)`
+- `volume(float)`
+- `messageattenuation(choices)`
+- `sentenceflags(flags)` to `spawnflags`

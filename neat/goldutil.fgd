@@ -10,7 +10,7 @@
     targetname(target_source) : "Name"
     target(target_destination) : "Target"
     killtarget(target_destination) : "Kill Target"
-    delay(float) : "Delay before trigger" : "0"
+    delay(float) : "Delay before trigger after message duration" : "0"
 
     message(string) : "Message Name"
     spawnflags(flags) =
@@ -34,4 +34,49 @@
         1 : "On"
         2 : "Toggle"
     ]
+]
+
+@PointClass = neat_sentence : "Neat Sentence"
+[
+    targetname(target_source) : "Name"
+
+    // {{{ env_message
+    triggerstate(choices) : "Trigger State" : 2 =
+    [
+        0 : "Off"
+        1 : "On"
+        2 : "Toggle"
+    ]
+    messageflags(flags) =
+    [
+        1: "Play Once" : 0
+        2: "All Clients" : 0
+    ]
+    target(target_destination) : "Target"
+    killtarget(target_destination) : "Kill Target"
+    delay(string) : "Delay before trigger after message duration" : "0"
+    // }}} env_message
+
+    // {{{ scripted_sentence
+    sentence(string) : "Sentence Name" : "!SC_PLFEAR0"
+    entity(target_destination) : "Speaker entity"
+    listener(target_destination) : "Listener"
+    radius(float) : "Search radius"
+    refire(float) : "Delay before refire after message duration"
+    volume(float) : "Volume 0-10" : "10"
+    messageattenuation(choices) : "Sound Radius" : 1 =
+    [
+        0 : "Small Radius"
+        1 : "Medium Radius"
+        2 : "Large  Radius"
+        3 : "Play Everywhere"
+    ]
+	sentenceflags(flags) =
+	[
+		1 : "Fire Once" : 1
+		2 : "Followers Only" : 0
+		4 : "Interrupt Speech" : 1
+		8 : "Concurrent" : 0
+	]
+    // }}}
 ]

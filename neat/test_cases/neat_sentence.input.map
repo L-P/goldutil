@@ -1,0 +1,16 @@
+// Game: Half-Life
+// Format: Valve
+// entity 0
+{
+"classname" "neat_sentence"
+"delay" "0"
+"triggerstate" "2"
+"sentence" "msgname"
+"volume" "10.000000"
+"messageattenuation" "1"
+"sentenceflags" "4"
+"origin" "168 56 72"
+"entity" "barney"
+"listener" "player"
+"targetname" "debug_msg"
+}
