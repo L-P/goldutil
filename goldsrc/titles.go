@@ -35,6 +35,10 @@ type Title struct {
 	HoldTime       float32     // $holdtime
 }
 
+func (t Title) TotalTime() float32 {
+	return t.FadeIn + t.HoldTime + t.FadeOut
+}
+
 func NewTitlesFromReader(r io.Reader) (map[string]Title, error) {
 	parser := newTitlesParser(r)
 	return parser.run()

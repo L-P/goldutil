@@ -1,4 +1,5 @@
 # next
+- Use total visible time as duration in `neat_message` and `neat_sentence`
 - Add missing killtarget to `neat_message`
 - Add `neat_sentence`
 

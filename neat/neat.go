@@ -159,7 +159,7 @@ func handleMessage(
 		valve.TriggerRelay{
 			Origin:       msg.Origin,
 			TargetName:   msg.TargetName,
-			Delay:        titles[msg.Message].HoldTime + msg.Delay,
+			Delay:        titles[msg.Message].TotalTime() + msg.Delay,
 			Target:       msg.Target,
 			KillTarget:   msg.KillTarget,
 			TriggerState: msg.TriggerState,
@@ -197,6 +197,8 @@ func handleSentence(
 	}
 	qm.Delete(index)
 
+	baseDuration := titles[sentence.Sentence].TotalTime()
+
 	return qm.AddEntities([]any{
 		valve.EnvMessage{
 			Origin:     sentence.Origin,
@@ -212,7 +214,7 @@ func handleSentence(
 			Sentence:    sentence.Sentence,
 			Entity:      sentence.Entity,
 			Listener:    sentence.Listener,
-			Duration:    titles[sentence.Sentence].HoldTime + sentence.Duration,
+			Duration:    baseDuration + sentence.Duration,
 			Radius:      sentence.Radius,
 			Refire:      sentence.Refire,
 			Volume:      sentence.Volume,
@@ -221,7 +223,7 @@ func handleSentence(
 		valve.TriggerRelay{
 			Origin:       sentence.Origin,
 			TargetName:   sentence.TargetName,
-			Delay:        titles[sentence.Sentence].HoldTime + sentence.Delay,
+			Delay:        baseDuration + sentence.Delay,
 			Target:       sentence.Target,
 			KillTarget:   sentence.KillTarget,
 			TriggerState: sentence.TriggerState,
