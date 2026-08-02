@@ -9,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"golang.org/x/exp/constraints"
 )
 
 type TitleEffect int
@@ -35,7 +37,23 @@ type Title struct {
 	HoldTime       float32     // $holdtime
 }
 
+//nolint:ireturn // what else am I supposed to do?
+func coalesce[T constraints.Integer](args ...T) T {
+	for _, v := range args {
+		if v != 0 {
+			return v
+		}
+	}
+
+	return T(0)
+}
+
 func (t Title) TotalTime() float32 {
+	if t.Effect == TitleEffectTypewriter {
+		length := coalesce(len(t.Message), len(t.Name))
+		return (t.FadeIn * float32(length)) + t.HoldTime + t.FadeOut
+	}
+
 	return t.FadeIn + t.HoldTime + t.FadeOut
 }
 
