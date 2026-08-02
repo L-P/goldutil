@@ -60,7 +60,7 @@
     // {{{ scripted_sentence
     sentence(string) : "Sentence Name" : "!SC_PLFEAR0"
     entity(target_destination) : "Speaker entity"
-    listener(target_destination) : "Listener"
+    listener(target_destination) : "Listener" : "player"
     radius(float) : "Search radius"
     refire(float) : "Delay before refire after message duration"
     volume(float) : "Volume 0-10" : "10"
