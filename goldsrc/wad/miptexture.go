@@ -4,9 +4,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/L-P/goldutil/palette"
 	"io"
 	"strings"
+
+	"github.com/L-P/goldutil/palette"
 )
 
 // Number of mimmaps per texture, base texture is mipmap 0.
@@ -22,6 +23,18 @@ type MIPTextureHeader struct {
 	Height int32
 
 	MIPOffsets [NumMIPMaps]int32
+}
+
+func StripTexturePrefix(name string) string {
+	if len(name) >= 2 && (name[0] == '+' || name[0] == '-') {
+		name = name[2:]
+	}
+
+	if len(name) >= 1 && (name[0] == '{' || name[0] == '~') {
+		name = name[1:]
+	}
+
+	return name
 }
 
 // Returns true if the texture data is present, meaning we're either in a WAD

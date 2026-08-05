@@ -110,6 +110,7 @@ func doModFilterWADs(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
+// For use with materials.txt shenanigans only because of name prefix hacks.
 func getUsedTextureNames(paths []string) (set.PresenceSet[string], error) {
 	seen := set.NewPresenceSet[string](0)
 	for _, path := range paths {
@@ -119,7 +120,8 @@ func getUsedTextureNames(paths []string) (set.PresenceSet[string], error) {
 		}
 
 		for _, tex := range bsp.Textures.Textures {
-			seen.Set(strings.ToUpper(tex.Name.String()))
+			name := wad.StripTexturePrefix(strings.ToUpper(tex.Name.String()))
+			seen.Set(name)
 		}
 	}
 
