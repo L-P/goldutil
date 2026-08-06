@@ -3,6 +3,7 @@
 - Add missing killtarget to `neat_message`
 - Add `neat_sentence`
 - Fix mod filter-materials not handling prefixes
+- Add entity count to bsp limits
 
 # v1.7.0
 - Remove erroneous textures lump size limit

@@ -2,12 +2,16 @@
 package bsp
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
+
+	"github.com/L-P/goldutil/goldsrc/qmap"
 )
 
 const BSPVersionGoldSrc = 30
@@ -241,7 +245,7 @@ type Limit struct {
 }
 
 func (bsp *BSP) Limits() []Limit {
-	ret := make([]Limit, len(bsp.LumpIndex))
+	ret := make([]Limit, len(bsp.LumpIndex)+1)
 	for i, v := range bsp.LumpIndex {
 		lump := LumpType(i)
 
@@ -252,8 +256,22 @@ func (bsp *BSP) Limits() []Limit {
 		}
 	}
 
+	// HACK: Add entity count.
+	qm, err := qmap.LoadFromReader(bytes.NewReader(
+		bsp.Entities[:len(bsp.Entities)-1],
+	))
+	if err != nil {
+		panic(err)
+	}
+	ret[LumpTypeEntities].Desc = "Entities string"
+	ret[len(ret)-1] = Limit{
+		Desc:    "Entities count",
+		Current: len(slices.Collect(qm.Entities())),
+		Max:     MaxMapEntities,
+	}
+
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Desc[0] < ret[j].Desc[0]
+		return ret[i].Desc < ret[j].Desc
 	})
 
 	return ret
