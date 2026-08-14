@@ -14,7 +14,7 @@ docs/goldutil.1: goldutil.adoc
 docs/index.html: goldutil.adoc
 	asciidoctor --backend html "$<" -o "$@"
 
-.PHONY: $(EXEC) test lint ci-windows ci-linux ci-test
+.PHONY: $(EXEC) test lint ci-windows ci-linux ci-test tags
 
 ci-linux:
 	GOOS=linux GOARCH=amd64 go build ${CIFLAGS} ${BUILDFLAGS} -o goldutil ./cmd
@@ -30,3 +30,6 @@ ci-test:
 
 lint:
 	golangci-lint run
+
+tags:
+	ctags-universal -R cmd fgd goldsrc internal neat palette

@@ -18,7 +18,7 @@ var Version = "unknown version"
 func main() {
 	var app = newApp()
 	if err := app.Run(context.Background(), os.Args); err != nil {
-		fmt.Println(err.Error()) //nolint:forbidigo
+		fmt.Fprintln(app.ErrWriter, err.Error())
 		os.Exit(1)
 	}
 }
@@ -101,10 +101,21 @@ func newApp() *cli.Command {
 
 			{
 				Name:  "fgd",
-				Usage: "Output the FGD to use with goldutil map neat.",
-				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Fprint(cmd.Writer, neat.FGD)
-					return nil
+				Usage: "FGD (game-specific editor configuration) manipulation.",
+				Commands: []*cli.Command{
+					{
+						Name:   "check",
+						Action: doFGDCheck,
+						Usage:  "Perform a syntax check on a FGD.",
+					},
+					{
+						Name:  "neat",
+						Usage: "Output the FGD to use with goldutil map neat.",
+						Action: func(ctx context.Context, cmd *cli.Command) error {
+							fmt.Fprint(cmd.Writer, neat.FGD)
+							return nil
+						},
+					},
 				},
 			},
 

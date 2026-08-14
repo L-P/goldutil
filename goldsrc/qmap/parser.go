@@ -21,7 +21,6 @@ const (
 
 type parser struct {
 	scanner *bufio.Scanner
-	state   parserState
 	qm      *QMap
 
 	curEntity *AnonymousEntity
@@ -30,7 +29,6 @@ type parser struct {
 
 func newParser(r io.Reader) parser {
 	return parser{
-		state:   psOutside,
 		scanner: bufio.NewScanner(r),
 		qm:      New(),
 	}

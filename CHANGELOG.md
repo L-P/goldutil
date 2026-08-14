@@ -1,9 +1,12 @@
 # next
+- BC break: the "fgd" command is now "fgd neat"
+- Add "fgd check" command
 - Use total visible time as duration in `neat_message` and `neat_sentence`
 - Add missing killtarget to `neat_message`
 - Add `neat_sentence`
 - Fix mod filter-materials not handling prefixes
 - Add entity count to bsp limits
+- Fix error output being written to stdout
 
 # v1.7.0
 - Remove erroneous textures lump size limit

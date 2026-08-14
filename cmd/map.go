@@ -12,7 +12,7 @@ import (
 )
 
 func doMapGraph(ctx context.Context, cmd *cli.Command) error {
-	qm, err := loadQMap(cmd.Args().Get(0))
+	qm, err := loadQMap(cmd)
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -23,7 +23,7 @@ func doMapGraph(ctx context.Context, cmd *cli.Command) error {
 }
 
 func doNeat(ctx context.Context, cmd *cli.Command) error {
-	qm, err := loadQMap(cmd.Args().Get(0))
+	qm, err := loadQMap(cmd)
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -43,7 +43,7 @@ func doNeat(ctx context.Context, cmd *cli.Command) error {
 }
 
 func doMapExport(ctx context.Context, cmd *cli.Command) error {
-	qm, err := loadQMap(cmd.Args().Get(0))
+	qm, err := loadQMap(cmd)
 	if err != nil {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
@@ -58,10 +58,10 @@ func doMapExport(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func loadQMap(path string) (*qmap.QMap, error) {
-	if path == "" {
-		return qmap.LoadFromReader(os.Stdin)
+func loadQMap(cmd *cli.Command) (*qmap.QMap, error) {
+	if path := cmd.Args().First(); path != "" {
+		return qmap.LoadFromFile(path)
 	}
 
-	return qmap.LoadFromFile(path)
+	return qmap.LoadFromReader(cmd.Reader)
 }

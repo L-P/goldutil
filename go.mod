@@ -3,6 +3,7 @@ module github.com/L-P/goldutil
 go 1.26.0
 
 require (
+	github.com/bzick/tokenizer v1.5.1
 	github.com/fatih/color v1.19.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1

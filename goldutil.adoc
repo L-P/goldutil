@@ -14,7 +14,7 @@ Synopsis
 *goldutil* help [command]
 
 *goldutil* bsp [entities | info | limits | remap-materials] +
-*goldutil* fgd +
+*goldutil* fgd [check | neat] +
 *goldutil* map [export | graph | neat] +
 *goldutil* mod [filter-materials | filter-wads] +
 *goldutil* nod [export] +
@@ -58,6 +58,15 @@ _materials.txt_
     Path to the replacement _materials.txt_ file, defaults to _valve_addon/sound/materials.txt_.
 `--verbose`::
     Output to _STDOUT_ what the original texture names were remapped to.
+
+FGD Manipulation
+----------------
+=== `goldutil fgd neat`
+Output to _STDOUT_ the FGD to use with xref:_goldutil_map_neat_moddir_path_file[goldutil map neat].
+
+=== `goldutil fgd check [<file>]`
+Parse the FGD and exit with an error if its syntax is invalid. If no _<file>_
+is provided the map will be read from _STDIN_.
 
 MAP Manipulation
 ----------------
@@ -192,11 +201,6 @@ Extract a WAD file in the given DIR as a bunch of PNG files.
 
 === `goldutil wad info <path>`
 Print parsed data from a WAD file.
-
-Misc modding utilities
-----------------------
-=== `goldutil fgd`
-Output to _STDOUT_ the FGD to use with xref:_goldutil_map_neat_moddir_path_file[goldutil map neat].
 
 === `goldutil mod filter-materials --in <materials> <bsp0> [<bspx>…]`
 Takes a _materials.txt_ file and only keep the texture names that are used in the

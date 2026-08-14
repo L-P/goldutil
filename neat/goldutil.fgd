@@ -15,8 +15,8 @@
     message(string) : "Message Name"
     spawnflags(flags) =
     [
-        1: "Play Once" : 0
-        2: "All Clients" : 0
+        1 : "Play Once" : 0
+        2 : "All Clients" : 0
     ]
     messagesound(sound) : "Sound Effect"
     messagevolume(float) : "Volume 0-10" : "10"
@@ -24,7 +24,7 @@
     [
         0 : "Small Radius"
         1 : "Medium Radius"
-        2 : "Large  Radius"
+        2 : "Large Radius"
         3 : "Play Everywhere"
     ]
 
@@ -49,8 +49,8 @@
     ]
     messageflags(flags) =
     [
-        1: "Play Once" : 0
-        2: "All Clients" : 0
+        1 : "Play Once" : 0
+        2 : "All Clients" : 0
     ]
     target(target_destination) : "Target"
     killtarget(target_destination) : "Kill Target"
@@ -71,12 +71,12 @@
         2 : "Large  Radius"
         3 : "Play Everywhere"
     ]
-	sentenceflags(flags) =
-	[
-		1 : "Fire Once" : 1
-		2 : "Followers Only" : 0
-		4 : "Interrupt Speech" : 1
-		8 : "Concurrent" : 0
-	]
+    sentenceflags(flags) =
+    [
+        1 : "Fire Once" : 1
+        2 : "Followers Only" : 0
+        4 : "Interrupt Speech" : 1
+        8 : "Concurrent" : 0
+    ]
     // }}}
 ]
