@@ -1,6 +1,7 @@
 package fgd_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -10,9 +11,13 @@ import (
 )
 
 func TestFGDParser(t *testing.T) {
-	actual, err := fgd.NewFromReader(strings.NewReader(input))
-	require.NoError(t, err)
-	require.Equal(t, expected, actual)
+	for i, v := range cases {
+		t.Run(fmt.Sprintf("#%d", i), func(t *testing.T) {
+			actual, err := fgd.NewFromReader(strings.NewReader(v.input))
+			require.NoError(t, err)
+			require.Equal(t, v.expected, actual)
+		})
+	}
 }
 
 func TestDogfood(t *testing.T) {
@@ -20,7 +25,18 @@ func TestDogfood(t *testing.T) {
 	require.NoError(t, err)
 }
 
-var input = `
+type testCase struct {
+	input    string
+	expected fgd.FGD
+	err      error
+}
+
+var cases = []testCase{
+	{
+		``, nil, nil,
+	},
+	{
+		`
 // Comment.
 @PointClass = test_point_entity : "Test point entity"
 [
@@ -34,41 +50,44 @@ var input = `
     targetname(target_source) : "Name"
     target(target_destination) : "Target"
 ]
-`
+`,
 
-var expected = fgd.FGD{
-	fgd.Definition{
-		Name:        "test_point_entity",
-		Type:        fgd.DefinitionTypePoint,
-		Description: "Test point entity",
-		Properties: []fgd.Property{
-			fgd.Property{
-				Name:        "targetname",
-				Description: "Name",
-				Type:        fgd.PropertyTypeTargetSource,
+		fgd.FGD{
+			fgd.Definition{
+				Name:        "test_point_entity",
+				Type:        fgd.DefinitionTypePoint,
+				Description: "Test point entity",
+				Properties: []fgd.Property{
+					fgd.Property{
+						Name:        "targetname",
+						Description: "Name",
+						Type:        fgd.PropertyTypeTargetSource,
+					},
+					fgd.Property{
+						Name:        "target",
+						Description: "Target",
+						Type:        fgd.PropertyTypeTargetDestination,
+					},
+				},
 			},
-			fgd.Property{
-				Name:        "target",
-				Description: "Target",
-				Type:        fgd.PropertyTypeTargetDestination,
+			fgd.Definition{
+				Name:        "test_brush_entity",
+				Type:        fgd.DefinitionTypeSolid,
+				Description: "Test brush entity",
+				Properties: []fgd.Property{
+					fgd.Property{
+						Name:        "targetname",
+						Description: "Name",
+						Type:        fgd.PropertyTypeTargetSource,
+					},
+					fgd.Property{
+						Name:        "target",
+						Description: "Target",
+						Type:        fgd.PropertyTypeTargetDestination,
+					},
+				},
 			},
 		},
-	},
-	fgd.Definition{
-		Name:        "test_brush_entity",
-		Type:        fgd.DefinitionTypeSolid,
-		Description: "Test brush entity",
-		Properties: []fgd.Property{
-			fgd.Property{
-				Name:        "targetname",
-				Description: "Name",
-				Type:        fgd.PropertyTypeTargetSource,
-			},
-			fgd.Property{
-				Name:        "target",
-				Description: "Target",
-				Type:        fgd.PropertyTypeTargetDestination,
-			},
-		},
+		nil,
 	},
 }
