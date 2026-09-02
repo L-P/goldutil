@@ -71,7 +71,7 @@ func NewMIPTexture(nameStr string, width, height int) (MIPTexture, error) {
 	// on some texture names (eg. "sky").
 	name, err := NewTextureName(strings.ToLower(nameStr))
 	if err != nil {
-		return MIPTexture{}, fmt.Errorf("unable to create texture name: %w", err)
+		return MIPTexture{}, fmt.Errorf("unable to create texture name for '%s': %w", nameStr, err)
 	}
 
 	if width%16 != 0 || height%16 != 0 {

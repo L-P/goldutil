@@ -7,6 +7,7 @@
 - Fix mod filter-materials not handling prefixes
 - Add entity count to bsp limits
 - Fix error output being written to stdout
+- Show attempted texture name when it's being rejected for being to long
 
 # v1.7.0
 - Remove erroneous textures lump size limit
