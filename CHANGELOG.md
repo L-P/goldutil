@@ -1,4 +1,4 @@
-# next
+# v1.8.0
 - BC break: the "fgd" command is now "fgd neat"
 - Add "fgd check" command
 - Use total visible time as duration in `neat_message` and `neat_sentence`
