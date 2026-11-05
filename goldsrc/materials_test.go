@@ -1,9 +1,10 @@
 package goldsrc_test
 
 import (
-	"github.com/L-P/goldutil/goldsrc"
 	"strings"
 	"testing"
+
+	"github.com/L-P/goldutil/goldsrc"
 
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +49,7 @@ Y TEX_GLASS
 func TestInvalidMaterials(t *testing.T) {
 	var cases = []string{
 		"D TEX_DIRT // line with garbage, ie. this comment",
-		"A TEX_DIRT",                // invalid type
+		"1 TEX_DIRT",                // invalid type
 		"D TEXTURENAME_IS_TOO_LONG", // texture name is too long
 		"D TEX_DIRT garbage",
 		" D TEX_DIRT", // space before

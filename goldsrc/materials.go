@@ -12,45 +12,14 @@ import (
 
 type MaterialType rune
 
-const (
-	MaterialTypeInvalid MaterialType = 0
-
-	MaterialTypeComputer MaterialType = 'P'
-	MaterialTypeDirt     MaterialType = 'D'
-	MaterialTypeGlass    MaterialType = 'Y'
-	MaterialTypeGrate    MaterialType = 'G'
-	MaterialTypeLiquid   MaterialType = 'S' // "slosh"
-	MaterialTypeMetal    MaterialType = 'M'
-	MaterialTypeTile     MaterialType = 'T'
-	MaterialTypeVents    MaterialType = 'V'
-	MaterialTypeWood     MaterialType = 'W'
-)
+const MaterialTypeInvalid MaterialType = 0
 
 func (t MaterialType) String() string {
-	switch t {
-	case MaterialTypeComputer:
-		return "MaterialTypeComputer"
-	case MaterialTypeDirt:
-		return "MaterialTypeDirt"
-	case MaterialTypeGlass:
-		return "MaterialTypeGlass"
-	case MaterialTypeGrate:
-		return "MaterialTypeGrate"
-	case MaterialTypeLiquid:
-		return "MaterialTypeLiquid"
-	case MaterialTypeMetal:
-		return "MaterialTypeMetal"
-	case MaterialTypeTile:
-		return "MaterialTypeTile"
-	case MaterialTypeVents:
-		return "MaterialTypeVents"
-	case MaterialTypeWood:
-		return "MaterialTypeWood"
-	case MaterialTypeInvalid:
+	if t == MaterialTypeInvalid {
 		return "MaterialTypeInvalid"
 	}
 
-	return fmt.Sprintf("<invalid: %d>", t)
+	return fmt.Sprintf("%c", t)
 }
 
 const MaterialTypeCount = 9 + 1
@@ -142,20 +111,9 @@ func IsValidTextureName(str string) bool {
 }
 
 func parseMaterialType(c byte) MaterialType {
-	switch MaterialType(c) {
-	case MaterialTypeComputer,
-		MaterialTypeDirt,
-		MaterialTypeGlass,
-		MaterialTypeGrate,
-		MaterialTypeLiquid,
-		MaterialTypeMetal,
-		MaterialTypeTile,
-		MaterialTypeVents,
-		MaterialTypeWood:
-		return MaterialType(c)
-	case MaterialTypeInvalid:
+	if c < 'A' || c > 'Z' {
 		return MaterialTypeInvalid
 	}
 
-	return MaterialTypeInvalid
+	return MaterialType(c)
 }

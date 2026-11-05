@@ -2,10 +2,11 @@ package goldsrc
 
 import (
 	"fmt"
-	"github.com/L-P/goldutil/goldsrc/wad"
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/L-P/goldutil/goldsrc/wad"
 )
 
 type MaterialsRemapper struct {
@@ -127,7 +128,7 @@ func (r *MaterialsRemapper) ReMap(
 func (r *MaterialsRemapper) PrintAvailable(w io.Writer) {
 	fmt.Fprintln(w, "\nTexture names still usable in source:")
 	for mat, v := range r.pools {
-		fmt.Fprintf(w, "  - %-20s: %d\n", mat.String(), len(v))
+		fmt.Fprintf(w, "  - %s: %d\n", mat.String(), len(v))
 	}
 
 	var totals = map[MaterialType][3]int{}
@@ -142,7 +143,7 @@ func (r *MaterialsRemapper) PrintAvailable(w io.Writer) {
 	}
 	fmt.Fprintln(w, "\nTemplated texture entries still usable in source (unprefixed, one char, two chars):")
 	for mat, v := range totals {
-		fmt.Fprintf(w, "  - %-20s: % 6d, % 6d, % 6d\n", mat.String(), v[0], v[1], v[2])
+		fmt.Fprintf(w, "  - %s: % 6d, % 6d, % 6d\n", mat.String(), v[0], v[1], v[2])
 	}
 }
 

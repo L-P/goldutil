@@ -8,6 +8,7 @@
 - Add entity count to bsp limits
 - Fix error output being written to stdout
 - Show attempted texture name when it's being rejected for being to long
+- Allow custom materials in remapper, not only vanilla Half-Life
 
 # v1.7.0
 - Remove erroneous textures lump size limit
