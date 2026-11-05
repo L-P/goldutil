@@ -10,6 +10,7 @@
 - Show attempted texture name when it's being rejected for being to long
 - Allow custom materials in remapper, not only vanilla Half-Life
 - Fix remapper relying on materials.txt case
+- Sort remapper output
 
 # v1.7.0
 - Remove erroneous textures lump size limit

@@ -3,6 +3,8 @@ package goldsrc
 import (
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 
@@ -127,7 +129,8 @@ func (r *MaterialsRemapper) ReMap(
 
 func (r *MaterialsRemapper) PrintAvailable(w io.Writer) {
 	fmt.Fprintln(w, "\nTexture names still usable in source:")
-	for mat, v := range r.pools {
+	for _, mat := range slices.Sorted(maps.Keys(r.pools)) {
+		v := r.pools[mat]
 		fmt.Fprintf(w, "  - %s: %d\n", mat.String(), len(v))
 	}
 
@@ -142,7 +145,8 @@ func (r *MaterialsRemapper) PrintAvailable(w io.Writer) {
 		}
 	}
 	fmt.Fprintln(w, "\nTemplated texture entries still usable in source (unprefixed, one char, two chars):")
-	for mat, v := range totals {
+	for _, mat := range slices.Sorted(maps.Keys(totals)) {
+		v := totals[mat]
 		fmt.Fprintf(w, "  - %s: % 6d, % 6d, % 6d\n", mat.String(), v[0], v[1], v[2])
 	}
 }
