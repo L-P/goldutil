@@ -7,7 +7,7 @@
 - Fix mod filter-materials not handling prefixes
 - Add entity count to bsp limits
 - Fix error output being written to stdout
-- Show attempted texture name when it's being rejected for being to long
+- Show attempted texture name when it's being rejected for being too long
 - Allow custom materials in remapper, not only vanilla Half-Life
 - Fix remapper relying on materials.txt case
 - Sort remapper output

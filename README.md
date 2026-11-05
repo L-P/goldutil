@@ -26,7 +26,7 @@ USAGE:
    goldutil [global options] [command [command options]]
 
 VERSION:
-   v1.7.0
+   v1.8.0
 
 DESCRIPTION:
    goldutil can read, modify, and write multiple file formats used by the GoldSrc (Half-Life) engine.
@@ -34,7 +34,7 @@ DESCRIPTION:
 
 COMMANDS:
    bsp      BSP (compiled maps) manipulation.
-   fgd      Output the FGD to use with goldutil map neat.
+   fgd      FGD (game-specific editor configuration) manipulation.
    nod      NPC pathfinding nodes manipulation.
    map      Map pre-processing.
    mod      Misc modding utilities
