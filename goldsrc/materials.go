@@ -89,7 +89,7 @@ func parseMaterialsLine(line string) (MaterialType, string, error) {
 		return MaterialTypeInvalid, "", fmt.Errorf("invalid texture name: %s", parts[1])
 	}
 
-	return mat, parts[1], nil
+	return mat, strings.ToUpper(parts[1]), nil
 }
 
 func IsValidTextureName(str string) bool {
