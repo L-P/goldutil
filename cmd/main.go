@@ -200,6 +200,10 @@ func newApp() *cli.Command {
 								Value: ".",
 								Usage: "root of the mod directory (eg. 'valve'), defaults to the current working directory.",
 							},
+							&cli.StringFlag{
+								Name:  "out",
+								Usage: "Path were the output map will be written, if this path is left empty, the map will be written to standard output.",
+							},
 						},
 					},
 				},

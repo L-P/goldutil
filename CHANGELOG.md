@@ -1,3 +1,6 @@
+# next 
+- Add an output path parameter to "map neat"
+
 # v1.8.0
 - BC break: the "fgd" command is now "fgd neat"
 - Add "fgd check" command

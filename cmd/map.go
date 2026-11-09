@@ -37,7 +37,24 @@ func doNeat(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to neatify map: %w", err)
 	}
 
-	fmt.Fprint(cmd.Writer, qm.String())
+	outPath := cmd.String("out")
+	if outPath == "" {
+		_, err = fmt.Fprint(cmd.Writer, qm.String())
+		return err
+	}
+
+	dest, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to open '%s' for writing: %w", outPath, err)
+	}
+
+	if _, err := fmt.Fprint(dest, qm.String()); err != nil {
+		return fmt.Errorf("unable to write to map file: %w", err)
+	}
+
+	if err := dest.Close(); err != nil {
+		return fmt.Errorf("unable to finalize writing to '%s': %w", outPath, err)
+	}
 
 	return nil
 }
