@@ -3,8 +3,9 @@ package sprite
 import (
 	"errors"
 	"fmt"
-	"github.com/L-P/goldutil/palette"
 	"image"
+
+	"github.com/L-P/goldutil/palette"
 )
 
 func NewFromImage(typ Type, format TextureFormat, frames ...*image.Paletted) (Sprite, error) {
@@ -50,7 +51,7 @@ func (spr *Sprite) addFrameFromImage(img *image.Paletted, remapIndex uint8, shou
 
 	spr.AddFrame(NewFrame(
 		int32(rect.Dx()), int32(rect.Dy()),
-		int32(rect.Dx()/2), int32(rect.Dy()/2),
+		int32(-rect.Dx()/2), int32(rect.Dy()/2),
 		img.Pix,
 	))
 

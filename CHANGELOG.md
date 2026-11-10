@@ -1,4 +1,5 @@
 # next 
+- BC break: set minus half width origin on sprite frames
 - Add an output path parameter to "map neat"
 
 # v1.8.0
