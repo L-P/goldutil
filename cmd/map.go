@@ -65,7 +65,7 @@ func doMapExport(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("unable to read from map: %w", err)
 	}
 
-	clean, err := exportQMap(qm, cmd.Bool("cleanup-tb"))
+	clean, err := exportQMap(qm, cmd.Bool("cleanup-tb"), cmd.Bool("fix-zero-angles"))
 	if err != nil {
 		return fmt.Errorf("unable to export map: %w", err)
 	}

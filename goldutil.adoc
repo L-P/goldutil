@@ -79,6 +79,10 @@ read from _STDIN_.
 Also remove properties added by TrenchBroom that are not understood by the
 engine and spam the console with errors.
 
+`--fix-sprite-angles`::
+Replace 0 with 360 in `angles` properties as a workaround for a buggy
+Worldcraft workaround mangling angles in `CSprite::Spawn()`.
+
 === `goldutil map neat [--moddir <path>] <file>`
 Process `neat_*` entity macros and outputs the generated .map to standard output. +
 See <<_neat_entities>> and <<_goldutil_fgd>>.

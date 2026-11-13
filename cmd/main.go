@@ -176,6 +176,11 @@ func newApp() *cli.Command {
 								Usage: "Also remove properties added by TrenchBroom that are not understood by the engine and spam the console with errors.",
 								Value: false,
 							},
+							&cli.BoolFlag{
+								Name:  "fix-zero-angles",
+								Usage: "Replace 0 with 360 in \"angles\" properties.",
+								Value: false,
+							},
 						},
 						Action: doMapExport,
 					},

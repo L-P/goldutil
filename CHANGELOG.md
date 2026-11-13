@@ -1,6 +1,7 @@
 # next 
 - BC break: set minus half width origin on sprite frames
 - Add an output path parameter to "map neat"
+- Add --fix-zero-angles flag to "map export"
 
 # v1.8.0
 - BC break: the "fgd" command is now "fgd neat"

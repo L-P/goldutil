@@ -64,7 +64,7 @@ func getUnexportedGroupSet(qm *qmap.QMap, unexportedLayerIDs set.PresenceSet[str
 	return skipIDs, nil
 }
 
-func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
+func exportQMap(qm *qmap.QMap, cleanupTB bool, bFixZeroAngles bool) (*qmap.QMap, error) {
 	skipLayerIDs, err := getUnexportedLayerSet(qm)
 	if err != nil {
 		return nil, err
@@ -85,6 +85,10 @@ func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
 			removeTBProps(v)
 		}
 
+		if bFixZeroAngles { // I am deeply sorry for hungarianing it up.
+			fixZeroAngles(v)
+		}
+
 		clean = append(clean, v)
 	}
 
@@ -94,6 +98,21 @@ func exportQMap(qm *qmap.QMap, cleanupTB bool) (*qmap.QMap, error) {
 	}
 
 	return out, nil
+}
+
+func fixZeroAngles(ent qmap.AnonymousEntity) {
+	if ent.KVs["classname"] != "env_sprite" {
+		return
+	}
+
+	tokens := strings.Split(ent.KVs["angles"], " ")
+	for k, v := range tokens {
+		if v == "0" {
+			tokens[k] = "360"
+		}
+	}
+
+	ent.KVs["angles"] = strings.Join(tokens, " ")
 }
 
 // Skip TB metadata entities and entities belonging to hidden groups/layers.

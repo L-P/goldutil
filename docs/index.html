@@ -619,6 +619,11 @@ read from <em>STDIN</em>.</p>
 <p>Also remove properties added by TrenchBroom that are not understood by the
 engine and spam the console with errors.</p>
 </dd>
+<dt class="hdlist1"><code>--fix-sprite-angles</code></dt>
+<dd>
+<p>Replace 0 with 360 in <code>angles</code> properties as a workaround for a buggy
+Worldcraft workaround mangling angles in <code>CSprite::Spawn()</code>.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -1151,7 +1156,7 @@ duration.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-08-16 16:42:49 +0200
+Last updated 2026-11-13 21:58:45 +0100
 </div>
 </div>
 </body>
