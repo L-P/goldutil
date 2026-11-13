@@ -4,8 +4,11 @@ package neat
 import (
 	_ "embed"
 	"fmt"
+	"math/rand"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -30,13 +33,41 @@ func Neatify(qm *qmap.QMap, mod *os.Root) error {
 		return fmt.Errorf("unable to handle neat_sentence: %w", err)
 	}
 
+	if err := handleRandomizer(qm); err != nil {
+		return fmt.Errorf("unable to handle neat_sentence: %w", err)
+	}
+
+	return nil
+}
+
+func handleRandomizer(qm *qmap.QMap) error {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	for ent := range qm.Entities() {
+		if ent.KVs["classname"] != "env_sprite" {
+			continue
+		}
+		tokens := strings.Split(ent.KVs["angles"], " ")
+		for k, v := range tokens {
+			if v == "$random" {
+				v = strconv.Itoa(r.Intn(360))
+				if v == "0" {
+					v = "360"
+				}
+				tokens[k] = v
+			}
+		}
+
+		ent.KVs["angles"] = strings.Join(tokens, " ")
+	}
+
 	return nil
 }
 
 func handleMasters(qm *qmap.QMap) error {
 	masters, err := qmap.FindByKV[Master](qm, "classname", "neat_master")
 	if err != nil {
-		return fmt.Errorf("unable to obtain neat_master entitites: %w", err)
+		return fmt.Errorf("unable to obtain neat_master entities: %w", err)
 	}
 
 	for _, v := range masters {
@@ -119,7 +150,7 @@ func getMasterAdditions(master Master) []any {
 func handleMessages(qm *qmap.QMap, mod *os.Root) error {
 	messages, err := qmap.FindByKV[Message](qm, "classname", "neat_message")
 	if err != nil {
-		return fmt.Errorf("unable to obtain neat_message entitites: %w", err)
+		return fmt.Errorf("unable to obtain neat_message entities: %w", err)
 	}
 
 	titles, err := goldsrc.NewTitlesFromModRoot(mod)
@@ -170,7 +201,7 @@ func handleMessage(
 func handleSentences(qm *qmap.QMap, mod *os.Root) error {
 	sentences, err := qmap.FindByKV[Sentence](qm, "classname", "neat_sentence")
 	if err != nil {
-		return fmt.Errorf("unable to obtain neat_sentence entitites: %w", err)
+		return fmt.Errorf("unable to obtain neat_sentence entities: %w", err)
 	}
 
 	titles, err := goldsrc.NewTitlesFromModRoot(mod)

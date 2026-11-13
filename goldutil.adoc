@@ -331,3 +331,10 @@ The following properties are copied verbatim to the generated `scripted_sentence
 - `volume(float)`
 - `messageattenuation(choices)`
 - `sentenceflags(flags)` to `spawnflags`
+
+Neat alterations
+----------------
+=== `$random`
+An `env_sprite` with a `$random` component in its `angles` with have a random `[1-360]` value supplied to it.
+
+This syntax is expected to change in the future.
